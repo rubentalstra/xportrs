@@ -1,0 +1,37 @@
+[package]
+name = "xportrs"
+version = "0.0.1"
+edition = "2024"
+rust-version = "1.92"
+license = "MIT"
+description = "SAS Transport (XPT) V5/V8 format reader and writer"
+readme = "README.md"
+repository = "https://github.com/rubentalstra/xportrs"
+documentation = "https://docs.rs/xportrs"
+keywords = ["sas", "xpt", "xport", "cdisc", "clinical-trials"]
+categories = ["encoding", "parser-implementations", "science"]
+
+[features]
+default = []
+polars = ["dep:polars"]
+serde = ["dep:serde"]
+
+[dependencies]
+thiserror = "2.0"
+chrono = { version = "0.4", default-features = false, features = ["std", "clock"] }
+polars = { version = "0.51", optional = true, features = ["lazy", "strings"] }
+serde = { version = "1.0", features = ["derive"], optional = true }
+
+[dev-dependencies]
+tempfile = "3"
+
+[lints.rust]
+unsafe_code = "warn"
+
+[lints.clippy]
+enum_glob_use = "warn"
+wildcard_imports = "warn"
+needless_pass_by_value = "warn"
+cloned_instead_of_copied = "warn"
+redundant_closure_for_method_calls = "warn"
+inefficient_to_string = "warn"
