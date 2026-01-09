@@ -1,17 +1,23 @@
-//! Error types for the sdtm-xpt crate.
+//! Error types for the xportrs crate.
 //!
-//! This module provides a unified error type [`XptError`] that covers:
-//! - I/O and format parsing errors
-//! - Validation errors with location tracking
+//! This module provides error types for all xportrs operations:
+//! - [`XptError`] - I/O and format parsing errors
+//! - [`ValidationError`] - Validation errors with location tracking
+//! - [`TransformError`] - Transform operation errors
+//! - [`SpecError`] - Specification loading errors
 //!
 //! The validation system uses a collect-all-errors pattern, allowing
 //! all validation issues to be reported at once.
 
+mod spec;
+mod transform;
 mod validation;
 
 use std::path::PathBuf;
 use thiserror::Error;
 
+pub use spec::{SpecError, SpecResult};
+pub use transform::{TransformError, TransformResult};
 pub use validation::{
     ErrorLocation, Severity, ValidationError, ValidationErrorCode, ValidationResult,
 };

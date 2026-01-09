@@ -1,15 +1,17 @@
-//! SAS Transport (XPT) file format reader and writer.
+//! CDISC-compliant XPT file generation, inspired by R's xportr package.
 //!
 //! This crate provides functionality to read and write SAS Transport V5 and V8 format files,
-//! commonly used for SDTM datasets in regulatory submissions.
+//! commonly used for SDTM datasets in regulatory submissions. It also includes a metadata-driven
+//! transformation system inspired by the R xportr package.
 //!
 //! # Features
 //!
 //! - Full SAS Transport V5 format support (default, for maximum compatibility)
 //! - SAS Transport V8 format support (longer names, labels, and formats)
-//! - IEEE ↔ IBM mainframe floating-point conversion
+//! - IEEE to IBM mainframe floating-point conversion
 //! - Support for all 28 SAS missing value codes (`.`, `._`, `.A`-`.Z`)
 //! - Variable metadata including formats and informats
+//! - Metadata specification types for xportr-style workflows
 //! - Optional Polars DataFrame integration (with `polars` feature)
 //!
 //! # Format Versions
@@ -67,11 +69,33 @@
 //! // Check for missing
 //! assert!(missing.is_missing());
 //! ```
+//!
+//! # Metadata Specification (xportr-style)
+//!
+//! ```
+//! use xportrs::spec::{DatasetSpec, VariableSpec};
+//! use xportrs::FormatSpec;
+//!
+//! let spec = DatasetSpec::new("DM")
+//!     .with_label("Demographics")
+//!     .add_variable(
+//!         VariableSpec::character("USUBJID", 20)
+//!             .with_label("Unique Subject Identifier")
+//!             .with_order(1)
+//!     )
+//!     .add_variable(
+//!         VariableSpec::numeric("AGE")
+//!             .with_label("Age")
+//!             .with_format(FormatSpec::best(8))
+//!             .with_order(2)
+//!     );
+//! ```
 
 mod error;
 pub mod float;
 pub mod header;
 pub mod reader;
+pub mod spec;
 mod types;
 pub mod validation;
 mod version;
@@ -82,8 +106,8 @@ pub mod polars;
 
 // Re-export error types
 pub use error::{
-    ErrorLocation, Result, Severity, ValidationError, ValidationErrorCode, ValidationResult,
-    XptError,
+    ErrorLocation, Result, Severity, SpecError, SpecResult, TransformError, TransformResult,
+    ValidationError, ValidationErrorCode, ValidationResult, XptError,
 };
 
 // Re-export version
@@ -96,16 +120,22 @@ pub use types::{
     XptWriterOptions,
 };
 
+// Re-export spec types at top level for convenience
+pub use spec::{Core, DatasetSpec, VariableSpec};
+
+// Re-export validation types
+pub use validation::ActionLevel;
+
 // Re-export reader functionality
 pub use reader::{
-    DatasetMeta, ObservationIter, StreamingReader, XptReader, read_xpt, read_xpt_streaming,
-    read_xpt_streaming_with_options, read_xpt_with_options,
+    read_xpt, read_xpt_streaming, read_xpt_streaming_with_options, read_xpt_with_options,
+    DatasetMeta, ObservationIter, StreamingReader, XptReader,
 };
 
 // Re-export writer functionality
 pub use writer::{
-    DatasetInfo, StreamingWriter, ValidatedWriter, XptWriter, XptWriterBuilder, write_xpt,
-    write_xpt_with_options,
+    write_xpt, write_xpt_with_options, DatasetInfo, StreamingWriter, ValidatedWriter, XptWriter,
+    XptWriterBuilder,
 };
 
 // Re-export Polars integration

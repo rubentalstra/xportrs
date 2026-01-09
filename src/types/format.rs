@@ -13,6 +13,7 @@ use std::fmt;
 /// - `DATE9.` - Date format (e.g., "01JAN2020")
 /// - `$CHAR20.` - Character format
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct FormatSpec {
     /// Format name (e.g., "DATE9", "BEST12").
     ///

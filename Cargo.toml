@@ -1,10 +1,10 @@
 [package]
 name = "xportrs"
-version = "0.0.1"
+version = "0.1.0"
 edition = "2024"
 rust-version = "1.92"
 license = "MIT"
-description = "SAS Transport (XPT) V5/V8 format reader and writer"
+description = "CDISC-compliant XPT file generation inspired by R's xportr package"
 readme = "README.md"
 repository = "https://github.com/rubentalstra/xportrs"
 documentation = "https://docs.rs/xportrs"
@@ -14,24 +14,65 @@ categories = ["encoding", "parser-implementations", "science"]
 [features]
 default = []
 polars = ["dep:polars"]
-serde = ["dep:serde"]
+serde = ["dep:serde", "chrono/serde"]
+miette = ["dep:miette"]
+tracing = ["dep:tracing"]
+full = ["polars", "serde", "miette", "tracing"]
 
 [dependencies]
-thiserror = "2.0"
+# Required - Error handling (industry standard for libraries)
+thiserror = "2.0.17"
+
+# Required - Date/time handling for XPT timestamps
 chrono = { version = "0.4.42", default-features = false, features = ["std", "clock"] }
+
+# Optional - DataFrame integration (recommended)
 polars = { version = "0.51", optional = true, features = ["lazy", "strings"] }
+
+# Optional - Serialization
 serde = { version = "1.0", features = ["derive"], optional = true }
+
+# Optional - Rich error diagnostics
+miette = { version = "7.6", optional = true }
+
+# Optional - Structured logging
+tracing = { version = "0.1.44", optional = true }
 
 [dev-dependencies]
 tempfile = "3"
 
 [lints.rust]
-unsafe_code = "warn"
+# Safety
+unsafe_code = "deny"
+missing_docs = "warn"
+rust_2018_idioms = "warn"
 
 [lints.clippy]
+# Correctness
+all = { level = "warn", priority = -1 }
+correctness = { level = "deny", priority = -1 }
+suspicious = { level = "warn", priority = -1 }
+complexity = { level = "warn", priority = -1 }
+perf = { level = "warn", priority = -1 }
+
+# Style
 enum_glob_use = "warn"
 wildcard_imports = "warn"
 needless_pass_by_value = "warn"
 cloned_instead_of_copied = "warn"
 redundant_closure_for_method_calls = "warn"
 inefficient_to_string = "warn"
+
+# Pedantic (selective)
+doc_markdown = "warn"
+missing_errors_doc = "warn"
+missing_panics_doc = "warn"
+must_use_candidate = "warn"
+semicolon_if_nothing_returned = "warn"
+explicit_iter_loop = "warn"
+match_same_arms = "warn"
+
+# Restrictions (be selective)
+print_stdout = "warn"
+print_stderr = "warn"
+dbg_macro = "warn"

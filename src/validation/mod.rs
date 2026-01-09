@@ -32,8 +32,10 @@
 
 mod context;
 pub mod rules;
+mod severity;
 
 pub use context::ValidationContext;
+pub use severity::ActionLevel;
 
 use crate::error::{ValidationError, ValidationResult};
 use crate::types::{XptColumn, XptDataset};

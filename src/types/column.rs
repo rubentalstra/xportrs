@@ -8,6 +8,7 @@ use std::fmt;
 
 /// Variable data type in XPT format.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub enum XptType {
     /// Numeric variable (1 in NAMESTR ntype field).
