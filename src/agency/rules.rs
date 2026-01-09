@@ -226,7 +226,8 @@ impl Rule {
                             "AGENCY_006",
                             format!(
                                 "dataset name '{}' exceeds {} bytes (has {} bytes)",
-                                plan.domain_code, max,
+                                plan.domain_code,
+                                max,
                                 plan.domain_code.len()
                             ),
                         )
@@ -244,7 +245,8 @@ impl Rule {
                                 "AGENCY_007",
                                 format!(
                                     "variable name '{}' exceeds {} bytes (has {} bytes)",
-                                    var.name, max,
+                                    var.name,
+                                    max,
                                     var.name.len()
                                 ),
                             )
@@ -280,7 +282,8 @@ impl Rule {
                                 "AGENCY_008",
                                 format!(
                                     "variable '{}' label exceeds {} bytes (has {} bytes)",
-                                    var.name, max,
+                                    var.name,
+                                    max,
                                     var.label.len()
                                 ),
                             )

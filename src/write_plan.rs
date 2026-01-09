@@ -258,16 +258,11 @@ mod tests {
     fn test_write_plan_with_agency() {
         let dataset = DomainDataset::new(
             "AE".into(),
-            vec![Column::new(
-                "AESEQ",
-                ColumnData::F64(vec![Some(1.0)]),
-            )],
+            vec![Column::new("AESEQ", ColumnData::F64(vec![Some(1.0)]))],
         )
         .unwrap();
 
-        let plan = XptWritePlan::new(dataset)
-            .agency(Agency::FDA)
-            .finalize();
+        let plan = XptWritePlan::new(dataset).agency(Agency::FDA).finalize();
 
         assert!(plan.is_ok());
     }
