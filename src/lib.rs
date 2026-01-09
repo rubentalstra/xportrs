@@ -18,19 +18,22 @@
 //! ### Reading an XPT file
 //!
 //! ```no_run
-//! use xportrs::{read_xpt, ReadOptions};
+//! use xportrs::Xpt;
 //!
-//! let dataset = read_xpt("ae.xpt", ReadOptions::default())?;
+//! // Simple: read first dataset
+//! let dataset = Xpt::read("ae.xpt")?;
 //! println!("Domain: {}", dataset.domain_code);
 //! println!("Rows: {}", dataset.nrows);
-//! println!("Columns: {}", dataset.ncols());
+//!
+//! // With options or specific member
+//! let dm = Xpt::reader("study.xpt")?.read_member("DM")?;
 //! # Ok::<(), xportrs::XportrsError>(())
 //! ```
 //!
 //! ### Writing an XPT file
 //!
 //! ```no_run
-//! use xportrs::{DomainDataset, Column, ColumnData, XptWritePlan, XptVersion};
+//! use xportrs::{Xpt, DomainDataset, Column, ColumnData};
 //!
 //! let dataset = DomainDataset::new(
 //!     "AE".to_string(),
@@ -43,8 +46,7 @@
 //!     ],
 //! )?;
 //!
-//! XptWritePlan::new(dataset)
-//!     .xpt_version(XptVersion::V5)
+//! Xpt::writer(dataset)
 //!     .finalize()?
 //!     .write_path("ae.xpt")?;
 //! # Ok::<(), xportrs::XportrsError>(())
@@ -90,19 +92,37 @@ pub mod validate;
 mod write_plan;
 pub mod xpt;
 
-// Re-export main types at crate root
-pub use api::{inspect_xpt, read_xpt, read_xpt_all, read_xpt_member, write_xpt_v5};
+// Main entry point - the unified API
+pub use api::{Xpt, XptReaderBuilder};
+
+// Configuration types users may need
 pub use config::{Config, ReadOptions, TextMode, Verbosity, WriteOptions};
+
+// Dataset types - needed to construct data
 pub use dataset::{Column, ColumnData, DomainDataset, VariableRole};
+
+// Error types
 pub use error::{Result, XportrsError};
+
+// Metadata types - for advanced usage
 pub use metadata::{DatasetMetadata, VariableMetadata, XptVarType};
+
+// Schema types - for advanced usage
 pub use schema::{PlannedVariable, SchemaPlan};
+
+// Validation types
 pub use validate::{Issue, Severity, Target};
+
+// Write plan types
 pub use write_plan::{FinalizedWritePlan, XptWritePlan};
+
+// XPT version enum
 pub use xpt::XptVersion;
 
-// Re-export commonly used types from submodules
+// Compliance profile types
 pub use profile::{ComplianceProfile, Rule};
+
+// XPT file info (for Xpt::inspect)
 pub use xpt::v5::read::XptFile;
 
 /// Temporal conversion utilities.
