@@ -14,6 +14,7 @@ use std::fmt;
 /// The version determines various format constraints such as maximum
 /// name lengths, label lengths, and header structures.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub enum XptVersion {
     /// SAS Transport Version 5 (original format).

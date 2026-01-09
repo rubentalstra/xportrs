@@ -21,6 +21,7 @@ mod missing;
 mod observation;
 mod options;
 mod value;
+mod version;
 
 // Column types
 pub use column::{Justification, XptColumn, XptType};
@@ -40,8 +41,8 @@ pub use observation::Observation;
 // Reader/Writer options
 pub use options::{XptReaderOptions, XptWriterOptions};
 
-// Re-export XptVersion from the version module for backward compatibility
-pub use crate::version::XptVersion;
+// Version enum
+pub use version::XptVersion;
 
 // Value types
 pub use value::{NumericValue, XptValue};

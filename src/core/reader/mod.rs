@@ -19,7 +19,7 @@
 //!
 //! ```no_run
 //! use std::fs::File;
-//! use xportrs::reader::StreamingReader;
+//! use xportrs::core::reader::StreamingReader;
 //!
 //! let file = File::open("large.xpt").unwrap();
 //! let mut reader = StreamingReader::new(file).unwrap();
@@ -38,7 +38,7 @@ use std::io::{BufReader, Read};
 use std::path::Path;
 
 use crate::error::{Result, XptError};
-use crate::header::{
+use crate::core::header::{
     LabelSectionType, RECORD_LEN, align_to_record, is_label_header, parse_dataset_label,
     parse_dataset_name, parse_dataset_type, parse_labelv8_data, parse_labelv9_data,
     parse_namestr_len, parse_namestr_records, parse_variable_count, validate_dscrptr_header,

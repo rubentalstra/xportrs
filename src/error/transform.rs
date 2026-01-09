@@ -81,6 +81,10 @@ pub enum TransformError {
     #[error("I/O error: {0}")]
     Io(#[from] std::io::Error),
 
+    /// XPT format error during transform.
+    #[error("XPT error: {0}")]
+    Xpt(#[from] crate::XptError),
+
     /// Generic transform error.
     #[error("transform error: {message}")]
     Other {

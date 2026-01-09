@@ -3,7 +3,7 @@
 //! Represents the metadata for a single variable in an XPT dataset,
 //! corresponding to the NAMESTR record in the file format.
 
-use crate::header::{normalize_name, truncate_str};
+use crate::core::header::{normalize_name, truncate_str};
 use std::fmt;
 
 /// Variable data type in XPT format.

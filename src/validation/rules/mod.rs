@@ -6,20 +6,27 @@
 //! - Format validation
 //! - Dataset structure validation
 //! - FDA-specific rules
+//! - Spec conformance rules
 
 mod dataset;
 mod fda;
 mod format;
 mod label;
 mod name;
+mod spec_conformance;
 
 pub use dataset::{DuplicateVariableRule, VariableLengthRule};
 pub use fda::{FdaAsciiRule, FdaVersionRule};
 pub use format::FormatNameRule;
 pub use label::{DatasetLabelRule, VariableLabelRule};
 pub use name::{DatasetNameRule, VariableNameRule};
+pub use spec_conformance::{
+    DatasetMetaConformanceRule, FormatConformanceRule, LabelConformanceRule,
+    LengthConformanceRule, OrderConformanceRule, SpecConformanceConfig, TypeConformanceRule,
+    VariableInDataRule, VariableInSpecRule,
+};
 
-use crate::header::normalize_name;
+use crate::core::header::normalize_name;
 
 /// Check if a name contains only valid SAS characters (A-Z, 0-9, _).
 fn is_valid_sas_name(name: &str) -> bool {

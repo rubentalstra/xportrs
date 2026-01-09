@@ -3,7 +3,7 @@
 //! This module provides functions for encoding observation (row) data
 //! into XPT binary format.
 
-use crate::float::{encode_missing, ieee_to_ibm, truncate_ibm};
+use crate::core::float::{encode_missing, ieee_to_ibm, truncate_ibm};
 use crate::types::{NumericValue, Observation, XptColumn, XptType, XptValue, XptWriterOptions};
 
 /// Encode a value for writing to XPT format.

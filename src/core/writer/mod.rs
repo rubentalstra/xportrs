@@ -47,7 +47,7 @@
 //! ```no_run
 //! use std::path::Path;
 //! use xportrs::{XptColumn, Observation, XptValue};
-//! use xportrs::writer::{DatasetInfo, StreamingWriter};
+//! use xportrs::core::writer::{DatasetInfo, StreamingWriter};
 //!
 //! let info = DatasetInfo::new("DM", vec![
 //!     XptColumn::character("USUBJID", 20),
@@ -77,7 +77,7 @@ use std::path::Path;
 
 use crate::XptVersion;
 use crate::error::{Result, XptError};
-use crate::header::{
+use crate::core::header::{
     LabelSectionType, LibraryInfo, RECORD_LEN, build_dscrptr_header, build_labelv8_data,
     build_labelv8_header, build_labelv9_data, build_labelv9_header, build_library_header,
     build_member_data, build_member_header, build_member_second, build_namestr,

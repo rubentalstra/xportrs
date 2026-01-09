@@ -9,7 +9,7 @@ use std::io::Write;
 use std::path::Path;
 
 use crate::error::{Result, ValidationError, ValidationResult, XptError};
-use crate::header::normalize_name;
+use crate::core::header::normalize_name;
 use crate::types::{XptDataset, XptVersion, XptWriterOptions};
 use crate::validation::{ValidationMode, Validator};
 

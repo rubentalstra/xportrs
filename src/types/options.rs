@@ -3,10 +3,8 @@
 use chrono::NaiveDateTime;
 
 use super::MissingValue;
-use crate::{
-    XptVersion,
-    header::{format_xpt_datetime, truncate_str},
-};
+use crate::core::header::{format_xpt_datetime, truncate_str};
+use crate::XptVersion;
 
 /// Options for reading XPT files.
 #[derive(Debug, Clone)]

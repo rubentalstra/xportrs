@@ -3,7 +3,7 @@
 //! This module provides functions for decoding observation (row) data
 //! from XPT binary format into typed values.
 
-use crate::float::{ibm_to_ieee, is_missing};
+use crate::core::float::{ibm_to_ieee, is_missing};
 use crate::types::{MissingValue, NumericValue, Observation, XptColumn, XptType, XptValue};
 
 /// Decode a character value from bytes.

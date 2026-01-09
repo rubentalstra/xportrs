@@ -1,7 +1,7 @@
 //! Name validation rules for datasets and variables.
 
 use crate::error::{ErrorLocation, Severity, ValidationError, ValidationErrorCode};
-use crate::header::normalize_name;
+use crate::core::header::normalize_name;
 use crate::types::{XptColumn, XptDataset};
 use crate::validation::{ValidationContext, ValidationMode, ValidationRule};
 
@@ -180,7 +180,7 @@ impl ValidationRule for VariableNameRule {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::version::XptVersion;
+    use crate::XptVersion;
 
     fn make_context(version: XptVersion) -> ValidationContext {
         ValidationContext::new(version, ValidationMode::Basic)

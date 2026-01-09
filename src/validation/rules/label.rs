@@ -134,7 +134,7 @@ impl ValidationRule for VariableLabelRule {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::version::XptVersion;
+    use crate::XptVersion;
 
     fn make_context(version: XptVersion, fda: bool) -> ValidationContext {
         ValidationContext::new(

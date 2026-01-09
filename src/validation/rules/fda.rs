@@ -31,7 +31,7 @@ impl ValidationRule for FdaVersionRule {
         let mut errors = Vec::new();
 
         // FDA requires V5 format
-        if ctx.version() != crate::version::XptVersion::V5 {
+        if ctx.version() != crate::XptVersion::V5 {
             errors.push(ValidationError::new(
                 ValidationErrorCode::WrongVersion,
                 "FDA submissions require SAS Transport V5 format".to_string(),
@@ -104,7 +104,7 @@ impl ValidationRule for FdaAsciiRule {
 mod tests {
     use super::*;
     use crate::types::XptColumn;
-    use crate::version::XptVersion;
+    use crate::XptVersion;
 
     fn make_fda_context(version: XptVersion) -> ValidationContext {
         ValidationContext::new(version, ValidationMode::FdaCompliant)

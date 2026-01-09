@@ -1,7 +1,7 @@
 //! Validation context providing shared state during validation.
 
 use super::ValidationMode;
-use crate::version::XptVersion;
+use crate::XptVersion;
 
 /// Context passed to validation rules during execution.
 ///

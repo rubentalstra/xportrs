@@ -6,7 +6,7 @@
 use chrono::NaiveDateTime;
 
 use super::{XptColumn, XptValue};
-use crate::header::{normalize_name, truncate_str};
+use crate::core::header::{normalize_name, truncate_str};
 
 /// A single dataset (member) in an XPT file.
 ///

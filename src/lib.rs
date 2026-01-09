@@ -12,7 +12,7 @@
 //! - Support for all 28 SAS missing value codes (`.`, `._`, `.A`-`.Z`)
 //! - Variable metadata including formats and informats
 //! - Metadata specification types for xportr-style workflows
-//! - Optional Polars DataFrame integration (with `polars` feature)
+//! - Optional Polars `DataFrame` integration (with `polars` feature)
 //!
 //! # Format Versions
 //!
@@ -91,56 +91,98 @@
 //!     );
 //! ```
 
-mod error;
-pub mod float;
-pub mod header;
-pub mod reader;
-pub mod spec;
-mod types;
-pub mod validation;
-mod version;
-pub mod writer;
+// ============================================================================
+// Module Structure
+// ============================================================================
 
+// Core low-level XPT format implementation
+pub mod core;
+
+// Error types
+mod error;
+
+// High-level I/O operations
+pub mod io;
+
+// Agency policy layer
+pub mod policy;
+
+// Metadata specification
+pub mod spec;
+
+// Transform operations
+pub mod transform;
+
+// Core data types
+mod types;
+
+// Validation framework
+pub mod validation;
+
+// Optional Polars integration
 #[cfg(feature = "polars")]
 pub mod polars;
 
-// Re-export error types
+// ============================================================================
+// Re-exports: Error Types
+// ============================================================================
+
 pub use error::{
     ErrorLocation, Result, Severity, SpecError, SpecResult, TransformError, TransformResult,
     ValidationError, ValidationErrorCode, ValidationResult, XptError,
 };
 
-// Re-export version
-pub use version::XptVersion;
+// ============================================================================
+// Re-exports: Core Types
+// ============================================================================
 
-// Re-export core types
 pub use types::{
     FormatSpec, InformatSpec, Justification, MissingValue, NumericValue, Observation,
     RowLengthError, XptColumn, XptDataset, XptLibrary, XptReaderOptions, XptType, XptValue,
-    XptWriterOptions,
+    XptVersion, XptWriterOptions,
 };
 
-// Re-export spec types at top level for convenience
+// ============================================================================
+// Re-exports: Spec Types
+// ============================================================================
+
 pub use spec::{Core, DatasetSpec, VariableSpec};
 
-// Re-export validation types
+// ============================================================================
+// Re-exports: Validation Types
+// ============================================================================
+
 pub use validation::ActionLevel;
 
-// Re-export reader functionality
-pub use reader::{
+// ============================================================================
+// Re-exports: Policy Types
+// ============================================================================
+
+pub use policy::{
+    Agency, AgencyPolicy, CustomPolicy, FdaPolicy, FileNamingIssue, FileNamingRules, NmpaPolicy,
+    PmdaPolicy, FDA_MAX_FILE_SIZE, NMPA_MAX_FILE_SIZE, PMDA_MAX_FILE_SIZE,
+};
+
+// ============================================================================
+// Re-exports: I/O Functions (High-Level API)
+// ============================================================================
+
+pub use io::{
     read_xpt, read_xpt_streaming, read_xpt_streaming_with_options, read_xpt_with_options,
-    DatasetMeta, ObservationIter, StreamingReader, XptReader,
+    write_xpt, write_xpt_with_options, DatasetInfo, DatasetMeta, ObservationIter, StreamingReader,
+    StreamingWriter, ValidatedWriter, XptReader, XptWriter, XptWriterBuilder,
 };
 
-// Re-export writer functionality
-pub use writer::{
-    write_xpt, write_xpt_with_options, DatasetInfo, StreamingWriter, ValidatedWriter, XptWriter,
-    XptWriterBuilder,
-};
+// ============================================================================
+// Re-exports: Polars Integration
+// ============================================================================
 
-// Re-export Polars integration
 #[cfg(feature = "polars")]
 pub use polars::{read_xpt_to_dataframe, write_dataframe_to_xpt};
+
+// ============================================================================
+// Crate Metadata
+// ============================================================================
 
 /// Crate version.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

@@ -21,6 +21,57 @@ xportrs brings the power of metadata-driven clinical data transformation to the 
 - **Streaming API** - Memory-efficient processing of large datasets
 - **Validation framework** - Configurable strictness with detailed reporting
 
+## xportr-Style Workflow
+
+xportrs provides the same metadata-driven workflow as R's xportr:
+
+| R xportr | Rust xportrs | Description |
+|----------|--------------|-------------|
+| `xportr_type()` | `.xportr_type()` | Coerce column types to match spec |
+| `xportr_length()` | `.xportr_length()` | Apply variable lengths from spec |
+| `xportr_label()` | `.xportr_label()` | Apply variable labels from spec |
+| `xportr_order()` | `.xportr_order()` | Reorder columns to match spec |
+| `xportr_format()` | `.xportr_format()` | Apply SAS formats from spec |
+| `xportr_df_label()` | `.xportr_df_label()` | Set dataset label |
+| `xportr_metadata()` | `.xportr_metadata()` | Attach specification to DataFrame |
+| `xportr_write()` | `.xportr_write()` | Write compliant XPT file |
+| `xportr()` | `.xportr()` | Full pipeline in one call |
+
+### Step-by-Step Control
+
+```rust
+use polars::prelude::*;
+use xportrs::polars::XportrTransforms;
+use xportrs::spec::{DatasetSpec, VariableSpec};
+use xportrs::ActionLevel;
+
+let spec = DatasetSpec::new("DM")
+    .with_label("Demographics")
+    .add_variable(VariableSpec::numeric("AGE").with_label("Age").with_order(1))
+    .add_variable(VariableSpec::character("SEX", 1).with_label("Sex").with_order(2));
+
+let df = df! {
+    "AGE" => &[35i64, 42],
+    "SEX" => &["M", "F"],
+}?;
+
+let result = df
+    .xportr_metadata(spec.clone())
+    .xportr_type(&spec, ActionLevel::Warn)?
+    .xportr_length(&spec, ActionLevel::Warn)?
+    .xportr_label(&spec, ActionLevel::Warn)?
+    .xportr_order(&spec, ActionLevel::Message)?
+    .xportr_format(&spec, ActionLevel::Message)?
+    .xportr_df_label("Demographics");
+
+// Check report before writing
+if result.report().has_warnings() {
+    eprintln!("Warnings found during transformation");
+}
+
+result.xportr_write("dm.xpt", "DM", &spec, true)?;
+```
+
 ## Installation
 
 ```bash
@@ -128,7 +179,65 @@ use xportrs::{read_xpt_to_dataframe, write_dataframe_to_xpt};
 let df = read_xpt_to_dataframe(Path::new("dm.xpt"))?;
 
 // Write DataFrame to XPT
-write_dataframe_to_xpt(&df, "DM", Path::new("dm_out.xpt"))?;
+write_dataframe_to_xpt(Path::new("dm_out.xpt"), &df, "DM")?;
+```
+
+## Agency Compliance
+
+### FDA (Default)
+
+```rust
+use xportrs::validation::Validator;
+use xportrs::XptVersion;
+
+// Use FDA-compliant validation mode
+let validator = Validator::fda_compliant(XptVersion::V5);
+let report = validator.validate(&dataset);
+
+if !report.is_valid() {
+    for error in &report.errors {
+        eprintln!("{}", error);
+    }
+}
+```
+
+### Custom Policy
+
+Create custom policies with specific constraints:
+
+```rust
+use xportrs::{CustomPolicy, XptVersion};
+use xportrs::policy::AgencyPolicy;
+
+// Research policy - relaxed for V8 format
+let policy = CustomPolicy::new()
+    .with_required_version(XptVersion::V8)
+    .with_max_variable_name_length(32)
+    .with_require_ascii(false)
+    .with_no_file_size_limit();
+
+// Internal QC - stricter than FDA
+let qc_policy = CustomPolicy::from_fda_base()
+    .with_max_file_size(1024 * 1024 * 1024)  // 1 GB limit
+    .with_strict(true);
+```
+
+## Loading Specifications
+
+Load specifications from any source using Polars, then pass to xportrs:
+
+```rust
+use polars::prelude::*;
+use xportrs::spec::{DataFrameMetadataSource, MetadataSource};
+
+// Load from CSV, Excel, Parquet, etc. via Polars
+let spec_df = CsvReadOptions::default()
+    .try_into_reader_with_file_path(Some("specs/var_spec.csv".into()))?
+    .finish()?;
+
+// Create specification from DataFrame
+let source = DataFrameMetadataSource::new(spec_df);
+let dm_spec = source.load_dataset_spec("DM")?;
 ```
 
 ## Format Comparison

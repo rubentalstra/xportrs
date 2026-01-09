@@ -9,7 +9,7 @@ use std::path::Path;
 
 use crate::XptVersion;
 use crate::error::Result;
-use crate::header::{
+use crate::core::header::{
     LabelSectionType, LibraryInfo, RECORD_LEN, build_dscrptr_header, build_labelv8_data,
     build_labelv8_header, build_labelv9_data, build_labelv9_header, build_library_header,
     build_member_header, build_namestr, build_namestr_header, build_obs_header, build_real_header,
@@ -69,7 +69,7 @@ impl DatasetInfo {
 /// ```no_run
 /// use std::fs::File;
 /// use xportrs::{XptColumn, Observation, XptValue};
-/// use xportrs::writer::{DatasetInfo, StreamingWriter};
+/// use xportrs::core::writer::{DatasetInfo, StreamingWriter};
 ///
 /// let file = File::create("large.xpt").unwrap();
 /// let info = DatasetInfo::new("DM", vec![
@@ -335,7 +335,7 @@ fn write_with_padding<W: Write>(writer: &mut W, data: &[u8]) -> Result<()> {
 
 /// Build member data record from DatasetInfo.
 fn build_member_data_from_info(info: &DatasetInfo, options: &XptWriterOptions) -> [u8; RECORD_LEN] {
-    use crate::header::{format_xpt_datetime, write_string};
+    use crate::core::header::{format_xpt_datetime, write_string};
 
     let mut record = [b' '; RECORD_LEN];
     let version = options.version;
@@ -367,7 +367,7 @@ fn build_member_second_from_info(
     info: &DatasetInfo,
     _options: &XptWriterOptions,
 ) -> [u8; RECORD_LEN] {
-    use crate::header::write_string;
+    use crate::core::header::write_string;
 
     let mut record = [b' '; RECORD_LEN];
 

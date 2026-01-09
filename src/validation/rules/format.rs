@@ -68,7 +68,7 @@ impl ValidationRule for FormatNameRule {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::version::XptVersion;
+    use crate::XptVersion;
 
     fn make_context(version: XptVersion) -> ValidationContext {
         ValidationContext::new(version, ValidationMode::Basic)

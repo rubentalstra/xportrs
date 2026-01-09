@@ -1,6 +1,7 @@
 //! Optional Polars DataFrame integration.
 //!
-//! This module provides conversion between XPT datasets and Polars DataFrames.
+//! This module provides conversion between XPT datasets and Polars DataFrames,
+//! along with xportr-style transform methods for DataFrame pipelines.
 //! Enable with the `polars` feature.
 //!
 //! # Reading XPT to DataFrame
@@ -27,17 +28,56 @@
 //!
 //! write_dataframe_to_xpt(Path::new("out.xpt"), &df, "DM").unwrap();
 //! ```
+//!
+//! # xportr-style Pipeline
+//!
+//! ```no_run
+//! use polars::prelude::*;
+//! use xportrs::polars::XportrTransforms;
+//! use xportrs::spec::{DatasetSpec, VariableSpec};
+//! use xportrs::ActionLevel;
+//!
+//! let spec = DatasetSpec::new("DM")
+//!     .add_variable(VariableSpec::numeric("AGE").with_label("Age"))
+//!     .add_variable(VariableSpec::character("SEX", 1).with_label("Sex"));
+//!
+//! let df = df! {
+//!     "AGE" => &[25i64, 30],
+//!     "SEX" => &["M", "F"],
+//! }.unwrap();
+//!
+//! // Apply transforms using method chaining
+//! let result = df
+//!     .xportr_metadata(spec.clone())
+//!     .xportr_label(&spec, ActionLevel::Warn).unwrap()
+//!     .xportr_df_label("Demographics");
+//!
+//! // Access the DataFrame
+//! assert_eq!(result.df().height(), 2);
+//! ```
 
 mod conversion;
+mod metadata;
+mod pipeline;
+mod transforms;
 
 use std::path::Path;
 
 use polars::prelude::DataFrame;
 
 use crate::error::Result;
-use crate::reader::read_xpt;
+use crate::core::reader::read_xpt;
 use crate::types::{XptDataset, XptWriterOptions};
-use crate::writer::write_xpt_with_options;
+use crate::core::writer::write_xpt_with_options;
+
+// Re-export MetadataFrame
+pub use metadata::MetadataFrame;
+
+// Re-export XportrTransforms trait
+pub use transforms::XportrTransforms;
+
+// Re-export pipeline functions
+pub use pipeline::{write_df_fda_compliant, write_df_with_pipeline};
 
 /// Read an XPT file directly to a Polars DataFrame.
 ///

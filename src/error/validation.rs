@@ -169,6 +169,26 @@ pub enum ValidationErrorCode {
     MultipleDatasets,
     /// Compressed data (not allowed by FDA)
     CompressedData,
+
+    // ============ Spec Conformance ============
+    /// Variable in data but not in specification
+    VariableNotInSpec,
+    /// Variable in specification but not in data
+    VariableNotInData,
+    /// Variable type doesn't match specification
+    TypeMismatch,
+    /// Variable length doesn't match specification
+    LengthMismatch,
+    /// Variable order doesn't match specification
+    OrderMismatch,
+    /// Variable format doesn't match specification
+    FormatMismatch,
+    /// Variable label doesn't match specification
+    LabelMismatch,
+    /// Dataset name doesn't match specification
+    DatasetNameSpecMismatch,
+    /// Dataset label doesn't match specification
+    DatasetLabelMismatch,
 }
 
 impl fmt::Display for ValidationErrorCode {
@@ -200,6 +220,15 @@ impl fmt::Display for ValidationErrorCode {
             Self::DatasetNameMismatch => "DATASET_NAME_MISMATCH",
             Self::MultipleDatasets => "MULTIPLE_DATASETS",
             Self::CompressedData => "COMPRESSED_DATA",
+            Self::VariableNotInSpec => "VARIABLE_NOT_IN_SPEC",
+            Self::VariableNotInData => "VARIABLE_NOT_IN_DATA",
+            Self::TypeMismatch => "TYPE_MISMATCH",
+            Self::LengthMismatch => "LENGTH_MISMATCH",
+            Self::OrderMismatch => "ORDER_MISMATCH",
+            Self::FormatMismatch => "FORMAT_MISMATCH",
+            Self::LabelMismatch => "LABEL_MISMATCH",
+            Self::DatasetNameSpecMismatch => "DATASET_NAME_SPEC_MISMATCH",
+            Self::DatasetLabelMismatch => "DATASET_LABEL_MISMATCH",
         };
         write!(f, "{code}")
     }

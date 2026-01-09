@@ -415,7 +415,7 @@ pub fn namestr_block_size(var_count: usize, namestr_len: usize) -> usize {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::header::NAMESTR_LEN;
+    use crate::core::header::NAMESTR_LEN;
 
     #[test]
     fn test_validate_headers_v5() {

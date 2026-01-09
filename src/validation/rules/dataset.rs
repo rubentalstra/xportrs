@@ -3,7 +3,7 @@
 use std::collections::BTreeSet;
 
 use crate::error::{ErrorLocation, Severity, ValidationError, ValidationErrorCode};
-use crate::header::normalize_name;
+use crate::core::header::normalize_name;
 use crate::types::{XptColumn, XptDataset};
 use crate::validation::{ValidationContext, ValidationMode, ValidationRule};
 
@@ -92,7 +92,7 @@ impl ValidationRule for VariableLengthRule {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::version::XptVersion;
+    use crate::XptVersion;
 
     fn make_context() -> ValidationContext {
         ValidationContext::new(XptVersion::V5, ValidationMode::Basic)
