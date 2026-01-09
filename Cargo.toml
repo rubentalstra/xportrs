@@ -1,6 +1,6 @@
 [package]
 name = "xportrs"
-version = "0.1.0"
+version = "0.0.2"
 edition = "2024"
 rust-version = "1.92"
 license = "MIT"
@@ -21,11 +21,14 @@ full = ["serde", "tracing"]
 # Required - Error handling (industry standard for libraries)
 thiserror = "2.0.17"
 
-# Required - Date/time handling for XPT timestamps
+# Required - Date/time handling for XPT timestamps and SAS epoch conversions
 chrono = { version = "0.4.42", default-features = false, features = ["std", "clock"] }
 
-# Required - DataFrame integration
-polars = { version = "0.51", features = ["lazy", "strings"] }
+# Required - Binary packing with explicit endianness (safe, no-std compatible)
+byteorder = "1.5"
+
+# Required - Pattern matching for compliance profile rules
+regex = "1.12.2"
 
 # Optional - Serialization
 serde = { version = "1.0", features = ["derive"], optional = true }
@@ -37,8 +40,8 @@ tracing = { version = "0.1.44", optional = true }
 tempfile = "3"
 
 [lints.rust]
-# Safety
-unsafe_code = "deny"
+# Safety - forbid unsafe code (non-negotiable per architecture)
+unsafe_code = "forbid"
 missing_docs = "warn"
 rust_2018_idioms = { level = "warn", priority = -1 }
 
