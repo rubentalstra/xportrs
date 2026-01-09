@@ -115,8 +115,6 @@ impl ValidationRule for VariableInDataRule {
 
         for var_spec in &self.spec.variables {
             if !data_columns.contains(var_spec.name.as_str()) {
-                
-
                 errors.push(ValidationError::new(
                     ValidationErrorCode::VariableNotInData,
                     format!(
@@ -168,8 +166,6 @@ impl ValidationRule for TypeConformanceRule {
 
         if let Some(var_spec) = self.spec.variable(&column.name) {
             if column.data_type != var_spec.data_type {
-                
-
                 let expected = if var_spec.data_type.is_numeric() {
                     "Numeric"
                 } else {

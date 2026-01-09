@@ -84,8 +84,8 @@ impl ValidationRule for VariableLengthRule {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::validation::ActionLevel;
     use crate::XptVersion;
+    use crate::validation::ActionLevel;
 
     fn make_context() -> ValidationContext {
         ValidationContext::new(XptVersion::V5, ActionLevel::Warn)

@@ -120,8 +120,8 @@ impl ValidationRule for VariableLabelRule {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::validation::ActionLevel;
     use crate::XptVersion;
+    use crate::validation::ActionLevel;
 
     fn make_context(version: XptVersion) -> ValidationContext {
         ValidationContext::new(version, ActionLevel::Warn)
@@ -187,11 +187,8 @@ mod tests {
         let errors = rule.validate_column(&column, 0, "DM", &ctx);
 
         // Non-ASCII should be a warning (policy layer makes it error for FDA)
-        assert!(
-            errors
-                .iter()
-                .any(|e| e.code == ValidationErrorCode::NonAsciiLabel
-                    && e.severity == Severity::Warning)
-        );
+        assert!(errors.iter().any(
+            |e| e.code == ValidationErrorCode::NonAsciiLabel && e.severity == Severity::Warning
+        ));
     }
 }
