@@ -51,15 +51,20 @@
 //!     .with_mapping(ColumnMapping::pinnacle21());
 //! ```
 
+mod builder;
 mod dataset;
 mod mapping;
 mod source;
 mod variable;
 
+pub use builder::{SpecBuilder, VariableBuilder};
 pub use dataset::DatasetSpec;
 pub use mapping::ColumnMapping;
 pub use source::MetadataSource;
 pub use variable::{Core, VariableSpec};
+
+// Re-export XptType from types for convenience in spec module docs
+pub use crate::types::XptType;
 
 #[cfg(feature = "polars")]
 pub use source::DataFrameMetadataSource;

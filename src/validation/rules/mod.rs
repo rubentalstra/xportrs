@@ -14,6 +14,7 @@ mod format;
 mod label;
 mod name;
 mod spec_conformance;
+mod value;
 
 pub use dataset::{DuplicateVariableRule, VariableLengthRule};
 pub use fda::{FdaAsciiRule, FdaVersionRule};
@@ -25,6 +26,7 @@ pub use spec_conformance::{
     LengthConformanceRule, OrderConformanceRule, SpecConformanceConfig, TypeConformanceRule,
     VariableInDataRule, VariableInSpecRule,
 };
+pub use value::{AsciiValueRule, CharacterLengthRule, NumericRangeRule};
 
 use crate::core::header::normalize_name;
 

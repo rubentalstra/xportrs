@@ -9,6 +9,7 @@
 //! The validation system uses a collect-all-errors pattern, allowing
 //! all validation issues to be reported at once.
 
+mod report;
 mod spec;
 mod transform;
 mod validation;
@@ -16,6 +17,8 @@ mod validation;
 use std::path::PathBuf;
 use thiserror::Error;
 
+#[allow(unused_imports)]
+pub use report::ErrorCodeExt;
 pub use spec::{SpecError, SpecResult};
 pub use transform::{TransformError, TransformResult};
 pub use validation::{
