@@ -40,7 +40,7 @@ This release marks the beginning of xportrs' evolution from a low-level XPT code
 - IEEE to IBM floating-point conversion and vice versa
 - All 28 SAS missing value codes (`.`, `.A`-`.Z`, `._`)
 - Streaming API for memory-efficient processing of large files
-- Optional Polars integration (`polars` feature)
+- Polars DataFrame integration (included by default)
 - Optional Serde support (`serde` feature)
 - CDISC validation rules
 - FDA compliance checking

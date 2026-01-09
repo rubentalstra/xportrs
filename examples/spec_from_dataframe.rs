@@ -4,7 +4,7 @@
 //! a Polars DataFrame. In practice, you would typically load this from
 //! a CSV, Excel, or other file using Polars.
 //!
-//! Run with: `cargo run --example spec_from_dataframe --features polars`
+//! Run with: `cargo run --example spec_from_dataframe`
 
 use polars::prelude::*;
 use xportrs::spec::{ColumnMapping, DataFrameMetadataSource, MetadataSource};

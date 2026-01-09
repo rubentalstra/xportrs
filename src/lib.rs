@@ -12,7 +12,7 @@
 //! - Support for all 28 SAS missing value codes (`.`, `._`, `.A`-`.Z`)
 //! - Variable metadata including formats and informats
 //! - Metadata specification types for xportr-style workflows
-//! - Optional Polars `DataFrame` integration (with `polars` feature)
+//! - Polars `DataFrame` integration for data manipulation
 //!
 //! # Format Versions
 //!
@@ -119,8 +119,7 @@ mod types;
 // Validation framework
 pub mod validation;
 
-// Optional Polars integration
-#[cfg(feature = "polars")]
+// Polars integration
 pub mod polars;
 
 // ============================================================================
@@ -177,7 +176,6 @@ pub use io::{
 // Re-exports: Polars Integration
 // ============================================================================
 
-#[cfg(feature = "polars")]
 pub use polars::{read_xpt_to_dataframe, write_dataframe_to_xpt};
 
 // ============================================================================

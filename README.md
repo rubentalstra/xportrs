@@ -85,9 +85,6 @@ Or add to your `Cargo.toml`:
 ```toml
 [dependencies]
 xportrs = "0.1"
-
-# With Polars integration (recommended)
-xportrs = { version = "0.1", features = ["polars"] }
 ```
 
 ## Quick Start
@@ -166,12 +163,7 @@ assert!(missing.is_missing());
 
 ### Polars Integration
 
-Enable the `polars` feature for DataFrame support:
-
-```toml
-[dependencies]
-xportrs = { version = "0.1", features = ["polars"] }
-```
+Polars DataFrame integration is included by default:
 
 ```rust
 use std::path::Path;
@@ -269,11 +261,12 @@ write_xpt_with_options(Path::new("dm.xpt"), & dataset, & options) ?;
 
 | Feature   | Description                         |
 |-----------|-------------------------------------|
-| `polars`  | DataFrame integration (recommended) |
 | `serde`   | Serialization support               |
 | `miette`  | Rich error diagnostics              |
 | `tracing` | Structured logging                  |
-| `full`    | All features enabled                |
+| `full`    | All optional features enabled       |
+
+Note: Polars DataFrame integration is included by default (not optional).
 
 ## MSRV
 

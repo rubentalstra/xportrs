@@ -31,7 +31,7 @@
 //!
 //! # Loading Specs from DataFrames
 //!
-//! With the `polars` feature enabled, you can load specifications from DataFrames:
+//! You can load specifications from Polars DataFrames:
 //!
 //! ```ignore
 //! use polars::prelude::*;
@@ -66,5 +66,4 @@ pub use variable::{Core, VariableSpec};
 // Re-export XptType from types for convenience in spec module docs
 pub use crate::types::XptType;
 
-#[cfg(feature = "polars")]
 pub use source::DataFrameMetadataSource;

@@ -2,7 +2,7 @@
 //!
 //! This module provides the [`MetadataSource`] trait for loading specifications
 //! from various sources. The primary implementation is [`DataFrameMetadataSource`]
-//! which loads specs from Polars DataFrames (requires `polars` feature).
+//! which loads specs from Polars DataFrames.
 //!
 //! # Usage
 //!
@@ -73,7 +73,6 @@ pub trait MetadataSource {
     fn dataset_names(&self) -> Vec<String>;
 }
 
-#[cfg(feature = "polars")]
 mod polars_source {
     use polars::prelude::*;
     use std::collections::HashSet;
@@ -109,11 +108,10 @@ mod polars_source {
     /// # Example
     ///
     /// ```
-    /// # #[cfg(feature = "polars")]
-    /// # fn example() -> Result<(), Box<dyn std::error::Error>> {
     /// use polars::prelude::*;
     /// use xportrs::spec::{DataFrameMetadataSource, MetadataSource};
     ///
+    /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// let df = df! {
     ///     "dataset" => &["DM", "DM", "DM"],
     ///     "variable" => &["USUBJID", "AGE", "SEX"],
@@ -150,11 +148,10 @@ mod polars_source {
         /// # Example
         ///
         /// ```
-        /// # #[cfg(feature = "polars")]
-        /// # fn example() -> Result<(), Box<dyn std::error::Error>> {
         /// use polars::prelude::*;
         /// use xportrs::spec::{DataFrameMetadataSource, ColumnMapping};
         ///
+        /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
         /// let df = df! {
         ///     "DOMAIN" => &["DM"],
         ///     "VARNAME" => &["USUBJID"],
@@ -659,5 +656,4 @@ mod polars_source {
     }
 }
 
-#[cfg(feature = "polars")]
 pub use polars_source::DataFrameMetadataSource;

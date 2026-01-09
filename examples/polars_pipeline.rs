@@ -3,7 +3,7 @@
 //! This example demonstrates the xportr-style workflow using Polars DataFrames.
 //! It shows how to apply metadata-driven transformations to create compliant XPT files.
 //!
-//! Run with: `cargo run --example polars_pipeline --features polars`
+//! Run with: `cargo run --example polars_pipeline`
 
 use polars::prelude::*;
 use std::path::Path;
