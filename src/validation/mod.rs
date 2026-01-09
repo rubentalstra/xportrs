@@ -453,79 +453,6 @@ impl Default for Validator {
     }
 }
 
-// ============================================================================
-// Backward Compatibility
-// ============================================================================
-
-/// Validation mode determining which rules to apply.
-///
-/// **Deprecated:** Use `Validator::basic()`, `Validator::for_policy()`,
-/// or `ActionLevel` instead.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-#[deprecated(
-    since = "0.1.0",
-    note = "Use Validator::basic(), Validator::for_policy(), or ActionLevel instead"
-)]
-pub enum ValidationMode {
-    /// Basic XPT format validation only.
-    #[default]
-    Basic,
-    /// Full FDA compliance validation.
-    FdaCompliant,
-    /// Custom validation.
-    Custom,
-}
-
-impl Validator {
-    /// Create a validator with the old API.
-    ///
-    /// **Deprecated:** Use `Validator::basic()` instead.
-    #[deprecated(since = "0.1.0", note = "Use Validator::basic() instead")]
-    #[must_use]
-    pub fn new(version: XptVersion) -> Self {
-        Self::basic(version)
-    }
-
-    /// Set the validation mode (backward compatibility).
-    ///
-    /// **Deprecated:** Use `Validator::for_policy()` instead.
-    #[deprecated(since = "0.1.0", note = "Use Validator::for_policy() instead")]
-    #[allow(deprecated)]
-    #[must_use]
-    pub fn with_mode(mut self, mode: ValidationMode) -> Self {
-        match mode {
-            ValidationMode::FdaCompliant => {
-                self.policy = Some(Arc::new(crate::policy::FdaPolicy::strict()));
-            }
-            ValidationMode::Basic | ValidationMode::Custom => {}
-        }
-        self
-    }
-
-    /// Get the validation mode (backward compatibility).
-    ///
-    /// **Deprecated:** Check `has_policy()` instead.
-    #[deprecated(since = "0.1.0", note = "Check has_policy() instead")]
-    #[allow(deprecated)]
-    #[must_use]
-    pub fn mode(&self) -> ValidationMode {
-        if self.policy.is_some() {
-            ValidationMode::FdaCompliant
-        } else {
-            ValidationMode::Basic
-        }
-    }
-
-    /// Create a FDA compliant validator (backward compatibility).
-    ///
-    /// **Deprecated:** Use `Validator::fda()` instead.
-    #[deprecated(since = "0.1.0", note = "Use Validator::fda() instead")]
-    #[must_use]
-    pub fn fda_compliant(version: XptVersion) -> Self {
-        Self::for_policy(crate::policy::FdaPolicy::strict()).with_version(version)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -707,27 +634,5 @@ mod tests {
 
         let result = validator.validate_against_spec_with_config(&dataset, &spec, config);
         assert!(result.is_valid());
-    }
-
-    // Backward compatibility tests
-    #[test]
-    #[allow(deprecated)]
-    fn test_backward_compat_new() {
-        let validator = Validator::new(XptVersion::V5);
-        assert_eq!(validator.version(), XptVersion::V5);
-    }
-
-    #[test]
-    #[allow(deprecated)]
-    fn test_backward_compat_with_mode() {
-        let validator = Validator::new(XptVersion::V5).with_mode(ValidationMode::FdaCompliant);
-        assert!(validator.policy().is_some());
-    }
-
-    #[test]
-    #[allow(deprecated)]
-    fn test_backward_compat_fda_compliant() {
-        let validator = Validator::fda_compliant(XptVersion::V5);
-        assert!(validator.policy().is_some());
     }
 }

@@ -167,6 +167,10 @@ pub enum ValidationErrorCode {
     CharacterValueTooLong,
     /// Non-ASCII character in character value
     NonAsciiValue,
+    /// Numeric value exceeds IBM float maximum magnitude
+    NumericRangeExceeded,
+    /// Numeric value below IBM float minimum magnitude (will become zero)
+    NumericRangeTooSmall,
 
     // ============ FDA-Specific ============
     /// FDA requires V5 format
@@ -224,6 +228,8 @@ impl fmt::Display for ValidationErrorCode {
             Self::RowLengthMismatch => "ROW_LENGTH_MISMATCH",
             Self::CharacterValueTooLong => "CHAR_VALUE_TOO_LONG",
             Self::NonAsciiValue => "NON_ASCII_VALUE",
+            Self::NumericRangeExceeded => "NUMERIC_RANGE_EXCEEDED",
+            Self::NumericRangeTooSmall => "NUMERIC_RANGE_TOO_SMALL",
             Self::WrongVersion => "WRONG_VERSION",
             Self::DatasetNameMismatch => "DATASET_NAME_MISMATCH",
             Self::MultipleDatasets => "MULTIPLE_DATASETS",

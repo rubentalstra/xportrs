@@ -18,7 +18,7 @@
 
 use std::collections::HashSet;
 
-use crate::error::{ErrorLocation, Severity, ValidationError, ValidationErrorCode};
+use crate::error::{ErrorLocation, ValidationError, ValidationErrorCode};
 use crate::spec::DatasetSpec;
 use crate::types::{XptColumn, XptDataset};
 use crate::validation::{ActionLevel, ValidationContext, ValidationRule};
@@ -59,11 +59,6 @@ impl ValidationRule for VariableInSpecRule {
 
         // Check if variable exists in spec
         if self.spec.variable(&column.name).is_none() {
-            let severity = match self.action {
-                ActionLevel::Stop => Severity::Error,
-                _ => Severity::Warning,
-            };
-
             return vec![ValidationError::new(
                 ValidationErrorCode::VariableNotInSpec,
                 format!(
@@ -75,7 +70,7 @@ impl ValidationRule for VariableInSpecRule {
                     column: column.name.clone(),
                     index,
                 },
-                severity,
+                self.action.to_severity(),
             )];
         }
 
@@ -120,10 +115,7 @@ impl ValidationRule for VariableInDataRule {
 
         for var_spec in &self.spec.variables {
             if !data_columns.contains(var_spec.name.as_str()) {
-                let severity = match self.action {
-                    ActionLevel::Stop => Severity::Error,
-                    _ => Severity::Warning,
-                };
+                
 
                 errors.push(ValidationError::new(
                     ValidationErrorCode::VariableNotInData,
@@ -134,7 +126,7 @@ impl ValidationRule for VariableInDataRule {
                     ErrorLocation::Dataset {
                         name: dataset.name.clone(),
                     },
-                    severity,
+                    self.action.to_severity(),
                 ));
             }
         }
@@ -176,10 +168,7 @@ impl ValidationRule for TypeConformanceRule {
 
         if let Some(var_spec) = self.spec.variable(&column.name) {
             if column.data_type != var_spec.data_type {
-                let severity = match self.action {
-                    ActionLevel::Stop => Severity::Error,
-                    _ => Severity::Warning,
-                };
+                
 
                 let expected = if var_spec.data_type.is_numeric() {
                     "Numeric"
@@ -203,7 +192,7 @@ impl ValidationRule for TypeConformanceRule {
                         column: column.name.clone(),
                         index,
                     },
-                    severity,
+                    self.action.to_severity(),
                 )];
             }
         }
@@ -246,11 +235,6 @@ impl ValidationRule for LengthConformanceRule {
         if let Some(var_spec) = self.spec.variable(&column.name) {
             if let Some(spec_length) = var_spec.length {
                 if column.length != spec_length {
-                    let severity = match self.action {
-                        ActionLevel::Stop => Severity::Error,
-                        _ => Severity::Warning,
-                    };
-
                     return vec![ValidationError::new(
                         ValidationErrorCode::LengthMismatch,
                         format!(
@@ -262,7 +246,7 @@ impl ValidationRule for LengthConformanceRule {
                             column: column.name.clone(),
                             index,
                         },
-                        severity,
+                        self.action.to_severity(),
                     )];
                 }
             }
@@ -321,11 +305,6 @@ impl ValidationRule for OrderConformanceRule {
                 .position(|c| c.name.as_str() == *var_name)
             {
                 if actual_pos != expected_pos {
-                    let severity = match self.action {
-                        ActionLevel::Stop => Severity::Error,
-                        _ => Severity::Warning,
-                    };
-
                     errors.push(ValidationError::new(
                         ValidationErrorCode::OrderMismatch,
                         format!(
@@ -339,7 +318,7 @@ impl ValidationRule for OrderConformanceRule {
                             column: (*var_name).to_string(),
                             index: actual_pos,
                         },
-                        severity,
+                        self.action.to_severity(),
                     ));
                 }
             }
@@ -390,11 +369,6 @@ impl ValidationRule for FormatConformanceRule {
                     .map_or(false, |f| f == &spec_format_str);
 
                 if !formats_match {
-                    let severity = match self.action {
-                        ActionLevel::Stop => Severity::Error,
-                        _ => Severity::Warning,
-                    };
-
                     return vec![ValidationError::new(
                         ValidationErrorCode::FormatMismatch,
                         format!(
@@ -406,7 +380,7 @@ impl ValidationRule for FormatConformanceRule {
                             column: column.name.clone(),
                             index,
                         },
-                        severity,
+                        self.action.to_severity(),
                     )];
                 }
             }
@@ -452,11 +426,6 @@ impl ValidationRule for LabelConformanceRule {
                 let labels_match = column.label.as_ref().map_or(false, |l| l == spec_label);
 
                 if !labels_match {
-                    let severity = match self.action {
-                        ActionLevel::Stop => Severity::Error,
-                        _ => Severity::Warning,
-                    };
-
                     return vec![ValidationError::new(
                         ValidationErrorCode::LabelMismatch,
                         format!(
@@ -468,7 +437,7 @@ impl ValidationRule for LabelConformanceRule {
                             column: column.name.clone(),
                             index,
                         },
-                        severity,
+                        self.action.to_severity(),
                     )];
                 }
             }
@@ -511,11 +480,6 @@ impl ValidationRule for DatasetMetaConformanceRule {
 
         let mut errors = Vec::new();
 
-        let severity = match self.action {
-            ActionLevel::Stop => Severity::Error,
-            _ => Severity::Warning,
-        };
-
         // Check dataset name matches
         if dataset.name.to_uppercase() != self.spec.name.to_uppercase() {
             errors.push(ValidationError::new(
@@ -527,7 +491,7 @@ impl ValidationRule for DatasetMetaConformanceRule {
                 ErrorLocation::Dataset {
                     name: dataset.name.clone(),
                 },
-                severity,
+                self.action.to_severity(),
             ));
         }
 
@@ -545,7 +509,7 @@ impl ValidationRule for DatasetMetaConformanceRule {
                     ErrorLocation::Dataset {
                         name: dataset.name.clone(),
                     },
-                    severity,
+                    self.action.to_severity(),
                 ));
             }
         }

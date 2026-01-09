@@ -18,7 +18,7 @@
 //! let dataset = XptDataset::new("DM");
 //!
 //! // Rules are typically used through the Validator
-//! let validator = Validator::new(XptVersion::V5);
+//! let validator = Validator::basic(XptVersion::V5);
 //! let result = validator.validate(&dataset);
 //! ```
 

@@ -188,6 +188,12 @@ impl ErrorCodeExt for ValidationError {
                 "xportrs::validation::char_value_too_long"
             }
             ValidationErrorCode::NonAsciiValue => "xportrs::validation::non_ascii_value",
+            ValidationErrorCode::NumericRangeExceeded => {
+                "xportrs::validation::numeric_range_exceeded"
+            }
+            ValidationErrorCode::NumericRangeTooSmall => {
+                "xportrs::validation::numeric_range_too_small"
+            }
             ValidationErrorCode::WrongVersion => "xportrs::validation::wrong_version",
             ValidationErrorCode::DatasetNameMismatch => {
                 "xportrs::validation::dataset_name_mismatch"

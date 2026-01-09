@@ -166,7 +166,7 @@ impl ValidationRule for NumericRangeRule {
 
                         if abs_val > IBM_MAX_MAGNITUDE {
                             errors.push(ValidationError::new(
-                                ValidationErrorCode::CharacterValueTooLong, // Reusing code for now
+                                ValidationErrorCode::NumericRangeExceeded,
                                 format!(
                                     "Numeric value {} in column '{}' at row {} exceeds IBM float maximum magnitude",
                                     n, column.name, row_idx
@@ -180,7 +180,7 @@ impl ValidationRule for NumericRangeRule {
                             ));
                         } else if abs_val > 0.0 && abs_val < IBM_MIN_MAGNITUDE {
                             errors.push(ValidationError::new(
-                                ValidationErrorCode::CharacterValueTooLong, // Reusing code for now
+                                ValidationErrorCode::NumericRangeTooSmall,
                                 format!(
                                     "Numeric value {} in column '{}' at row {} is below IBM float minimum magnitude (will become zero)",
                                     n, column.name, row_idx

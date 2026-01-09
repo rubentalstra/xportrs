@@ -5,6 +5,8 @@
 
 use std::fmt;
 
+use crate::error::Severity;
+
 /// Action level for transform operations.
 ///
 /// Controls how the system responds when a transform encounters an issue
@@ -91,6 +93,32 @@ impl ActionLevel {
         matches!(self, Self::None)
     }
 
+    /// Convert to [`Severity`] for validation errors.
+    ///
+    /// Maps action levels to severity levels:
+    /// - `Stop` → `Error`
+    /// - `Warn` → `Warning`
+    /// - `Message` → `Message`
+    /// - `None` → `Message` (fallback, should check `should_report()` first)
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use xportrs::{ActionLevel, Severity};
+    ///
+    /// assert_eq!(ActionLevel::Stop.to_severity(), Severity::Error);
+    /// assert_eq!(ActionLevel::Warn.to_severity(), Severity::Warning);
+    /// assert_eq!(ActionLevel::Message.to_severity(), Severity::Message);
+    /// ```
+    #[must_use]
+    pub const fn to_severity(self) -> Severity {
+        match self {
+            Self::Stop => Severity::Error,
+            Self::Warn => Severity::Warning,
+            Self::Message | Self::None => Severity::Message,
+        }
+    }
+
     /// Parse from string (case-insensitive).
     ///
     /// Accepts: "none", "message", "msg", "warn", "warning", "stop", "error"
@@ -169,5 +197,15 @@ mod tests {
         assert_eq!(format!("{}", ActionLevel::Message), "message");
         assert_eq!(format!("{}", ActionLevel::Warn), "warn");
         assert_eq!(format!("{}", ActionLevel::Stop), "stop");
+    }
+
+    #[test]
+    fn test_to_severity() {
+        use crate::error::Severity;
+
+        assert_eq!(ActionLevel::Stop.to_severity(), Severity::Error);
+        assert_eq!(ActionLevel::Warn.to_severity(), Severity::Warning);
+        assert_eq!(ActionLevel::Message.to_severity(), Severity::Message);
+        assert_eq!(ActionLevel::None.to_severity(), Severity::Message);
     }
 }
