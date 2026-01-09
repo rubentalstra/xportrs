@@ -244,7 +244,7 @@ mod tests {
         plan.recalculate_positions();
 
         let issues = Agency::FDA.validate(&plan, None);
-        assert!(!issues.iter().any(|i| i.severity == Severity::Error));
+        assert!(!issues.iter().any(|i| i.severity() == Severity::Error));
     }
 
     #[test]
@@ -254,7 +254,11 @@ mod tests {
         plan.recalculate_positions();
 
         let issues = Agency::FDA.validate(&plan, None);
-        assert!(issues.iter().any(|i| i.code == "AGENCY_004"));
+        assert!(
+            issues
+                .iter()
+                .any(|i| matches!(i, Issue::NonAsciiDatasetName { .. }))
+        );
     }
 
     #[test]

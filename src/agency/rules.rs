@@ -8,7 +8,7 @@ use std::path::Path;
 use regex::Regex;
 
 use crate::schema::SchemaPlan;
-use crate::validate::{Issue, Severity};
+use crate::validate::Issue;
 
 /// A single validation rule within an agency's requirements.
 ///
@@ -89,45 +89,29 @@ impl Rule {
         &self,
         plan: &SchemaPlan,
         file_path: Option<&Path>,
-        agency_name: &str,
+        agency_name: &'static str,
     ) -> Vec<Issue> {
         let mut issues = Vec::new();
 
         match self {
             Self::DatasetNamePattern { regex } => {
                 if !regex.is_match(&plan.domain_code) {
-                    issues.push(
-                        Issue::new(
-                            Severity::Error,
-                            "AGENCY_001",
-                            format!(
-                                "dataset name '{}' does not match {} required pattern '{}'",
-                                plan.domain_code,
-                                agency_name,
-                                regex.as_str()
-                            ),
-                        )
-                        .with_dataset(&plan.domain_code),
-                    );
+                    issues.push(Issue::DatasetNamePatternMismatch {
+                        dataset: plan.domain_code.clone(),
+                        agency: agency_name,
+                        pattern: regex.as_str().to_string(),
+                    });
                 }
             }
 
             Self::VariableNamePattern { regex } => {
                 for var in &plan.variables {
                     if !regex.is_match(&var.name) {
-                        issues.push(
-                            Issue::new(
-                                Severity::Error,
-                                "AGENCY_002",
-                                format!(
-                                    "variable name '{}' does not match {} required pattern '{}'",
-                                    var.name,
-                                    agency_name,
-                                    regex.as_str()
-                                ),
-                            )
-                            .with_variable(&var.name),
-                        );
+                        issues.push(Issue::VariableNamePatternMismatch {
+                            variable: var.name.clone(),
+                            agency: agency_name,
+                            pattern: regex.as_str().to_string(),
+                        });
                     }
                 }
             }
@@ -137,48 +121,25 @@ impl Rule {
                     && let Some(stem) = path.file_stem().and_then(|s| s.to_str())
                     && !stem.eq_ignore_ascii_case(&plan.domain_code)
                 {
-                    issues.push(
-                        Issue::new(
-                            Severity::Error,
-                            "AGENCY_003",
-                            format!(
-                                "dataset name '{}' does not match file stem '{}'",
-                                plan.domain_code, stem
-                            ),
-                        )
-                        .with_dataset(&plan.domain_code),
-                    );
+                    issues.push(Issue::DatasetNameFileStemMismatch {
+                        dataset: plan.domain_code.clone(),
+                        stem: stem.to_string(),
+                    });
                 }
             }
 
             Self::RequireAsciiNames => {
                 if !plan.domain_code.is_ascii() {
-                    issues.push(
-                        Issue::new(
-                            Severity::Error,
-                            "AGENCY_004",
-                            format!(
-                                "dataset name '{}' contains non-ASCII characters",
-                                plan.domain_code
-                            ),
-                        )
-                        .with_dataset(&plan.domain_code),
-                    );
+                    issues.push(Issue::NonAsciiDatasetName {
+                        dataset: plan.domain_code.clone(),
+                    });
                 }
 
                 for var in &plan.variables {
                     if !var.name.is_ascii() {
-                        issues.push(
-                            Issue::new(
-                                Severity::Error,
-                                "AGENCY_004",
-                                format!(
-                                    "variable name '{}' contains non-ASCII characters",
-                                    var.name
-                                ),
-                            )
-                            .with_variable(&var.name),
-                        );
+                        issues.push(Issue::NonAsciiVariableName {
+                            variable: var.name.clone(),
+                        });
                     }
                 }
             }
@@ -187,29 +148,16 @@ impl Rule {
                 if let Some(ref label) = plan.dataset_label
                     && !label.is_ascii()
                 {
-                    issues.push(
-                        Issue::new(
-                            Severity::Error,
-                            "AGENCY_005",
-                            "dataset label contains non-ASCII characters",
-                        )
-                        .with_dataset(&plan.domain_code),
-                    );
+                    issues.push(Issue::NonAsciiDatasetLabel {
+                        dataset: plan.domain_code.clone(),
+                    });
                 }
 
                 for var in &plan.variables {
                     if !var.label.is_ascii() {
-                        issues.push(
-                            Issue::new(
-                                Severity::Error,
-                                "AGENCY_005",
-                                format!(
-                                    "variable '{}' label contains non-ASCII characters",
-                                    var.name
-                                ),
-                            )
-                            .with_variable(&var.name),
-                        );
+                        issues.push(Issue::NonAsciiVariableLabel {
+                            variable: var.name.clone(),
+                        });
                     }
                 }
             }
@@ -220,38 +168,22 @@ impl Rule {
 
             Self::DatasetNameMaxBytes(max) => {
                 if plan.domain_code.len() > *max {
-                    issues.push(
-                        Issue::new(
-                            Severity::Error,
-                            "AGENCY_006",
-                            format!(
-                                "dataset name '{}' exceeds {} bytes (has {} bytes)",
-                                plan.domain_code,
-                                max,
-                                plan.domain_code.len()
-                            ),
-                        )
-                        .with_dataset(&plan.domain_code),
-                    );
+                    issues.push(Issue::AgencyDatasetNameTooLong {
+                        dataset: plan.domain_code.clone(),
+                        max: *max,
+                        actual: plan.domain_code.len(),
+                    });
                 }
             }
 
             Self::VariableNameMaxBytes(max) => {
                 for var in &plan.variables {
                     if var.name.len() > *max {
-                        issues.push(
-                            Issue::new(
-                                Severity::Error,
-                                "AGENCY_007",
-                                format!(
-                                    "variable name '{}' exceeds {} bytes (has {} bytes)",
-                                    var.name,
-                                    max,
-                                    var.name.len()
-                                ),
-                            )
-                            .with_variable(&var.name),
-                        );
+                        issues.push(Issue::AgencyVariableNameTooLong {
+                            variable: var.name.clone(),
+                            max: *max,
+                            actual: var.name.len(),
+                        });
                     }
                 }
             }
@@ -260,35 +192,22 @@ impl Rule {
                 if let Some(ref label) = plan.dataset_label
                     && label.len() > *max
                 {
-                    issues.push(
-                        Issue::new(
-                            Severity::Error,
-                            "AGENCY_008",
-                            format!(
-                                "dataset label exceeds {} bytes (has {} bytes)",
-                                max,
-                                label.len()
-                            ),
-                        )
-                        .with_dataset(&plan.domain_code),
-                    );
+                    issues.push(Issue::AgencyLabelTooLong {
+                        name: plan.domain_code.clone(),
+                        is_dataset: true,
+                        max: *max,
+                        actual: label.len(),
+                    });
                 }
 
                 for var in &plan.variables {
                     if var.label.len() > *max {
-                        issues.push(
-                            Issue::new(
-                                Severity::Error,
-                                "AGENCY_008",
-                                format!(
-                                    "variable '{}' label exceeds {} bytes (has {} bytes)",
-                                    var.name,
-                                    max,
-                                    var.label.len()
-                                ),
-                            )
-                            .with_variable(&var.name),
-                        );
+                        issues.push(Issue::AgencyLabelTooLong {
+                            name: var.name.clone(),
+                            is_dataset: false,
+                            max: *max,
+                            actual: var.label.len(),
+                        });
                     }
                 }
             }
@@ -296,17 +215,12 @@ impl Rule {
             Self::CharacterValueMaxBytes(max) => {
                 for var in &plan.variables {
                     if var.xpt_type.is_character() && var.length > *max {
-                        issues.push(
-                            Issue::new(
-                                Severity::Warning,
-                                "AGENCY_009",
-                                format!(
-                                    "character variable '{}' length {} exceeds {} policy limit of {} bytes",
-                                    var.name, var.length, agency_name, max
-                                ),
-                            )
-                            .with_variable(&var.name),
-                        );
+                        issues.push(Issue::CharacterValueLengthExceeded {
+                            variable: var.name.clone(),
+                            length: var.length,
+                            agency: agency_name,
+                            max: *max,
+                        });
                     }
                 }
             }

@@ -4,7 +4,7 @@
 
 use crate::schema::SchemaPlan;
 
-use super::issues::{Issue, Severity};
+use super::issues::Issue;
 
 /// XPT v5 constraints.
 pub mod constraints {
@@ -31,137 +31,79 @@ pub fn validate_v5_schema(plan: &SchemaPlan) -> Vec<Issue> {
 
     // Check dataset name length
     if plan.domain_code.len() > constraints::MAX_DATASET_NAME_BYTES {
-        issues.push(
-            Issue::new(
-                Severity::Error,
-                "XPT_V5_001",
-                format!(
-                    "dataset name '{}' exceeds {} bytes (has {} bytes)",
-                    plan.domain_code,
-                    constraints::MAX_DATASET_NAME_BYTES,
-                    plan.domain_code.len()
-                ),
-            )
-            .with_dataset(&plan.domain_code),
-        );
+        issues.push(Issue::DatasetNameTooLong {
+            dataset: plan.domain_code.clone(),
+            max: constraints::MAX_DATASET_NAME_BYTES,
+            actual: plan.domain_code.len(),
+        });
     }
 
     // Check dataset label length
     if let Some(ref label) = plan.dataset_label
         && label.len() > constraints::MAX_LABEL_BYTES
     {
-        issues.push(
-            Issue::new(
-                Severity::Error,
-                "XPT_V5_002",
-                format!(
-                    "dataset label exceeds {} bytes (has {} bytes)",
-                    constraints::MAX_LABEL_BYTES,
-                    label.len()
-                ),
-            )
-            .with_dataset(&plan.domain_code),
-        );
+        issues.push(Issue::DatasetLabelTooLong {
+            dataset: plan.domain_code.clone(),
+            max: constraints::MAX_LABEL_BYTES,
+            actual: label.len(),
+        });
     }
 
     // Check each variable
     for var in &plan.variables {
         // Variable name length
         if var.name.len() > constraints::MAX_VARIABLE_NAME_BYTES {
-            issues.push(
-                Issue::new(
-                    Severity::Error,
-                    "XPT_V5_003",
-                    format!(
-                        "variable name '{}' exceeds {} bytes (has {} bytes)",
-                        var.name,
-                        constraints::MAX_VARIABLE_NAME_BYTES,
-                        var.name.len()
-                    ),
-                )
-                .with_variable(&var.name),
-            );
+            issues.push(Issue::VariableNameTooLong {
+                variable: var.name.clone(),
+                max: constraints::MAX_VARIABLE_NAME_BYTES,
+                actual: var.name.len(),
+            });
         }
 
         // Variable label length
         if var.label.len() > constraints::MAX_LABEL_BYTES {
-            issues.push(
-                Issue::new(
-                    Severity::Error,
-                    "XPT_V5_004",
-                    format!(
-                        "variable label exceeds {} bytes (has {} bytes)",
-                        constraints::MAX_LABEL_BYTES,
-                        var.label.len()
-                    ),
-                )
-                .with_variable(&var.name),
-            );
+            issues.push(Issue::VariableLabelTooLong {
+                variable: var.name.clone(),
+                max: constraints::MAX_LABEL_BYTES,
+                actual: var.label.len(),
+            });
         }
 
         // Numeric length must be 8
         if var.xpt_type.is_numeric() && var.length != constraints::NUMERIC_LENGTH {
-            issues.push(
-                Issue::new(
-                    Severity::Error,
-                    "XPT_V5_005",
-                    format!(
-                        "numeric variable '{}' must have length {} (has {})",
-                        var.name,
-                        constraints::NUMERIC_LENGTH,
-                        var.length
-                    ),
-                )
-                .with_variable(&var.name),
-            );
+            issues.push(Issue::NumericWrongLength {
+                variable: var.name.clone(),
+                expected: constraints::NUMERIC_LENGTH,
+                actual: var.length,
+            });
         }
 
         // Character length must be >= 1
         if var.xpt_type.is_character() && var.length < constraints::MIN_CHARACTER_LENGTH {
-            issues.push(
-                Issue::new(
-                    Severity::Error,
-                    "XPT_V5_006",
-                    format!(
-                        "character variable '{}' must have length >= {} (has {})",
-                        var.name,
-                        constraints::MIN_CHARACTER_LENGTH,
-                        var.length
-                    ),
-                )
-                .with_variable(&var.name),
-            );
+            issues.push(Issue::CharacterLengthTooShort {
+                variable: var.name.clone(),
+                min: constraints::MIN_CHARACTER_LENGTH,
+                actual: var.length,
+            });
         }
 
         // Character length must be <= 200
         if var.xpt_type.is_character() && var.length > constraints::MAX_CHARACTER_LENGTH {
-            issues.push(
-                Issue::new(
-                    Severity::Error,
-                    "XPT_V5_008",
-                    format!(
-                        "character variable '{}' must have length <= {} (has {})",
-                        var.name,
-                        constraints::MAX_CHARACTER_LENGTH,
-                        var.length
-                    ),
-                )
-                .with_variable(&var.name),
-            );
+            issues.push(Issue::CharacterLengthTooLong {
+                variable: var.name.clone(),
+                max: constraints::MAX_CHARACTER_LENGTH,
+                actual: var.length,
+            });
         }
     }
 
     // Verify row_len consistency
     let expected_row_len: usize = plan.variables.iter().map(|v| v.length).sum();
     if plan.row_len != expected_row_len {
-        issues.push(Issue::new(
-            Severity::Error,
-            "XPT_V5_007",
-            format!(
-                "row_len inconsistency: recorded {} but computed {}",
-                plan.row_len, expected_row_len
-            ),
-        ));
+        issues.push(Issue::RowLenInconsistent {
+            recorded: plan.row_len,
+            computed: expected_row_len,
+        });
     }
 
     issues
@@ -193,7 +135,7 @@ mod tests {
 
         let issues = validate_v5_schema(&plan);
         assert!(!issues.is_empty());
-        assert!(issues[0].code == "XPT_V5_001");
+        assert!(matches!(issues[0], Issue::DatasetNameTooLong { .. }));
     }
 
     #[test]
@@ -208,6 +150,10 @@ mod tests {
 
         let issues = validate_v5_schema(&plan);
         assert!(!issues.is_empty());
-        assert!(issues.iter().any(|i| i.code == "XPT_V5_005"));
+        assert!(
+            issues
+                .iter()
+                .any(|i| matches!(i, Issue::NumericWrongLength { .. }))
+        );
     }
 }

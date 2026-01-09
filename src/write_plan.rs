@@ -156,7 +156,7 @@ impl XptWritePlan {
 
         // Check for errors in strict mode
         if self.config.strict_checks && issues.has_errors() {
-            let error_messages: Vec<String> = issues.errors().map(|i| i.message.clone()).collect();
+            let error_messages: Vec<String> = issues.errors().map(ToString::to_string).collect();
             return Err(XportrsError::validation_failed(error_messages.join("; ")));
         }
 
