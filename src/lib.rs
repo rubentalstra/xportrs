@@ -9,7 +9,7 @@
 //!
 //! - **Pure Rust**: No unsafe code (`#![forbid(unsafe_code)]`)
 //! - **DataFrame-agnostic**: Works with any in-memory table representation
-//! - **CDISC-compliant**: Built-in compliance profiles for FDA, NMPA, and PMDA
+//! - **Agency compliance**: Built-in validation for FDA, NMPA, and PMDA
 //! - **XPT v5**: Full read and write support
 //! - **XPT v8**: API-ready (not yet implemented)
 //!
@@ -33,7 +33,7 @@
 //! ### Writing an XPT file
 //!
 //! ```no_run
-//! use xportrs::{Xpt, DomainDataset, Column, ColumnData};
+//! use xportrs::{Xpt, Agency, DomainDataset, Column, ColumnData};
 //!
 //! let dataset = DomainDataset::new(
 //!     "AE".to_string(),
@@ -46,18 +46,25 @@
 //!     ],
 //! )?;
 //!
-//! Xpt::writer(dataset)
+//! // Without agency: applies only XPT v5 structural validation
+//! Xpt::writer(dataset.clone())
 //!     .finalize()?
 //!     .write_path("ae.xpt")?;
+//!
+//! // With agency: applies agency-specific validation rules
+//! Xpt::writer(dataset)
+//!     .agency(Agency::FDA)
+//!     .finalize()?
+//!     .write_path("ae_fda.xpt")?;
 //! # Ok::<(), xportrs::XportrsError>(())
 //! ```
 //!
 //! ## Modules
 //!
+//! - [`agency`]: Regulatory agency definitions (FDA, PMDA, NMPA)
 //! - [`config`]: Configuration options for reading and writing
 //! - [`dataset`]: Core data structures (`DomainDataset`, `Column`, `ColumnData`)
 //! - [`metadata`]: Variable and dataset metadata
-//! - [`profile`]: Compliance profiles (FDA, NMPA, PMDA)
 //! - [`schema`]: Schema planning for XPT generation
 //! - [`validate`]: Validation logic and issue reporting
 //! - [`xpt`]: XPT format implementation details
@@ -81,12 +88,12 @@
 #![warn(clippy::all)]
 
 // Core modules
+pub mod agency;
 mod api;
 pub mod config;
 pub mod dataset;
 mod error;
 pub mod metadata;
-pub mod profile;
 pub mod schema;
 pub mod validate;
 mod write_plan;
@@ -94,6 +101,9 @@ pub mod xpt;
 
 // Main entry point - the unified API
 pub use api::{Xpt, XptReaderBuilder};
+
+// Agency for compliance validation
+pub use agency::Agency;
 
 // Configuration types users may need
 pub use config::{Config, ReadOptions, TextMode, Verbosity, WriteOptions};
@@ -118,9 +128,6 @@ pub use write_plan::{FinalizedWritePlan, XptWritePlan};
 
 // XPT version enum
 pub use xpt::XptVersion;
-
-// Compliance profile types
-pub use profile::{ComplianceProfile, Rule};
 
 // XPT file info (for Xpt::inspect)
 pub use xpt::v5::read::XptFile;

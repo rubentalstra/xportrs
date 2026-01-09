@@ -5,13 +5,13 @@
 
 use std::path::Path;
 
+use crate::agency::Agency;
 use crate::config::Config;
 use crate::dataset::DomainDataset;
 use crate::error::{Result, XportrsError};
 use crate::metadata::{DatasetMetadata, VariableMetadata};
-use crate::profile::ComplianceProfile;
 use crate::schema::{SchemaPlan, derive_schema_plan};
-use crate::validate::{Issue, IssueCollection, validate_profile, validate_v5_schema};
+use crate::validate::{Issue, IssueCollection, validate_v5_schema};
 use crate::xpt::XptVersion;
 use crate::xpt::v5::write::XptWriter;
 
@@ -19,10 +19,28 @@ use crate::xpt::v5::write::XptWriter;
 ///
 /// This struct accumulates configuration and validates the dataset before
 /// writing. Call [`finalize`](Self::finalize) to create a [`FinalizedWritePlan`].
+///
+/// # Example
+///
+/// ```no_run
+/// use xportrs::{Xpt, Agency, DomainDataset, Column, ColumnData};
+///
+/// let dataset = DomainDataset::new(
+///     "AE".to_string(),
+///     vec![Column::new("AESEQ", ColumnData::I64(vec![Some(1)]))],
+/// )?;
+///
+/// // With agency validation
+/// Xpt::writer(dataset)
+///     .agency(Agency::FDA)
+///     .finalize()?
+///     .write_path("ae.xpt")?;
+/// # Ok::<(), xportrs::XportrsError>(())
+/// ```
 #[derive(Debug)]
 pub struct XptWritePlan {
     dataset: DomainDataset,
-    profile: Option<ComplianceProfile>,
+    agency: Option<Agency>,
     config: Config,
     version: XptVersion,
     variable_meta: Option<Vec<VariableMetadata>>,
@@ -35,7 +53,7 @@ impl XptWritePlan {
     pub fn new(dataset: DomainDataset) -> Self {
         Self {
             dataset,
-            profile: None,
+            agency: None,
             config: Config::default(),
             version: XptVersion::V5,
             variable_meta: None,
@@ -43,10 +61,26 @@ impl XptWritePlan {
         }
     }
 
-    /// Sets the compliance profile.
+    /// Sets the regulatory agency for compliance validation.
+    ///
+    /// When set, additional validation rules specific to the agency
+    /// are applied during finalization.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use xportrs::{Xpt, Agency, DomainDataset};
+    ///
+    /// # let dataset = DomainDataset::new("AE".into(), vec![]).unwrap();
+    /// Xpt::writer(dataset)
+    ///     .agency(Agency::FDA)
+    ///     .finalize()?
+    ///     .write_path("ae.xpt")?;
+    /// # Ok::<(), xportrs::XportrsError>(())
+    /// ```
     #[must_use]
-    pub fn profile(mut self, profile: ComplianceProfile) -> Self {
-        self.profile = Some(profile);
+    pub fn agency(mut self, agency: Agency) -> Self {
+        self.agency = Some(agency);
         self
     }
 
@@ -58,6 +92,9 @@ impl XptWritePlan {
     }
 
     /// Sets the XPT version.
+    ///
+    /// Note: Currently only XPT v5 is supported. XPT v8 will return
+    /// an error during finalization.
     #[must_use]
     pub fn xpt_version(mut self, version: XptVersion) -> Self {
         self.version = version;
@@ -80,10 +117,15 @@ impl XptWritePlan {
 
     /// Finalizes the write plan, performing validation.
     ///
+    /// This validates:
+    /// 1. XPT v5 structural requirements (always)
+    /// 2. Agency-specific requirements (if an agency is set)
+    ///
     /// # Errors
     ///
-    /// Returns an error if the plan cannot be finalized (e.g., V8 is requested
-    /// but not implemented).
+    /// Returns an error if:
+    /// - XPT v8 is requested (not yet implemented)
+    /// - Strict mode is enabled and validation errors are found
     pub fn finalize(self) -> Result<FinalizedWritePlan> {
         // Check version support
         if !self.version.is_implemented() {
@@ -97,19 +139,19 @@ impl XptWritePlan {
             &self.dataset,
             self.dataset_meta.as_ref(),
             self.variable_meta.as_deref(),
-            self.profile.as_ref(),
+            self.agency,
             &self.config,
         )?;
 
         // Validate
         let mut issues = Vec::new();
 
-        // XPT v5 structural checks
+        // XPT v5 structural checks (always applied)
         issues.extend(validate_v5_schema(&schema));
 
-        // Profile checks
-        if let Some(ref profile) = self.profile {
-            issues.extend(validate_profile(&schema, profile, None));
+        // Agency checks (only if agency is set)
+        if let Some(agency) = self.agency {
+            issues.extend(agency.validate(&schema, None));
         }
 
         // Check for errors in strict mode
@@ -210,6 +252,24 @@ mod tests {
         assert!(plan.is_ok());
         let finalized = plan.unwrap();
         assert!(!finalized.has_errors());
+    }
+
+    #[test]
+    fn test_write_plan_with_agency() {
+        let dataset = DomainDataset::new(
+            "AE".into(),
+            vec![Column::new(
+                "AESEQ",
+                ColumnData::F64(vec![Some(1.0)]),
+            )],
+        )
+        .unwrap();
+
+        let plan = XptWritePlan::new(dataset)
+            .agency(Agency::FDA)
+            .finalize();
+
+        assert!(plan.is_ok());
     }
 
     #[test]

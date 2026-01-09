@@ -5,11 +5,11 @@
 
 use std::collections::HashMap;
 
+use crate::agency::Agency;
 use crate::config::Config;
 use crate::dataset::{ColumnData, DomainDataset};
 use crate::error::{Result, XportrsError};
 use crate::metadata::{DatasetMetadata, VariableMetadata, XptVarType};
-use crate::profile::ComplianceProfile;
 
 use super::plan::{PlannedVariable, SchemaPlan};
 
@@ -32,7 +32,7 @@ pub fn derive_schema_plan(
     dataset: &DomainDataset,
     dataset_meta: Option<&DatasetMetadata>,
     variable_meta: Option<&[VariableMetadata]>,
-    profile: Option<&ComplianceProfile>,
+    agency: Option<Agency>,
     config: &Config,
 ) -> Result<SchemaPlan> {
     // 1. Resolve domain identity
@@ -125,16 +125,14 @@ pub fn derive_schema_plan(
     plan.variables = planned_vars;
     plan.recalculate_positions();
 
-    // Apply profile name normalization if auto_fix is enabled
+    // Apply agency name normalization if auto_fix is enabled
     if config.auto_fix
-        && let Some(prof) = profile
+        && let Some(ag) = agency
+        && ag.requires_ascii_names()
     {
-        // Uppercase names if profile requires ASCII names
-        if prof.requires_ascii_names() {
-            plan.domain_code = plan.domain_code.to_ascii_uppercase();
-            for var in &mut plan.variables {
-                var.name = var.name.to_ascii_uppercase();
-            }
+        plan.domain_code = plan.domain_code.to_ascii_uppercase();
+        for var in &mut plan.variables {
+            var.name = var.name.to_ascii_uppercase();
         }
     }
 
