@@ -7,13 +7,13 @@ use std::io::{BufReader, Read, Seek, SeekFrom};
 
 use super::observation::{observation_length, parse_observation};
 use crate::XptVersion;
-use crate::error::{Result, XptError};
 use crate::core::header::{
     LabelSectionType, RECORD_LEN, align_to_record, is_label_header, parse_dataset_label,
     parse_dataset_name, parse_dataset_type, parse_labelv8_data, parse_labelv9_data,
     parse_namestr_len, parse_namestr_records, parse_variable_count, validate_dscrptr_header,
     validate_library_header, validate_member_header, validate_namestr_header, validate_obs_header,
 };
+use crate::error::{Result, XptError};
 use crate::types::{Observation, XptColumn, XptReaderOptions};
 
 /// Dataset metadata (without observation data).

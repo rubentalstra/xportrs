@@ -159,10 +159,7 @@ mod tests {
     fn test_apply_label_basic() {
         let dataset = XptDataset::with_columns(
             "TEST",
-            vec![
-                XptColumn::numeric("AGE"),
-                XptColumn::character("NAME", 20),
-            ],
+            vec![XptColumn::numeric("AGE"), XptColumn::character("NAME", 20)],
         );
 
         let spec = DatasetSpec::new("TEST")
@@ -199,10 +196,7 @@ mod tests {
             Some("New Label".to_string())
         );
         assert_eq!(result.changes.len(), 1);
-        assert_eq!(
-            result.changes[0].old_label,
-            Some("Old Label".to_string())
-        );
+        assert_eq!(result.changes[0].old_label, Some("Old Label".to_string()));
         assert_eq!(result.changes[0].new_label, "New Label");
     }
 
@@ -246,14 +240,11 @@ mod tests {
     fn test_apply_label_variable_not_in_spec() {
         let dataset = XptDataset::with_columns(
             "TEST",
-            vec![
-                XptColumn::numeric("AGE"),
-                XptColumn::numeric("EXTRA"),
-            ],
+            vec![XptColumn::numeric("AGE"), XptColumn::numeric("EXTRA")],
         );
 
-        let spec = DatasetSpec::new("TEST")
-            .add_variable(VariableSpec::numeric("AGE").with_label("Age"));
+        let spec =
+            DatasetSpec::new("TEST").add_variable(VariableSpec::numeric("AGE").with_label("Age"));
 
         let result = apply_label(dataset, &spec, ApplyLabelConfig::default()).unwrap();
 

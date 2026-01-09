@@ -25,11 +25,11 @@
 use std::fs::File;
 use std::path::Path;
 
+use crate::XptVersion;
 use crate::core::reader::{self, StreamingReader};
 use crate::error::{ValidationResult, XptError};
 use crate::types::{XptDataset, XptReaderOptions};
-use crate::validation::{ValidationMode, Validator};
-use crate::XptVersion;
+use crate::validation::Validator;
 
 // Re-export core reader types for convenience
 pub use crate::core::reader::{ObservationIter, XptReader};
@@ -128,14 +128,17 @@ pub fn read_xpt_with_options(
 ///     }
 /// }
 /// ```
-pub fn read_xpt_with_validation(path: &Path, version: XptVersion) -> crate::error::Result<ReadResult> {
+pub fn read_xpt_with_validation(
+    path: &Path,
+    version: XptVersion,
+) -> crate::error::Result<ReadResult> {
     let file = File::open(path).map_err(|_| XptError::file_not_found(path))?;
     let mut reader = StreamingReader::new(file)?;
     let detected_version = reader.version();
 
     let dataset = reader_to_dataset(&mut reader)?;
 
-    let validator = Validator::new(version);
+    let validator = Validator::basic(version);
     let validation = validator.validate(&dataset);
 
     Ok(ReadResult {
@@ -175,8 +178,7 @@ pub fn read_xpt_fda_compliant(path: &Path) -> crate::error::Result<ReadResult> {
 
     let dataset = reader_to_dataset(&mut reader)?;
 
-    let validator = Validator::fda_compliant(XptVersion::V5)
-        .with_mode(ValidationMode::FdaCompliant);
+    let validator = Validator::fda();
     let validation = validator.validate(&dataset);
 
     Ok(ReadResult {

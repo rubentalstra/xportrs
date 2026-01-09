@@ -65,10 +65,10 @@ use std::path::Path;
 
 use polars::prelude::DataFrame;
 
-use crate::error::Result;
 use crate::core::reader::read_xpt;
-use crate::types::{XptDataset, XptWriterOptions};
 use crate::core::writer::write_xpt_with_options;
+use crate::error::Result;
+use crate::types::{XptDataset, XptWriterOptions};
 
 // Re-export MetadataFrame
 pub use metadata::MetadataFrame;

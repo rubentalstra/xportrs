@@ -41,7 +41,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!(
             "    - {} ({}): {:?}",
             var.name,
-            if var.data_type.is_numeric() { "Num" } else { "Char" },
+            if var.data_type.is_numeric() {
+                "Num"
+            } else {
+                "Char"
+            },
             var.label
         );
     }

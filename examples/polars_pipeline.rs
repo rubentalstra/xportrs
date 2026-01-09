@@ -136,9 +136,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         // Read it back to verify
         let read_back = xportrs::read_xpt(output_path)?;
-        println!("Verified: Read back {} rows, {} columns",
-                 read_back.num_rows(),
-                 read_back.columns.len());
+        println!(
+            "Verified: Read back {} rows, {} columns",
+            read_back.num_rows(),
+            read_back.columns.len()
+        );
     }
 
     println!("\n=== Example Complete ===");

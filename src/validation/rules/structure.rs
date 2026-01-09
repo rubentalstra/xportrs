@@ -2,10 +2,10 @@
 
 use std::collections::BTreeSet;
 
-use crate::error::{ErrorLocation, Severity, ValidationError, ValidationErrorCode};
 use crate::core::header::normalize_name;
+use crate::error::{ErrorLocation, Severity, ValidationError, ValidationErrorCode};
 use crate::types::{XptColumn, XptDataset};
-use crate::validation::{ValidationContext, ValidationMode, ValidationRule};
+use crate::validation::{ValidationContext, ValidationRule};
 
 /// Checks for duplicate variable names in a dataset.
 pub struct DuplicateVariableRule;
@@ -13,10 +13,6 @@ pub struct DuplicateVariableRule;
 impl ValidationRule for DuplicateVariableRule {
     fn name(&self) -> &'static str {
         "DuplicateVariable"
-    }
-
-    fn applies_to(&self, _mode: ValidationMode) -> bool {
-        true
     }
 
     fn validate_dataset(
@@ -59,10 +55,6 @@ impl ValidationRule for VariableLengthRule {
         "VariableLength"
     }
 
-    fn applies_to(&self, _mode: ValidationMode) -> bool {
-        true
-    }
-
     fn validate_column(
         &self,
         column: &XptColumn,
@@ -92,10 +84,11 @@ impl ValidationRule for VariableLengthRule {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::validation::ActionLevel;
     use crate::XptVersion;
 
     fn make_context() -> ValidationContext {
-        ValidationContext::new(XptVersion::V5, ValidationMode::Basic)
+        ValidationContext::new(XptVersion::V5, ActionLevel::Warn)
     }
 
     #[test]

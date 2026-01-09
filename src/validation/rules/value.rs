@@ -5,7 +5,7 @@
 
 use crate::error::{ErrorLocation, Severity, ValidationError, ValidationErrorCode};
 use crate::types::{XptColumn, XptDataset, XptValue};
-use crate::validation::{ValidationContext, ValidationMode, ValidationRule};
+use crate::validation::{ValidationContext, ValidationRule};
 
 /// Rule that validates character values don't exceed their column's defined length.
 ///
@@ -16,11 +16,6 @@ pub struct CharacterLengthRule;
 impl ValidationRule for CharacterLengthRule {
     fn name(&self) -> &'static str {
         "CharacterLengthRule"
-    }
-
-    fn applies_to(&self, _mode: ValidationMode) -> bool {
-        // Applies in all modes - this is a basic format requirement
-        true
     }
 
     fn validate_dataset(
@@ -71,11 +66,6 @@ pub struct AsciiValueRule;
 impl ValidationRule for AsciiValueRule {
     fn name(&self) -> &'static str {
         "AsciiValueRule"
-    }
-
-    fn applies_to(&self, mode: ValidationMode) -> bool {
-        // Only applies in FDA compliant mode
-        matches!(mode, ValidationMode::FdaCompliant)
     }
 
     fn validate_dataset(
@@ -136,11 +126,6 @@ pub struct NumericRangeRule;
 impl ValidationRule for NumericRangeRule {
     fn name(&self) -> &'static str {
         "NumericRangeRule"
-    }
-
-    fn applies_to(&self, _mode: ValidationMode) -> bool {
-        // Applies in all modes
-        true
     }
 
     fn validate_column(
@@ -220,6 +205,7 @@ impl ValidationRule for NumericRangeRule {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::validation::ActionLevel;
 
     fn create_test_dataset(values: Vec<XptValue>) -> XptDataset {
         let mut dataset = XptDataset::new("TEST");
@@ -228,11 +214,15 @@ mod tests {
         dataset
     }
 
+    fn make_context() -> ValidationContext {
+        ValidationContext::new(crate::XptVersion::V5, ActionLevel::Warn)
+    }
+
     #[test]
     fn test_character_length_valid() {
         let rule = CharacterLengthRule;
         let dataset = create_test_dataset(vec![XptValue::character("short")]);
-        let ctx = ValidationContext::new(crate::XptVersion::V5, ValidationMode::Basic);
+        let ctx = make_context();
 
         let errors = rule.validate_dataset(&dataset, &ctx);
         assert!(errors.is_empty());
@@ -242,7 +232,7 @@ mod tests {
     fn test_character_length_too_long() {
         let rule = CharacterLengthRule;
         let dataset = create_test_dataset(vec![XptValue::character("this is way too long")]);
-        let ctx = ValidationContext::new(crate::XptVersion::V5, ValidationMode::Basic);
+        let ctx = make_context();
 
         let errors = rule.validate_dataset(&dataset, &ctx);
         assert_eq!(errors.len(), 1);
@@ -253,7 +243,7 @@ mod tests {
     fn test_ascii_value_valid() {
         let rule = AsciiValueRule;
         let dataset = create_test_dataset(vec![XptValue::character("ASCII text")]);
-        let ctx = ValidationContext::new(crate::XptVersion::V5, ValidationMode::FdaCompliant);
+        let ctx = make_context();
 
         let errors = rule.validate_dataset(&dataset, &ctx);
         assert!(errors.is_empty());
@@ -263,18 +253,11 @@ mod tests {
     fn test_ascii_value_non_ascii() {
         let rule = AsciiValueRule;
         let dataset = create_test_dataset(vec![XptValue::character("Héllo")]);
-        let ctx = ValidationContext::new(crate::XptVersion::V5, ValidationMode::FdaCompliant);
+        let ctx = make_context();
 
         let errors = rule.validate_dataset(&dataset, &ctx);
         assert_eq!(errors.len(), 1);
         assert_eq!(errors[0].code, ValidationErrorCode::NonAsciiValue);
         assert!(errors[0].message.contains("é"));
-    }
-
-    #[test]
-    fn test_ascii_rule_not_applied_in_basic_mode() {
-        let rule = AsciiValueRule;
-        assert!(!rule.applies_to(ValidationMode::Basic));
-        assert!(rule.applies_to(ValidationMode::FdaCompliant));
     }
 }

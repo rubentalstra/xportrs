@@ -160,13 +160,11 @@ impl DatasetSpec {
     ///
     /// Variables without an order are placed at the end in their current order.
     pub fn sort_by_order(&mut self) {
-        self.variables.sort_by(|a, b| {
-            match (a.order, b.order) {
-                (Some(oa), Some(ob)) => oa.cmp(&ob),
-                (Some(_), None) => std::cmp::Ordering::Less,
-                (None, Some(_)) => std::cmp::Ordering::Greater,
-                (None, None) => std::cmp::Ordering::Equal,
-            }
+        self.variables.sort_by(|a, b| match (a.order, b.order) {
+            (Some(oa), Some(ob)) => oa.cmp(&ob),
+            (Some(_), None) => std::cmp::Ordering::Less,
+            (None, Some(_)) => std::cmp::Ordering::Greater,
+            (None, None) => std::cmp::Ordering::Equal,
         });
     }
 
@@ -174,13 +172,11 @@ impl DatasetSpec {
     #[must_use]
     pub fn variables_by_order(&self) -> Vec<&VariableSpec> {
         let mut vars: Vec<_> = self.variables.iter().collect();
-        vars.sort_by(|a, b| {
-            match (a.order, b.order) {
-                (Some(oa), Some(ob)) => oa.cmp(&ob),
-                (Some(_), None) => std::cmp::Ordering::Less,
-                (None, Some(_)) => std::cmp::Ordering::Greater,
-                (None, None) => std::cmp::Ordering::Equal,
-            }
+        vars.sort_by(|a, b| match (a.order, b.order) {
+            (Some(oa), Some(ob)) => oa.cmp(&ob),
+            (Some(_), None) => std::cmp::Ordering::Less,
+            (None, Some(_)) => std::cmp::Ordering::Greater,
+            (None, None) => std::cmp::Ordering::Equal,
         });
         vars
     }
@@ -257,8 +253,8 @@ mod tests {
 
     #[test]
     fn test_dataset_spec_with_keys() {
-        let spec = DatasetSpec::new("DM")
-            .with_keys(vec!["STUDYID".to_string(), "usubjid".to_string()]);
+        let spec =
+            DatasetSpec::new("DM").with_keys(vec!["STUDYID".to_string(), "usubjid".to_string()]);
 
         assert_eq!(spec.keys, vec!["STUDYID", "USUBJID"]);
     }

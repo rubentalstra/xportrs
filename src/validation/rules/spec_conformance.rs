@@ -21,7 +21,7 @@ use std::collections::HashSet;
 use crate::error::{ErrorLocation, Severity, ValidationError, ValidationErrorCode};
 use crate::spec::DatasetSpec;
 use crate::types::{XptColumn, XptDataset};
-use crate::validation::{ActionLevel, ValidationContext, ValidationMode, ValidationRule};
+use crate::validation::{ActionLevel, ValidationContext, ValidationRule};
 
 /// Rule to check that all variables in data exist in the specification.
 ///
@@ -44,10 +44,6 @@ impl VariableInSpecRule {
 impl ValidationRule for VariableInSpecRule {
     fn name(&self) -> &'static str {
         "variable_in_spec"
-    }
-
-    fn applies_to(&self, _mode: ValidationMode) -> bool {
-        !matches!(self.action, ActionLevel::None)
     }
 
     fn validate_column(
@@ -110,10 +106,6 @@ impl ValidationRule for VariableInDataRule {
         "variable_in_data"
     }
 
-    fn applies_to(&self, _mode: ValidationMode) -> bool {
-        !matches!(self.action, ActionLevel::None)
-    }
-
     fn validate_dataset(
         &self,
         dataset: &XptDataset,
@@ -169,10 +161,6 @@ impl TypeConformanceRule {
 impl ValidationRule for TypeConformanceRule {
     fn name(&self) -> &'static str {
         "type_conformance"
-    }
-
-    fn applies_to(&self, _mode: ValidationMode) -> bool {
-        !matches!(self.action, ActionLevel::None)
     }
 
     fn validate_column(
@@ -244,10 +232,6 @@ impl ValidationRule for LengthConformanceRule {
         "length_conformance"
     }
 
-    fn applies_to(&self, _mode: ValidationMode) -> bool {
-        !matches!(self.action, ActionLevel::None)
-    }
-
     fn validate_column(
         &self,
         column: &XptColumn,
@@ -306,10 +290,6 @@ impl OrderConformanceRule {
 impl ValidationRule for OrderConformanceRule {
     fn name(&self) -> &'static str {
         "order_conformance"
-    }
-
-    fn applies_to(&self, _mode: ValidationMode) -> bool {
-        !matches!(self.action, ActionLevel::None)
     }
 
     fn validate_dataset(
@@ -389,10 +369,6 @@ impl ValidationRule for FormatConformanceRule {
         "format_conformance"
     }
 
-    fn applies_to(&self, _mode: ValidationMode) -> bool {
-        !matches!(self.action, ActionLevel::None)
-    }
-
     fn validate_column(
         &self,
         column: &XptColumn,
@@ -460,10 +436,6 @@ impl ValidationRule for LabelConformanceRule {
         "label_conformance"
     }
 
-    fn applies_to(&self, _mode: ValidationMode) -> bool {
-        !matches!(self.action, ActionLevel::None)
-    }
-
     fn validate_column(
         &self,
         column: &XptColumn,
@@ -528,10 +500,6 @@ impl ValidationRule for DatasetMetaConformanceRule {
         "dataset_meta_conformance"
     }
 
-    fn applies_to(&self, _mode: ValidationMode) -> bool {
-        !matches!(self.action, ActionLevel::None)
-    }
-
     fn validate_dataset(
         &self,
         dataset: &XptDataset,
@@ -565,10 +533,7 @@ impl ValidationRule for DatasetMetaConformanceRule {
 
         // Check dataset label matches (if specified)
         if let Some(ref spec_label) = self.spec.label {
-            let labels_match = dataset
-                .label
-                .as_ref()
-                .map_or(false, |l| l == spec_label);
+            let labels_match = dataset.label.as_ref().map_or(false, |l| l == spec_label);
 
             if !labels_match {
                 errors.push(ValidationError::new(
@@ -744,9 +709,9 @@ mod tests {
     fn create_test_dataset() -> XptDataset {
         let mut dataset = XptDataset::new("DM");
         dataset.label = Some("Demographics".to_string());
-        dataset.columns.push(
-            XptColumn::character("USUBJID", 20).with_label("Unique Subject Identifier"),
-        );
+        dataset
+            .columns
+            .push(XptColumn::character("USUBJID", 20).with_label("Unique Subject Identifier"));
         dataset
             .columns
             .push(XptColumn::numeric("AGE").with_label("Age"));
@@ -756,12 +721,16 @@ mod tests {
         dataset
     }
 
+    fn make_context() -> ValidationContext {
+        ValidationContext::new(crate::XptVersion::V5, ActionLevel::Warn)
+    }
+
     #[test]
     fn test_variable_in_spec_rule_passes() {
         let spec = create_test_spec();
         let dataset = create_test_dataset();
         let rule = VariableInSpecRule::new(spec, ActionLevel::Warn);
-        let ctx = ValidationContext::new(crate::XptVersion::V5, ValidationMode::Basic);
+        let ctx = make_context();
 
         for (idx, col) in dataset.columns.iter().enumerate() {
             let errors = rule.validate_column(col, idx, &dataset.name, &ctx);
@@ -778,7 +747,7 @@ mod tests {
             .push(XptColumn::character("EXTRA", 10).with_label("Extra Column"));
 
         let rule = VariableInSpecRule::new(spec, ActionLevel::Warn);
-        let ctx = ValidationContext::new(crate::XptVersion::V5, ValidationMode::Basic);
+        let ctx = make_context();
 
         let errors = rule.validate_column(&dataset.columns[3], 3, &dataset.name, &ctx);
         assert_eq!(errors.len(), 1);
@@ -790,7 +759,7 @@ mod tests {
         let spec = create_test_spec();
         let dataset = create_test_dataset();
         let rule = VariableInDataRule::new(spec, ActionLevel::Warn);
-        let ctx = ValidationContext::new(crate::XptVersion::V5, ValidationMode::Basic);
+        let ctx = make_context();
 
         let errors = rule.validate_dataset(&dataset, &ctx);
         assert!(errors.is_empty());
@@ -803,7 +772,7 @@ mod tests {
 
         let dataset = create_test_dataset();
         let rule = VariableInDataRule::new(spec, ActionLevel::Warn);
-        let ctx = ValidationContext::new(crate::XptVersion::V5, ValidationMode::Basic);
+        let ctx = make_context();
 
         let errors = rule.validate_dataset(&dataset, &ctx);
         assert_eq!(errors.len(), 1);
@@ -815,7 +784,7 @@ mod tests {
         let spec = create_test_spec();
         let dataset = create_test_dataset();
         let rule = TypeConformanceRule::new(spec, ActionLevel::Warn);
-        let ctx = ValidationContext::new(crate::XptVersion::V5, ValidationMode::Basic);
+        let ctx = make_context();
 
         for (idx, col) in dataset.columns.iter().enumerate() {
             let errors = rule.validate_column(col, idx, &dataset.name, &ctx);
@@ -831,7 +800,7 @@ mod tests {
         dataset.columns[1] = XptColumn::character("AGE", 10).with_label("Age");
 
         let rule = TypeConformanceRule::new(spec, ActionLevel::Warn);
-        let ctx = ValidationContext::new(crate::XptVersion::V5, ValidationMode::Basic);
+        let ctx = make_context();
 
         let errors = rule.validate_column(&dataset.columns[1], 1, &dataset.name, &ctx);
         assert_eq!(errors.len(), 1);
@@ -843,10 +812,11 @@ mod tests {
         let spec = create_test_spec();
         let mut dataset = create_test_dataset();
         // Change USUBJID length from 20 to 30
-        dataset.columns[0] = XptColumn::character("USUBJID", 30).with_label("Unique Subject Identifier");
+        dataset.columns[0] =
+            XptColumn::character("USUBJID", 30).with_label("Unique Subject Identifier");
 
         let rule = LengthConformanceRule::new(spec, ActionLevel::Warn);
-        let ctx = ValidationContext::new(crate::XptVersion::V5, ValidationMode::Basic);
+        let ctx = make_context();
 
         let errors = rule.validate_column(&dataset.columns[0], 0, &dataset.name, &ctx);
         assert_eq!(errors.len(), 1);
@@ -864,16 +834,20 @@ mod tests {
         dataset
             .columns
             .push(XptColumn::numeric("AGE").with_label("Age"));
-        dataset.columns.push(
-            XptColumn::character("USUBJID", 20).with_label("Unique Subject Identifier"),
-        );
+        dataset
+            .columns
+            .push(XptColumn::character("USUBJID", 20).with_label("Unique Subject Identifier"));
 
         let rule = OrderConformanceRule::new(spec, ActionLevel::Warn);
-        let ctx = ValidationContext::new(crate::XptVersion::V5, ValidationMode::Basic);
+        let ctx = make_context();
 
         let errors = rule.validate_dataset(&dataset, &ctx);
         assert!(!errors.is_empty());
-        assert!(errors.iter().all(|e| e.code == ValidationErrorCode::OrderMismatch));
+        assert!(
+            errors
+                .iter()
+                .all(|e| e.code == ValidationErrorCode::OrderMismatch)
+        );
     }
 
     #[test]
@@ -884,7 +858,7 @@ mod tests {
         dataset.columns[1] = XptColumn::numeric("AGE").with_label("Wrong Label");
 
         let rule = LabelConformanceRule::new(spec, ActionLevel::Warn);
-        let ctx = ValidationContext::new(crate::XptVersion::V5, ValidationMode::Basic);
+        let ctx = make_context();
 
         let errors = rule.validate_column(&dataset.columns[1], 1, &dataset.name, &ctx);
         assert_eq!(errors.len(), 1);
@@ -896,7 +870,7 @@ mod tests {
         let spec = create_test_spec();
         let dataset = create_test_dataset();
         let rule = DatasetMetaConformanceRule::new(spec, ActionLevel::Warn);
-        let ctx = ValidationContext::new(crate::XptVersion::V5, ValidationMode::Basic);
+        let ctx = make_context();
 
         let errors = rule.validate_dataset(&dataset, &ctx);
         assert!(errors.is_empty());
@@ -909,10 +883,14 @@ mod tests {
         dataset.name = "WRONG".to_string();
 
         let rule = DatasetMetaConformanceRule::new(spec, ActionLevel::Warn);
-        let ctx = ValidationContext::new(crate::XptVersion::V5, ValidationMode::Basic);
+        let ctx = make_context();
 
         let errors = rule.validate_dataset(&dataset, &ctx);
-        assert!(errors.iter().any(|e| e.code == ValidationErrorCode::DatasetNameSpecMismatch));
+        assert!(
+            errors
+                .iter()
+                .any(|e| e.code == ValidationErrorCode::DatasetNameSpecMismatch)
+        );
     }
 
     #[test]
@@ -922,10 +900,14 @@ mod tests {
         dataset.label = Some("Wrong Label".to_string());
 
         let rule = DatasetMetaConformanceRule::new(spec, ActionLevel::Warn);
-        let ctx = ValidationContext::new(crate::XptVersion::V5, ValidationMode::Basic);
+        let ctx = make_context();
 
         let errors = rule.validate_dataset(&dataset, &ctx);
-        assert!(errors.iter().any(|e| e.code == ValidationErrorCode::DatasetLabelMismatch));
+        assert!(
+            errors
+                .iter()
+                .any(|e| e.code == ValidationErrorCode::DatasetLabelMismatch)
+        );
     }
 
     #[test]
@@ -953,7 +935,7 @@ mod tests {
 
         // With ActionLevel::None, no errors should be generated
         let rule = TypeConformanceRule::new(spec, ActionLevel::None);
-        let ctx = ValidationContext::new(crate::XptVersion::V5, ValidationMode::Basic);
+        let ctx = make_context();
 
         let errors = rule.validate_column(&dataset.columns[1], 1, &dataset.name, &ctx);
         assert!(errors.is_empty());

@@ -51,14 +51,14 @@ mod report;
 
 // Re-export transform functions
 pub use apply_df_label::apply_df_label;
-pub use apply_format::{apply_format, ApplyFormatConfig, ApplyFormatResult};
-pub use apply_label::{apply_label, ApplyLabelConfig, ApplyLabelResult};
-pub use apply_length::{apply_length, ApplyLengthConfig, ApplyLengthResult};
-pub use apply_order::{apply_order, ApplyOrderConfig, ApplyOrderResult, UnmatchedPosition};
-pub use coerce_type::{coerce_type, CoerceTypeConfig, CoerceTypeResult};
+pub use apply_format::{ApplyFormatConfig, ApplyFormatResult, apply_format};
+pub use apply_label::{ApplyLabelConfig, ApplyLabelResult, apply_label};
+pub use apply_length::{ApplyLengthConfig, ApplyLengthResult, apply_length};
+pub use apply_order::{ApplyOrderConfig, ApplyOrderResult, UnmatchedPosition, apply_order};
+pub use coerce_type::{CoerceTypeConfig, CoerceTypeResult, coerce_type};
 
 // Re-export pipeline functions
-pub use pipeline::{xportr, xportr_write, PipelineReport, XportrConfig, XportrResult};
+pub use pipeline::{PipelineReport, XportrConfig, XportrResult, xportr, xportr_write};
 
 // Re-export configuration types
 pub use config::{MismatchAction, TransformConfig};

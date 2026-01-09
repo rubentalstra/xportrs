@@ -2,7 +2,7 @@
 
 use crate::error::{ErrorLocation, Severity, ValidationError, ValidationErrorCode};
 use crate::types::XptColumn;
-use crate::validation::{ValidationContext, ValidationMode, ValidationRule};
+use crate::validation::{ValidationContext, ValidationRule};
 
 /// Validates format and informat names.
 pub struct FormatNameRule;
@@ -10,10 +10,6 @@ pub struct FormatNameRule;
 impl ValidationRule for FormatNameRule {
     fn name(&self) -> &'static str {
         "FormatName"
-    }
-
-    fn applies_to(&self, _mode: ValidationMode) -> bool {
-        true
     }
 
     fn validate_column(
@@ -68,10 +64,11 @@ impl ValidationRule for FormatNameRule {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::validation::ActionLevel;
     use crate::XptVersion;
 
     fn make_context(version: XptVersion) -> ValidationContext {
-        ValidationContext::new(version, ValidationMode::Basic)
+        ValidationContext::new(version, ActionLevel::Warn)
     }
 
     #[test]

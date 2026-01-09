@@ -8,13 +8,13 @@ use std::io::{BufWriter, Write};
 use std::path::Path;
 
 use crate::XptVersion;
-use crate::error::Result;
 use crate::core::header::{
     LabelSectionType, LibraryInfo, RECORD_LEN, build_dscrptr_header, build_labelv8_data,
     build_labelv8_header, build_labelv9_data, build_labelv9_header, build_library_header,
     build_member_header, build_namestr, build_namestr_header, build_obs_header, build_real_header,
     build_second_header, determine_label_section,
 };
+use crate::error::Result;
 use crate::types::{Observation, XptColumn, XptWriterOptions};
 
 use super::observation::{encode_observation, observation_length};

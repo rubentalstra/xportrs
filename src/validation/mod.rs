@@ -12,6 +12,14 @@
 //! - [`ValidationContext`] provides shared state during validation
 //! - [`crate::policy::AgencyPolicy`] defines agency-specific constraints
 //!
+//! # Action Levels
+//!
+//! The `ActionLevel` enum controls how validation issues are reported:
+//! - `None` - Don't report the issue
+//! - `Message` - Report as informational message
+//! - `Warn` - Report as warning (validation passes)
+//! - `Stop` - Report as error (validation fails)
+//!
 //! # Example
 //!
 //! ```
@@ -22,11 +30,11 @@
 //! let dataset = XptDataset::new("DM");
 //!
 //! // Basic validation
-//! let validator = Validator::new(XptVersion::V5);
+//! let validator = Validator::basic(XptVersion::V5);
 //! let result = validator.validate(&dataset);
 //!
 //! // Policy-based validation (recommended for submissions)
-//! let validator = Validator::with_policy(XptVersion::V5, FdaPolicy::strict());
+//! let validator = Validator::for_policy(FdaPolicy::strict());
 //! let result = validator.validate(&dataset);
 //!
 //! if result.is_valid() {
@@ -43,24 +51,12 @@ pub use severity::ActionLevel;
 
 use std::sync::Arc;
 
-use crate::error::{ErrorLocation, Severity, ValidationError, ValidationErrorCode, ValidationResult};
+use crate::XptVersion;
+use crate::error::{
+    ErrorLocation, Severity, ValidationError, ValidationErrorCode, ValidationResult,
+};
 use crate::policy::AgencyPolicy;
 use crate::types::{XptColumn, XptDataset, XptValue};
-use crate::XptVersion;
-
-/// Validation mode determining which rules to apply.
-///
-/// For new code, prefer using [`Validator::with_policy()`] instead.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub enum ValidationMode {
-    /// Basic XPT format validation only.
-    #[default]
-    Basic,
-    /// Full FDA compliance validation (stricter).
-    FdaCompliant,
-    /// Custom validation with specific rules enabled.
-    Custom,
-}
 
 /// A validation rule that can be applied to datasets or columns.
 ///
@@ -68,11 +64,6 @@ pub enum ValidationMode {
 pub trait ValidationRule: Send + Sync {
     /// The name of this rule for reporting.
     fn name(&self) -> &'static str;
-
-    /// Whether this rule applies in the given mode.
-    fn applies_to(&self, _mode: ValidationMode) -> bool {
-        true // Default: applies to all modes
-    }
 
     /// Validate an entire dataset.
     fn validate_dataset(
@@ -103,35 +94,41 @@ pub trait ValidationRule: Send + Sync {
 /// # Example
 ///
 /// ```
-/// use xportrs::validation::Validator;
+/// use xportrs::validation::{Validator, ActionLevel};
 /// use xportrs::policy::FdaPolicy;
 /// use xportrs::{XptDataset, XptVersion};
 ///
 /// // Basic validation
-/// let validator = Validator::new(XptVersion::V5);
+/// let validator = Validator::basic(XptVersion::V5);
 ///
 /// // With FDA policy (recommended for submissions)
-/// let validator = Validator::with_policy(XptVersion::V5, FdaPolicy::strict());
+/// let validator = Validator::for_policy(FdaPolicy::strict());
+///
+/// // With custom default action level
+/// let validator = Validator::basic(XptVersion::V5)
+///     .with_default_action(ActionLevel::Stop);
 ///
 /// let dataset = XptDataset::new("DM");
 /// let result = validator.validate(&dataset);
 /// ```
 pub struct Validator {
     version: XptVersion,
-    mode: ValidationMode,
     policy: Option<Arc<dyn AgencyPolicy>>,
     rules: Vec<Box<dyn ValidationRule>>,
+    default_action: ActionLevel,
 }
 
 impl Validator {
-    /// Create a new validator for the specified XPT version.
+    /// Create a basic validator for the specified XPT version.
+    ///
+    /// Uses default rules without agency-specific constraints.
     #[must_use]
-    pub fn new(version: XptVersion) -> Self {
+    pub fn basic(version: XptVersion) -> Self {
         let mut validator = Self {
             version,
-            mode: ValidationMode::Basic,
             policy: None,
             rules: Vec::new(),
+            default_action: ActionLevel::Warn,
         };
         validator.register_default_rules();
         validator
@@ -142,33 +139,39 @@ impl Validator {
     /// The policy determines additional constraints like version requirements,
     /// ASCII restrictions, and name length limits.
     #[must_use]
-    pub fn with_policy(version: XptVersion, policy: impl AgencyPolicy + 'static) -> Self {
+    pub fn for_policy(policy: impl AgencyPolicy + 'static) -> Self {
+        let version = policy.required_version().unwrap_or(XptVersion::V5);
         let mut validator = Self {
             version,
-            mode: ValidationMode::FdaCompliant, // Policy implies compliance mode
             policy: Some(Arc::new(policy)),
             rules: Vec::new(),
+            default_action: ActionLevel::Warn,
         };
         validator.register_default_rules();
         validator
     }
 
-    /// Create a validator with FDA compliance mode.
+    /// Create a validator for FDA compliance.
     ///
-    /// This is equivalent to `with_policy(version, FdaPolicy::strict())`.
+    /// Shorthand for `Validator::for_policy(FdaPolicy::strict())`.
     #[must_use]
-    pub fn fda_compliant(version: XptVersion) -> Self {
-        Self::with_policy(version, crate::policy::FdaPolicy::strict())
+    pub fn fda() -> Self {
+        Self::for_policy(crate::policy::FdaPolicy::strict())
     }
 
-    /// Set the validation mode (for backward compatibility).
+    /// Set the default action level for validation issues.
+    ///
+    /// This determines how issues without explicit severity are reported.
     #[must_use]
-    pub fn with_mode(mut self, mode: ValidationMode) -> Self {
-        self.mode = mode;
-        // When switching to FDA mode without a policy, add the FDA policy
-        if mode == ValidationMode::FdaCompliant && self.policy.is_none() {
-            self.policy = Some(Arc::new(crate::policy::FdaPolicy::strict()));
-        }
+    pub fn with_default_action(mut self, action: ActionLevel) -> Self {
+        self.default_action = action;
+        self
+    }
+
+    /// Override the XPT version (useful for testing).
+    #[must_use]
+    pub fn with_version(mut self, version: XptVersion) -> Self {
+        self.version = version;
         self
     }
 
@@ -183,16 +186,22 @@ impl Validator {
         self.version
     }
 
-    /// Get the validation mode.
+    /// Get the default action level.
     #[must_use]
-    pub fn mode(&self) -> ValidationMode {
-        self.mode
+    pub fn default_action(&self) -> ActionLevel {
+        self.default_action
     }
 
     /// Get the policy, if set.
     #[must_use]
     pub fn policy(&self) -> Option<&dyn AgencyPolicy> {
         self.policy.as_ref().map(|p| p.as_ref())
+    }
+
+    /// Check if a policy is set.
+    #[must_use]
+    pub fn has_policy(&self) -> bool {
+        self.policy.is_some()
     }
 
     /// Validate a dataset.
@@ -203,22 +212,18 @@ impl Validator {
 
         // Run dataset-level validation rules
         for rule in &self.rules {
-            if rule.applies_to(self.mode) {
-                let errors = rule.validate_dataset(dataset, &ctx);
-                for error in errors {
-                    result.add(error);
-                }
+            let errors = rule.validate_dataset(dataset, &ctx);
+            for error in errors {
+                result.add(error);
             }
         }
 
         // Run column-level validation rules
         for (index, column) in dataset.columns.iter().enumerate() {
             for rule in &self.rules {
-                if rule.applies_to(self.mode) {
-                    let errors = rule.validate_column(column, index, &dataset.name, &ctx);
-                    for error in errors {
-                        result.add(error);
-                    }
+                let errors = rule.validate_column(column, index, &dataset.name, &ctx);
+                for error in errors {
+                    result.add(error);
                 }
             }
         }
@@ -253,7 +258,7 @@ impl Validator {
     /// let mut dataset = XptDataset::new("DM");
     /// dataset.columns.push(XptColumn::character("USUBJID", 20));
     ///
-    /// let validator = Validator::new(XptVersion::V5);
+    /// let validator = Validator::basic(XptVersion::V5);
     /// let result = validator.validate_against_spec(&dataset, &spec);
     /// assert!(result.is_valid());
     /// ```
@@ -275,9 +280,9 @@ impl Validator {
     /// # Example
     ///
     /// ```
-    /// use xportrs::validation::{Validator, rules::SpecConformanceConfig};
+    /// use xportrs::validation::{Validator, ActionLevel, rules::SpecConformanceConfig};
     /// use xportrs::spec::{DatasetSpec, VariableSpec};
-    /// use xportrs::{XptDataset, XptColumn, XptVersion, ActionLevel};
+    /// use xportrs::{XptDataset, XptColumn, XptVersion};
     ///
     /// let spec = DatasetSpec::new("DM")
     ///     .add_variable(VariableSpec::character("USUBJID", 20));
@@ -291,7 +296,7 @@ impl Validator {
     ///     ..Default::default()
     /// };
     ///
-    /// let validator = Validator::new(XptVersion::V5);
+    /// let validator = Validator::basic(XptVersion::V5);
     /// let result = validator.validate_against_spec_with_config(&dataset, &spec, config);
     /// ```
     #[must_use]
@@ -341,7 +346,7 @@ impl Validator {
 
     /// Create a validation context.
     fn create_context(&self) -> ValidationContext {
-        ValidationContext::new(self.version, self.mode)
+        ValidationContext::new(self.version, self.default_action)
     }
 
     /// Run policy-specific validation checks.
@@ -351,7 +356,11 @@ impl Validator {
         policy: &dyn AgencyPolicy,
         result: &mut ValidationResult,
     ) {
-        let is_strict = policy.is_strict();
+        let severity = if policy.is_strict() {
+            Severity::Error
+        } else {
+            Severity::Warning
+        };
 
         // Check version requirement
         if let Some(required_version) = policy.required_version() {
@@ -367,14 +376,14 @@ impl Validator {
                     ErrorLocation::Dataset {
                         name: dataset.name.clone(),
                     },
-                    if is_strict { Severity::Error } else { Severity::Warning },
+                    severity,
                 ));
             }
         }
 
         // Check ASCII requirement for character values
         if policy.require_ascii() {
-            self.validate_ascii_values(dataset, is_strict, result);
+            self.validate_ascii_values(dataset, severity, result);
         }
     }
 
@@ -382,7 +391,7 @@ impl Validator {
     fn validate_ascii_values(
         &self,
         dataset: &XptDataset,
-        is_strict: bool,
+        severity: Severity,
         result: &mut ValidationResult,
     ) {
         for (row_idx, row) in dataset.rows.iter().enumerate() {
@@ -406,7 +415,7 @@ impl Validator {
                                 column: col_name.to_string(),
                                 row: row_idx,
                             },
-                            if is_strict { Severity::Error } else { Severity::Warning },
+                            severity,
                         ));
                     }
                 }
@@ -440,7 +449,80 @@ impl Validator {
 
 impl Default for Validator {
     fn default() -> Self {
-        Self::new(XptVersion::default())
+        Self::basic(XptVersion::default())
+    }
+}
+
+// ============================================================================
+// Backward Compatibility
+// ============================================================================
+
+/// Validation mode determining which rules to apply.
+///
+/// **Deprecated:** Use `Validator::basic()`, `Validator::for_policy()`,
+/// or `ActionLevel` instead.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[deprecated(
+    since = "0.1.0",
+    note = "Use Validator::basic(), Validator::for_policy(), or ActionLevel instead"
+)]
+pub enum ValidationMode {
+    /// Basic XPT format validation only.
+    #[default]
+    Basic,
+    /// Full FDA compliance validation.
+    FdaCompliant,
+    /// Custom validation.
+    Custom,
+}
+
+impl Validator {
+    /// Create a validator with the old API.
+    ///
+    /// **Deprecated:** Use `Validator::basic()` instead.
+    #[deprecated(since = "0.1.0", note = "Use Validator::basic() instead")]
+    #[must_use]
+    pub fn new(version: XptVersion) -> Self {
+        Self::basic(version)
+    }
+
+    /// Set the validation mode (backward compatibility).
+    ///
+    /// **Deprecated:** Use `Validator::for_policy()` instead.
+    #[deprecated(since = "0.1.0", note = "Use Validator::for_policy() instead")]
+    #[allow(deprecated)]
+    #[must_use]
+    pub fn with_mode(mut self, mode: ValidationMode) -> Self {
+        match mode {
+            ValidationMode::FdaCompliant => {
+                self.policy = Some(Arc::new(crate::policy::FdaPolicy::strict()));
+            }
+            ValidationMode::Basic | ValidationMode::Custom => {}
+        }
+        self
+    }
+
+    /// Get the validation mode (backward compatibility).
+    ///
+    /// **Deprecated:** Check `has_policy()` instead.
+    #[deprecated(since = "0.1.0", note = "Check has_policy() instead")]
+    #[allow(deprecated)]
+    #[must_use]
+    pub fn mode(&self) -> ValidationMode {
+        if self.policy.is_some() {
+            ValidationMode::FdaCompliant
+        } else {
+            ValidationMode::Basic
+        }
+    }
+
+    /// Create a FDA compliant validator (backward compatibility).
+    ///
+    /// **Deprecated:** Use `Validator::fda()` instead.
+    #[deprecated(since = "0.1.0", note = "Use Validator::fda() instead")]
+    #[must_use]
+    pub fn fda_compliant(version: XptVersion) -> Self {
+        Self::for_policy(crate::policy::FdaPolicy::strict()).with_version(version)
     }
 }
 
@@ -451,38 +533,35 @@ mod tests {
     use crate::types::XptColumn;
 
     #[test]
-    fn test_validator_new() {
-        let validator = Validator::new(XptVersion::V5);
+    fn test_validator_basic() {
+        let validator = Validator::basic(XptVersion::V5);
         assert_eq!(validator.version(), XptVersion::V5);
-        assert_eq!(validator.mode(), ValidationMode::Basic);
         assert!(validator.policy().is_none());
+        assert_eq!(validator.default_action(), ActionLevel::Warn);
     }
 
     #[test]
-    fn test_validator_with_policy() {
-        let validator = Validator::with_policy(XptVersion::V5, FdaPolicy::strict());
-        assert_eq!(validator.mode(), ValidationMode::FdaCompliant);
+    fn test_validator_for_policy() {
+        let validator = Validator::for_policy(FdaPolicy::strict());
+        assert_eq!(validator.version(), XptVersion::V5); // FDA requires V5
         assert!(validator.policy().is_some());
     }
 
     #[test]
-    fn test_validator_fda_compliant() {
-        let validator = Validator::fda_compliant(XptVersion::V5);
-        assert_eq!(validator.mode(), ValidationMode::FdaCompliant);
+    fn test_validator_fda() {
+        let validator = Validator::fda();
         assert!(validator.policy().is_some());
     }
 
     #[test]
-    fn test_validator_with_mode() {
-        let validator = Validator::new(XptVersion::V5).with_mode(ValidationMode::FdaCompliant);
-        assert_eq!(validator.mode(), ValidationMode::FdaCompliant);
-        // Should auto-add FDA policy when switching to FDA mode
-        assert!(validator.policy().is_some());
+    fn test_validator_with_default_action() {
+        let validator = Validator::basic(XptVersion::V5).with_default_action(ActionLevel::Stop);
+        assert_eq!(validator.default_action(), ActionLevel::Stop);
     }
 
     #[test]
     fn test_validate_empty_dataset() {
-        let validator = Validator::new(XptVersion::V5);
+        let validator = Validator::basic(XptVersion::V5);
         let dataset = XptDataset::new("DM");
         let result = validator.validate(&dataset);
         assert!(result.errors.is_empty());
@@ -490,7 +569,7 @@ mod tests {
 
     #[test]
     fn test_validate_valid_dataset() {
-        let validator = Validator::new(XptVersion::V5);
+        let validator = Validator::basic(XptVersion::V5);
         let mut dataset = XptDataset::new("DM");
         dataset.columns.push(XptColumn::character("USUBJID", 20));
         dataset.columns.push(XptColumn::numeric("AGE"));
@@ -501,7 +580,7 @@ mod tests {
 
     #[test]
     fn test_validate_invalid_name() {
-        let validator = Validator::new(XptVersion::V5);
+        let validator = Validator::basic(XptVersion::V5);
         let dataset = XptDataset::new("TOOLONGNAME"); // > 8 chars for V5
 
         let result = validator.validate(&dataset);
@@ -511,29 +590,39 @@ mod tests {
     #[test]
     fn test_policy_version_check() {
         // FDA requires V5, but we're using V8
-        let validator = Validator::with_policy(XptVersion::V8, FdaPolicy::strict());
+        let validator = Validator::for_policy(FdaPolicy::strict()).with_version(XptVersion::V8);
         let dataset = XptDataset::new("DM");
 
         let result = validator.validate(&dataset);
-        assert!(result.errors.iter().any(|e| e.code == ValidationErrorCode::WrongVersion));
+        assert!(
+            result
+                .errors
+                .iter()
+                .any(|e| e.code == ValidationErrorCode::WrongVersion)
+        );
     }
 
     #[test]
     fn test_policy_ascii_check() {
-        let validator = Validator::with_policy(XptVersion::V5, FdaPolicy::strict());
+        let validator = Validator::for_policy(FdaPolicy::strict());
         let mut dataset = XptDataset::new("DM");
         dataset.columns.push(XptColumn::character("NAME", 20));
         dataset.rows.push(vec![XptValue::character("Hëllo")]); // non-ASCII
 
         let result = validator.validate(&dataset);
-        assert!(result.errors.iter().any(|e| e.code == ValidationErrorCode::NonAsciiValue));
+        assert!(
+            result
+                .errors
+                .iter()
+                .any(|e| e.code == ValidationErrorCode::NonAsciiValue)
+        );
     }
 
     #[test]
     fn test_validate_against_spec_passes() {
         use crate::spec::{DatasetSpec, VariableSpec};
 
-        let validator = Validator::new(XptVersion::V5);
+        let validator = Validator::basic(XptVersion::V5);
 
         let spec = DatasetSpec::new("DM")
             .with_label("Demographics")
@@ -544,10 +633,12 @@ mod tests {
 
         let mut dataset = XptDataset::new("DM");
         dataset.label = Some("Demographics".to_string());
-        dataset.columns.push(
-            XptColumn::character("USUBJID", 20).with_label("Unique Subject Identifier"),
-        );
-        dataset.columns.push(XptColumn::numeric("AGE").with_label("Age"));
+        dataset
+            .columns
+            .push(XptColumn::character("USUBJID", 20).with_label("Unique Subject Identifier"));
+        dataset
+            .columns
+            .push(XptColumn::numeric("AGE").with_label("Age"));
 
         let result = validator.validate_against_spec(&dataset, &spec);
         assert!(result.is_valid());
@@ -557,7 +648,7 @@ mod tests {
     fn test_validate_against_spec_detects_missing_variable() {
         use crate::spec::{DatasetSpec, VariableSpec};
 
-        let validator = Validator::new(XptVersion::V5);
+        let validator = Validator::basic(XptVersion::V5);
 
         let spec = DatasetSpec::new("DM")
             .add_variable(VariableSpec::character("USUBJID", 20))
@@ -576,7 +667,7 @@ mod tests {
     fn test_validate_against_spec_strict_fails_on_mismatch() {
         use crate::spec::{DatasetSpec, VariableSpec};
 
-        let validator = Validator::new(XptVersion::V5);
+        let validator = Validator::basic(XptVersion::V5);
 
         let spec = DatasetSpec::new("DM").add_variable(VariableSpec::numeric("AGE"));
 
@@ -585,14 +676,19 @@ mod tests {
 
         let result = validator.validate_against_spec_strict(&dataset, &spec);
         assert!(!result.is_valid());
-        assert!(result.errors.iter().any(|e| e.code == ValidationErrorCode::TypeMismatch));
+        assert!(
+            result
+                .errors
+                .iter()
+                .any(|e| e.code == ValidationErrorCode::TypeMismatch)
+        );
     }
 
     #[test]
     fn test_validate_against_spec_with_config() {
         use crate::spec::{DatasetSpec, VariableSpec};
 
-        let validator = Validator::new(XptVersion::V5);
+        let validator = Validator::basic(XptVersion::V5);
 
         let spec = DatasetSpec::new("DM")
             .add_variable(VariableSpec::character("USUBJID", 20).with_order(2))
@@ -611,5 +707,27 @@ mod tests {
 
         let result = validator.validate_against_spec_with_config(&dataset, &spec, config);
         assert!(result.is_valid());
+    }
+
+    // Backward compatibility tests
+    #[test]
+    #[allow(deprecated)]
+    fn test_backward_compat_new() {
+        let validator = Validator::new(XptVersion::V5);
+        assert_eq!(validator.version(), XptVersion::V5);
+    }
+
+    #[test]
+    #[allow(deprecated)]
+    fn test_backward_compat_with_mode() {
+        let validator = Validator::new(XptVersion::V5).with_mode(ValidationMode::FdaCompliant);
+        assert!(validator.policy().is_some());
+    }
+
+    #[test]
+    #[allow(deprecated)]
+    fn test_backward_compat_fda_compliant() {
+        let validator = Validator::fda_compliant(XptVersion::V5);
+        assert!(validator.policy().is_some());
     }
 }

@@ -158,8 +158,12 @@ pub fn coerce_type(
             let mut conversion = TypeConversion::new(&col.name, from_type, to_type);
 
             // Convert all values in this column
-            let (converted, failed) =
-                convert_column_values(&mut dataset.rows, col_idx, col.data_type, var_spec.data_type);
+            let (converted, failed) = convert_column_values(
+                &mut dataset.rows,
+                col_idx,
+                col.data_type,
+                var_spec.data_type,
+            );
 
             conversion.values_converted = converted;
             conversion.values_failed = failed;
@@ -321,16 +325,10 @@ mod tests {
     fn create_test_dataset() -> XptDataset {
         let mut dataset = XptDataset::with_columns(
             "TEST",
-            vec![
-                XptColumn::character("AGE", 8),
-                XptColumn::numeric("NAME"),
-            ],
+            vec![XptColumn::character("AGE", 8), XptColumn::numeric("NAME")],
         );
         dataset.add_row(vec![XptValue::character("25"), XptValue::numeric(42.0)]);
-        dataset.add_row(vec![
-            XptValue::character("30"),
-            XptValue::numeric_missing(),
-        ]);
+        dataset.add_row(vec![XptValue::character("30"), XptValue::numeric_missing()]);
         dataset
     }
 

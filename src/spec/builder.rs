@@ -268,9 +268,7 @@ mod tests {
 
     #[test]
     fn test_spec_builder_basic() {
-        let spec = SpecBuilder::new("DM")
-            .label("Demographics")
-            .build();
+        let spec = SpecBuilder::new("DM").label("Demographics").build();
 
         assert_eq!(spec.name, "DM");
         assert_eq!(spec.label, Some("Demographics".to_string()));
@@ -282,13 +280,9 @@ mod tests {
         let spec = SpecBuilder::new("DM")
             .label("Demographics")
             .variable("USUBJID", XptType::Char, |v| {
-                v.length(20)
-                    .label("Unique Subject Identifier")
-                    .order(1)
+                v.length(20).label("Unique Subject Identifier").order(1)
             })
-            .variable("AGE", XptType::Num, |v| {
-                v.label("Age").order(2)
-            })
+            .variable("AGE", XptType::Num, |v| v.label("Age").order(2))
             .build();
 
         assert_eq!(spec.variables.len(), 2);
@@ -312,9 +306,7 @@ mod tests {
 
     #[test]
     fn test_spec_builder_keys() {
-        let spec = SpecBuilder::new("DM")
-            .keys(["STUDYID", "USUBJID"])
-            .build();
+        let spec = SpecBuilder::new("DM").keys(["STUDYID", "USUBJID"]).build();
 
         assert_eq!(spec.keys.len(), 2);
         assert_eq!(spec.keys[0], "STUDYID");

@@ -8,10 +8,10 @@ use std::fs::File;
 use std::io::Write;
 use std::path::Path;
 
-use crate::error::{Result, ValidationError, ValidationResult, XptError};
 use crate::core::header::normalize_name;
+use crate::error::{Result, ValidationError, ValidationResult, XptError};
 use crate::types::{XptDataset, XptVersion, XptWriterOptions};
-use crate::validation::{ValidationMode, Validator};
+use crate::validation::Validator;
 
 /// Builder for creating XPT writers with validation.
 ///
@@ -45,7 +45,7 @@ use crate::validation::{ValidationMode, Validator};
 #[derive(Debug, Clone)]
 pub struct XptWriterBuilder {
     options: XptWriterOptions,
-    mode: ValidationMode,
+    use_fda: bool,
 }
 
 impl Default for XptWriterBuilder {
@@ -60,7 +60,7 @@ impl XptWriterBuilder {
     pub fn new() -> Self {
         Self {
             options: XptWriterOptions::default(),
-            mode: ValidationMode::Basic,
+            use_fda: false,
         }
     }
 
@@ -77,7 +77,7 @@ impl XptWriterBuilder {
     #[must_use]
     pub fn fda_compliant(mut self) -> Self {
         self.options = self.options.with_version(XptVersion::V5);
-        self.mode = ValidationMode::FdaCompliant;
+        self.use_fda = true;
         self
     }
 
@@ -110,7 +110,11 @@ impl XptWriterBuilder {
         let version = self.options.version;
 
         // Use the validation framework
-        let validator = Validator::new(version).with_mode(self.mode);
+        let validator = if self.use_fda {
+            Validator::fda()
+        } else {
+            Validator::basic(version)
+        };
         let result = validator.validate(dataset);
 
         ValidatedWriter {
@@ -317,13 +321,14 @@ mod tests {
     fn test_builder_default() {
         let builder = XptWriterBuilder::new();
         assert_eq!(builder.options.version, XptVersion::V5);
+        assert!(!builder.use_fda);
     }
 
     #[test]
     fn test_builder_fda_compliant() {
         let builder = XptWriterBuilder::new().fda_compliant();
         assert_eq!(builder.options.version, XptVersion::V5);
-        assert_eq!(builder.mode, ValidationMode::FdaCompliant);
+        assert!(builder.use_fda);
     }
 
     #[test]

@@ -159,8 +159,8 @@ pub use validation::ActionLevel;
 // ============================================================================
 
 pub use policy::{
-    Agency, AgencyPolicy, CustomPolicy, FdaPolicy, FileNamingIssue, FileNamingRules, NmpaPolicy,
-    PmdaPolicy, FDA_MAX_FILE_SIZE, NMPA_MAX_FILE_SIZE, PMDA_MAX_FILE_SIZE,
+    Agency, AgencyPolicy, CustomPolicy, FDA_MAX_FILE_SIZE, FdaPolicy, FileNamingIssue,
+    FileNamingRules, NMPA_MAX_FILE_SIZE, NmpaPolicy, PMDA_MAX_FILE_SIZE, PmdaPolicy,
 };
 
 // ============================================================================
@@ -168,9 +168,9 @@ pub use policy::{
 // ============================================================================
 
 pub use io::{
-    read_xpt, read_xpt_streaming, read_xpt_streaming_with_options, read_xpt_with_options,
-    write_xpt, write_xpt_with_options, DatasetInfo, DatasetMeta, ObservationIter, StreamingReader,
-    StreamingWriter, ValidatedWriter, XptReader, XptWriter, XptWriterBuilder,
+    DatasetInfo, DatasetMeta, ObservationIter, StreamingReader, StreamingWriter, ValidatedWriter,
+    XptReader, XptWriter, XptWriterBuilder, read_xpt, read_xpt_streaming,
+    read_xpt_streaming_with_options, read_xpt_with_options, write_xpt, write_xpt_with_options,
 };
 
 // ============================================================================

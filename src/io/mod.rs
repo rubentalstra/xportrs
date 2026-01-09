@@ -61,16 +61,16 @@ mod writer;
 
 // Re-export reader types and functions
 pub use reader::{
-    get_xpt_metadata, read_xpt, read_xpt_fda_compliant, read_xpt_streaming,
-    read_xpt_streaming_with_options, read_xpt_with_options, read_xpt_with_validation,
-    ObservationIter, ReadResult, XptReader,
+    ObservationIter, ReadResult, XptReader, get_xpt_metadata, read_xpt, read_xpt_fda_compliant,
+    read_xpt_streaming, read_xpt_streaming_with_options, read_xpt_with_options,
+    read_xpt_with_validation,
 };
 
 // Re-export writer types and functions
 pub use writer::{
+    DatasetInfo, StreamingWriter, ValidatedWriter, WriteResult, XptWriter, XptWriterBuilder,
     write_xpt, write_xpt_against_spec, write_xpt_fda_compliant, write_xpt_validated,
-    write_xpt_with_options, DatasetInfo, StreamingWriter, ValidatedWriter, WriteResult,
-    XptWriter, XptWriterBuilder,
+    write_xpt_with_options,
 };
 
 // Re-export commonly used types from core

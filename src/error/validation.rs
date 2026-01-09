@@ -9,13 +9,20 @@
 use std::fmt;
 
 /// Severity level for validation issues.
+///
+/// Maps to `ActionLevel` for controlling validation behavior:
+/// - `Error` → `ActionLevel::Stop` - Must be fixed
+/// - `Warning` → `ActionLevel::Warn` - Should be reviewed
+/// - `Message` → `ActionLevel::Message` - Informational
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[non_exhaustive]
 pub enum Severity {
     /// Must be fixed before writing - file would be invalid or rejected
     Error,
-    /// FDA compliance warning - technically valid but may cause issues
+    /// Should be reviewed - technically valid but may cause issues
     Warning,
+    /// Informational message - for awareness only
+    Message,
 }
 
 impl fmt::Display for Severity {
@@ -23,6 +30,7 @@ impl fmt::Display for Severity {
         match self {
             Self::Error => write!(f, "error"),
             Self::Warning => write!(f, "warning"),
+            Self::Message => write!(f, "message"),
         }
     }
 }
@@ -294,7 +302,17 @@ impl ValidationError {
         Self::new(code, message, location, Severity::Warning)
     }
 
-    /// Check if this is an error (not a warning).
+    /// Create a new message (severity = Message).
+    #[must_use]
+    pub fn message(
+        code: ValidationErrorCode,
+        message: impl Into<String>,
+        location: ErrorLocation,
+    ) -> Self {
+        Self::new(code, message, location, Severity::Message)
+    }
+
+    /// Check if this is an error (not a warning or message).
     #[must_use]
     pub fn is_error(&self) -> bool {
         self.severity == Severity::Error
@@ -305,18 +323,31 @@ impl ValidationError {
     pub fn is_warning(&self) -> bool {
         self.severity == Severity::Warning
     }
+
+    /// Check if this is a message.
+    #[must_use]
+    pub fn is_message(&self) -> bool {
+        self.severity == Severity::Message
+    }
 }
 
-/// Result of validation containing all errors and warnings.
+/// Result of validation containing all errors, warnings, and messages.
 ///
 /// This implements a collect-all-errors pattern, allowing all validation
 /// issues to be reported at once rather than failing on the first error.
+///
+/// Severity levels map to action levels:
+/// - `errors` - Issues that must be fixed (ActionLevel::Stop)
+/// - `warnings` - Issues that should be reviewed (ActionLevel::Warn)
+/// - `messages` - Informational notes (ActionLevel::Message)
 #[derive(Debug, Clone, Default)]
 pub struct ValidationResult {
     /// Validation errors (must be fixed)
     pub errors: Vec<ValidationError>,
-    /// Validation warnings (FDA compliance issues)
+    /// Validation warnings (should be reviewed)
     pub warnings: Vec<ValidationError>,
+    /// Informational messages
+    pub messages: Vec<ValidationError>,
 }
 
 impl ValidationResult {
@@ -344,11 +375,18 @@ impl ValidationResult {
         self.warnings.push(warning);
     }
 
-    /// Add a validation error (routes to errors or warnings based on severity).
+    /// Add a message to the result.
+    pub fn add_message(&mut self, message: ValidationError) {
+        debug_assert!(message.is_message());
+        self.messages.push(message);
+    }
+
+    /// Add a validation error (routes to errors, warnings, or messages based on severity).
     pub fn add(&mut self, error: ValidationError) {
         match error.severity {
             Severity::Error => self.errors.push(error),
             Severity::Warning => self.warnings.push(error),
+            Severity::Message => self.messages.push(error),
         }
     }
 
@@ -356,6 +394,7 @@ impl ValidationResult {
     pub fn merge(&mut self, other: ValidationResult) {
         self.errors.extend(other.errors);
         self.warnings.extend(other.warnings);
+        self.messages.extend(other.messages);
     }
 
     /// Check if validation passed (no errors, warnings allowed).
@@ -370,16 +409,40 @@ impl ValidationResult {
         self.errors.is_empty() && self.warnings.is_empty()
     }
 
-    /// Get total number of issues (errors + warnings).
+    /// Get total number of issues (errors + warnings + messages).
     #[must_use]
     pub fn issue_count(&self) -> usize {
-        self.errors.len() + self.warnings.len()
+        self.errors.len() + self.warnings.len() + self.messages.len()
     }
 
-    /// Check if there are any issues.
+    /// Get number of errors only.
+    #[must_use]
+    pub fn error_count(&self) -> usize {
+        self.errors.len()
+    }
+
+    /// Get number of warnings only.
+    #[must_use]
+    pub fn warning_count(&self) -> usize {
+        self.warnings.len()
+    }
+
+    /// Get number of messages only.
+    #[must_use]
+    pub fn message_count(&self) -> usize {
+        self.messages.len()
+    }
+
+    /// Check if there are any issues (errors, warnings, or messages).
     #[must_use]
     pub fn has_issues(&self) -> bool {
         self.issue_count() > 0
+    }
+
+    /// Check if there are any errors or warnings (not just messages).
+    #[must_use]
+    pub fn has_problems(&self) -> bool {
+        !self.errors.is_empty() || !self.warnings.is_empty()
     }
 
     /// Convert to a Result, failing if there are any errors.
@@ -391,9 +454,12 @@ impl ValidationResult {
         }
     }
 
-    /// Get all issues (errors first, then warnings).
+    /// Get all issues (errors first, then warnings, then messages).
     pub fn all_issues(&self) -> impl Iterator<Item = &ValidationError> {
-        self.errors.iter().chain(self.warnings.iter())
+        self.errors
+            .iter()
+            .chain(self.warnings.iter())
+            .chain(self.messages.iter())
     }
 
     /// Get errors with a specific code.
@@ -411,24 +477,36 @@ impl ValidationResult {
     ) -> impl Iterator<Item = &ValidationError> {
         self.warnings.iter().filter(move |e| e.code == code)
     }
+
+    /// Get messages with a specific code.
+    pub fn messages_with_code(
+        &self,
+        code: ValidationErrorCode,
+    ) -> impl Iterator<Item = &ValidationError> {
+        self.messages.iter().filter(move |e| e.code == code)
+    }
 }
 
 impl fmt::Display for ValidationResult {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.is_fda_compliant() {
-            write!(f, "Validation passed (FDA compliant)")
+        if self.is_fda_compliant() && self.messages.is_empty() {
+            write!(f, "Validation passed")
+        } else if self.is_fda_compliant() {
+            write!(f, "Validation passed ({} message(s))", self.messages.len())
         } else if self.is_valid() {
             write!(
                 f,
-                "Validation passed with {} warning(s)",
-                self.warnings.len()
+                "Validation passed with {} warning(s), {} message(s)",
+                self.warnings.len(),
+                self.messages.len()
             )
         } else {
             write!(
                 f,
-                "Validation failed: {} error(s), {} warning(s)",
+                "Validation failed: {} error(s), {} warning(s), {} message(s)",
                 self.errors.len(),
-                self.warnings.len()
+                self.warnings.len(),
+                self.messages.len()
             )
         }
     }

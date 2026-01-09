@@ -23,12 +23,12 @@
 
 use std::path::Path;
 
+use crate::XptVersion;
 use crate::core::writer;
 use crate::error::{Result, ValidationResult, XptError};
 use crate::spec::DatasetSpec;
 use crate::types::{XptDataset, XptWriterOptions};
-use crate::validation::{ValidationMode, Validator};
-use crate::XptVersion;
+use crate::validation::Validator;
 
 // Re-export core writer types
 pub use crate::core::writer::{
@@ -141,7 +141,7 @@ pub fn write_xpt_validated(
     dataset: &XptDataset,
     version: XptVersion,
 ) -> Result<WriteResult> {
-    let validator = Validator::new(version);
+    let validator = Validator::basic(version);
     let validation = validator.validate(dataset);
 
     // Fail on errors, allow warnings
@@ -181,8 +181,7 @@ pub fn write_xpt_validated(
 /// write_xpt_fda_compliant(Path::new("dm.xpt"), &dataset).unwrap();
 /// ```
 pub fn write_xpt_fda_compliant(path: &Path, dataset: &XptDataset) -> Result<WriteResult> {
-    let validator = Validator::fda_compliant(XptVersion::V5)
-        .with_mode(ValidationMode::FdaCompliant);
+    let validator = Validator::fda();
     let validation = validator.validate(dataset);
 
     // For FDA compliance, we fail on both errors AND warnings
@@ -237,7 +236,7 @@ pub fn write_xpt_against_spec(
     spec: &DatasetSpec,
     version: XptVersion,
 ) -> Result<WriteResult> {
-    let validator = Validator::new(version);
+    let validator = Validator::basic(version);
     let validation = validator.validate_against_spec(dataset, spec);
 
     // Fail on errors, allow warnings

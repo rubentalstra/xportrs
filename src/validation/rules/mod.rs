@@ -34,9 +34,9 @@ pub use format::FormatNameRule;
 pub use label::{DatasetLabelRule, VariableLabelRule};
 pub use name::{DatasetNameRule, VariableNameRule};
 pub use spec_conformance::{
-    DatasetMetaConformanceRule, FormatConformanceRule, LabelConformanceRule,
-    LengthConformanceRule, OrderConformanceRule, SpecConformanceConfig, TypeConformanceRule,
-    VariableInDataRule, VariableInSpecRule,
+    DatasetMetaConformanceRule, FormatConformanceRule, LabelConformanceRule, LengthConformanceRule,
+    OrderConformanceRule, SpecConformanceConfig, TypeConformanceRule, VariableInDataRule,
+    VariableInSpecRule,
 };
 pub use structure::{DuplicateVariableRule, VariableLengthRule};
 pub use value::{AsciiValueRule, CharacterLengthRule, NumericRangeRule};

@@ -141,7 +141,11 @@ pub trait AgencyPolicy: Send + Sync + fmt::Debug {
         format!(
             "{} Policy ({})",
             self.agency().name(),
-            if self.is_strict() { "strict" } else { "lenient" }
+            if self.is_strict() {
+                "strict"
+            } else {
+                "lenient"
+            }
         )
     }
 }

@@ -209,14 +209,10 @@ mod tests {
 
     #[test]
     fn test_apply_length_basic() {
-        let mut dataset = XptDataset::with_columns(
-            "TEST",
-            vec![XptColumn::character("NAME", 100)],
-        );
+        let mut dataset = XptDataset::with_columns("TEST", vec![XptColumn::character("NAME", 100)]);
         dataset.add_row(vec![XptValue::character("John")]);
 
-        let spec = DatasetSpec::new("TEST")
-            .add_variable(VariableSpec::character("NAME", 20));
+        let spec = DatasetSpec::new("TEST").add_variable(VariableSpec::character("NAME", 20));
 
         let result = apply_length(dataset, &spec, ApplyLengthConfig::default()).unwrap();
 
@@ -228,15 +224,13 @@ mod tests {
 
     #[test]
     fn test_apply_length_with_truncation() {
-        let mut dataset = XptDataset::with_columns(
-            "TEST",
-            vec![XptColumn::character("NAME", 100)],
-        );
-        dataset.add_row(vec![XptValue::character("This is a very long name that will be truncated")]);
+        let mut dataset = XptDataset::with_columns("TEST", vec![XptColumn::character("NAME", 100)]);
+        dataset.add_row(vec![XptValue::character(
+            "This is a very long name that will be truncated",
+        )]);
         dataset.add_row(vec![XptValue::character("Short")]);
 
-        let spec = DatasetSpec::new("TEST")
-            .add_variable(VariableSpec::character("NAME", 10));
+        let spec = DatasetSpec::new("TEST").add_variable(VariableSpec::character("NAME", 10));
 
         let result = apply_length(dataset, &spec, ApplyLengthConfig::default()).unwrap();
 
@@ -250,14 +244,10 @@ mod tests {
 
     #[test]
     fn test_apply_length_no_truncation() {
-        let mut dataset = XptDataset::with_columns(
-            "TEST",
-            vec![XptColumn::character("NAME", 100)],
-        );
+        let mut dataset = XptDataset::with_columns("TEST", vec![XptColumn::character("NAME", 100)]);
         dataset.add_row(vec![XptValue::character("Long value here")]);
 
-        let spec = DatasetSpec::new("TEST")
-            .add_variable(VariableSpec::character("NAME", 10));
+        let spec = DatasetSpec::new("TEST").add_variable(VariableSpec::character("NAME", 10));
 
         let config = ApplyLengthConfig::default().with_truncate(false);
         let result = apply_length(dataset, &spec, config).unwrap();
@@ -270,14 +260,11 @@ mod tests {
 
     #[test]
     fn test_apply_length_numeric_column() {
-        let mut dataset = XptDataset::with_columns(
-            "TEST",
-            vec![XptColumn::numeric("AGE")],
-        );
+        let mut dataset = XptDataset::with_columns("TEST", vec![XptColumn::numeric("AGE")]);
         dataset.add_row(vec![XptValue::numeric(25.0)]);
 
-        let spec = DatasetSpec::new("TEST")
-            .add_variable(VariableSpec::numeric("AGE").with_length(4));
+        let spec =
+            DatasetSpec::new("TEST").add_variable(VariableSpec::numeric("AGE").with_length(4));
 
         let result = apply_length(dataset, &spec, ApplyLengthConfig::default()).unwrap();
 
@@ -287,14 +274,10 @@ mod tests {
 
     #[test]
     fn test_apply_length_no_change_needed() {
-        let mut dataset = XptDataset::with_columns(
-            "TEST",
-            vec![XptColumn::character("NAME", 20)],
-        );
+        let mut dataset = XptDataset::with_columns("TEST", vec![XptColumn::character("NAME", 20)]);
         dataset.add_row(vec![XptValue::character("John")]);
 
-        let spec = DatasetSpec::new("TEST")
-            .add_variable(VariableSpec::character("NAME", 20));
+        let spec = DatasetSpec::new("TEST").add_variable(VariableSpec::character("NAME", 20));
 
         let result = apply_length(dataset, &spec, ApplyLengthConfig::default()).unwrap();
 
@@ -313,8 +296,7 @@ mod tests {
         );
         dataset.add_row(vec![XptValue::character("John"), XptValue::character("X")]);
 
-        let spec = DatasetSpec::new("TEST")
-            .add_variable(VariableSpec::character("NAME", 30));
+        let spec = DatasetSpec::new("TEST").add_variable(VariableSpec::character("NAME", 30));
 
         let result = apply_length(dataset, &spec, ApplyLengthConfig::default()).unwrap();
 
@@ -326,14 +308,10 @@ mod tests {
 
     #[test]
     fn test_apply_length_length_increase() {
-        let mut dataset = XptDataset::with_columns(
-            "TEST",
-            vec![XptColumn::character("NAME", 10)],
-        );
+        let mut dataset = XptDataset::with_columns("TEST", vec![XptColumn::character("NAME", 10)]);
         dataset.add_row(vec![XptValue::character("John")]);
 
-        let spec = DatasetSpec::new("TEST")
-            .add_variable(VariableSpec::character("NAME", 50));
+        let spec = DatasetSpec::new("TEST").add_variable(VariableSpec::character("NAME", 50));
 
         let result = apply_length(dataset, &spec, ApplyLengthConfig::default()).unwrap();
 

@@ -66,9 +66,9 @@ pub use agency::{Agency, AgencyPolicy};
 
 // Re-export policy implementations
 pub use custom::CustomPolicy;
-pub use fda::{FdaPolicy, FDA_MAX_FILE_SIZE};
-pub use nmpa::{NmpaPolicy, NMPA_MAX_FILE_SIZE};
-pub use pmda::{PmdaPolicy, PMDA_MAX_FILE_SIZE};
+pub use fda::{FDA_MAX_FILE_SIZE, FdaPolicy};
+pub use nmpa::{NMPA_MAX_FILE_SIZE, NmpaPolicy};
+pub use pmda::{PMDA_MAX_FILE_SIZE, PmdaPolicy};
 
 // Re-export rules
 pub use rules::{FileNamingIssue, FileNamingRules};

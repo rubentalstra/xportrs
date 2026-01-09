@@ -248,7 +248,10 @@ impl fmt::Display for FileNamingIssue {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::WrongExtension { expected, found } => {
-                write!(f, "wrong extension: expected '.{expected}', found '.{found}'")
+                write!(
+                    f,
+                    "wrong extension: expected '.{expected}', found '.{found}'"
+                )
             }
             Self::TooLong { max, actual } => {
                 write!(f, "filename too long: {actual} chars (max {max})")
@@ -283,45 +286,55 @@ mod tests {
     fn test_fda_rules_invalid_extension() {
         let rules = FileNamingRules::fda();
         let issues = rules.validate("dm.csv");
-        assert!(issues
-            .iter()
-            .any(|i| matches!(i, FileNamingIssue::WrongExtension { .. })));
+        assert!(
+            issues
+                .iter()
+                .any(|i| matches!(i, FileNamingIssue::WrongExtension { .. }))
+        );
     }
 
     #[test]
     fn test_fda_rules_too_long() {
         let rules = FileNamingRules::fda();
         let issues = rules.validate("verylongname.xpt");
-        assert!(issues
-            .iter()
-            .any(|i| matches!(i, FileNamingIssue::TooLong { .. })));
+        assert!(
+            issues
+                .iter()
+                .any(|i| matches!(i, FileNamingIssue::TooLong { .. }))
+        );
     }
 
     #[test]
     fn test_fda_rules_uppercase() {
         let rules = FileNamingRules::fda();
         let issues = rules.validate("DM.xpt");
-        assert!(issues
-            .iter()
-            .any(|i| matches!(i, FileNamingIssue::NotLowercase)));
+        assert!(
+            issues
+                .iter()
+                .any(|i| matches!(i, FileNamingIssue::NotLowercase))
+        );
     }
 
     #[test]
     fn test_fda_rules_spaces() {
         let rules = FileNamingRules::fda();
         let issues = rules.validate("d m.xpt");
-        assert!(issues
-            .iter()
-            .any(|i| matches!(i, FileNamingIssue::ContainsSpaces)));
+        assert!(
+            issues
+                .iter()
+                .any(|i| matches!(i, FileNamingIssue::ContainsSpaces))
+        );
     }
 
     #[test]
     fn test_fda_rules_starts_with_number() {
         let rules = FileNamingRules::fda();
         let issues = rules.validate("1dm.xpt");
-        assert!(issues
-            .iter()
-            .any(|i| matches!(i, FileNamingIssue::DoesNotStartWithLetter)));
+        assert!(
+            issues
+                .iter()
+                .any(|i| matches!(i, FileNamingIssue::DoesNotStartWithLetter))
+        );
     }
 
     #[test]

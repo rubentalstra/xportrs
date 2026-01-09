@@ -1,9 +1,9 @@
 //! Name validation rules for datasets and variables.
 
-use crate::error::{ErrorLocation, Severity, ValidationError, ValidationErrorCode};
 use crate::core::header::normalize_name;
+use crate::error::{ErrorLocation, Severity, ValidationError, ValidationErrorCode};
 use crate::types::{XptColumn, XptDataset};
-use crate::validation::{ValidationContext, ValidationMode, ValidationRule};
+use crate::validation::{ValidationContext, ValidationRule};
 
 use super::is_valid_sas_name;
 
@@ -13,10 +13,6 @@ pub struct DatasetNameRule;
 impl ValidationRule for DatasetNameRule {
     fn name(&self) -> &'static str {
         "DatasetName"
-    }
-
-    fn applies_to(&self, _mode: ValidationMode) -> bool {
-        true // Always applies
     }
 
     fn validate_dataset(
@@ -100,10 +96,6 @@ impl ValidationRule for VariableNameRule {
         "VariableName"
     }
 
-    fn applies_to(&self, _mode: ValidationMode) -> bool {
-        true // Always applies
-    }
-
     fn validate_column(
         &self,
         column: &XptColumn,
@@ -181,9 +173,10 @@ impl ValidationRule for VariableNameRule {
 mod tests {
     use super::*;
     use crate::XptVersion;
+    use crate::validation::ActionLevel;
 
     fn make_context(version: XptVersion) -> ValidationContext {
-        ValidationContext::new(version, ValidationMode::Basic)
+        ValidationContext::new(version, ActionLevel::Warn)
     }
 
     #[test]

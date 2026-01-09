@@ -134,11 +134,7 @@ pub fn apply_format(
 
             // Check if format change is needed
             if col.format != new_format_name {
-                let change = FormatChange::new(
-                    &col.name,
-                    old_format,
-                    format_spec.to_string(),
-                );
+                let change = FormatChange::new(&col.name, old_format, format_spec.to_string());
 
                 col.format = new_format_name;
                 col.format_length = format_spec.width;
@@ -187,10 +183,7 @@ mod tests {
     fn test_apply_format_basic() {
         let dataset = XptDataset::with_columns(
             "TEST",
-            vec![
-                XptColumn::numeric("AGE"),
-                XptColumn::numeric("DATE"),
-            ],
+            vec![XptColumn::numeric("AGE"), XptColumn::numeric("DATE")],
         );
 
         let spec = DatasetSpec::new("TEST")
@@ -210,10 +203,7 @@ mod tests {
 
     #[test]
     fn test_apply_format_with_decimals() {
-        let dataset = XptDataset::with_columns(
-            "TEST",
-            vec![XptColumn::numeric("VALUE")],
-        );
+        let dataset = XptDataset::with_columns("TEST", vec![XptColumn::numeric("VALUE")]);
 
         let spec = DatasetSpec::new("TEST").add_variable(
             VariableSpec::numeric("VALUE").with_format(FormatSpec::with_decimals("BEST", 12, 2)),
@@ -274,10 +264,7 @@ mod tests {
         let result = apply_format(dataset, &spec, ApplyFormatConfig::default()).unwrap();
 
         // Format should remain unchanged
-        assert_eq!(
-            result.dataset.columns[0].format,
-            Some("BEST".to_string())
-        );
+        assert_eq!(result.dataset.columns[0].format, Some("BEST".to_string()));
         assert!(result.changes.is_empty());
     }
 
@@ -285,10 +272,7 @@ mod tests {
     fn test_apply_format_variable_not_in_spec() {
         let dataset = XptDataset::with_columns(
             "TEST",
-            vec![
-                XptColumn::numeric("AGE"),
-                XptColumn::numeric("EXTRA"),
-            ],
+            vec![XptColumn::numeric("AGE"), XptColumn::numeric("EXTRA")],
         );
 
         let spec = DatasetSpec::new("TEST")
@@ -304,10 +288,7 @@ mod tests {
 
     #[test]
     fn test_apply_format_character_format() {
-        let dataset = XptDataset::with_columns(
-            "TEST",
-            vec![XptColumn::character("NAME", 20)],
-        );
+        let dataset = XptDataset::with_columns("TEST", vec![XptColumn::character("NAME", 20)]);
 
         let spec = DatasetSpec::new("TEST")
             .add_variable(VariableSpec::character("NAME", 20).with_format(FormatSpec::char(20)));
@@ -320,10 +301,7 @@ mod tests {
 
     #[test]
     fn test_apply_format_informat() {
-        let dataset = XptDataset::with_columns(
-            "TEST",
-            vec![XptColumn::numeric("DATE")],
-        );
+        let dataset = XptDataset::with_columns("TEST", vec![XptColumn::numeric("DATE")]);
 
         let spec = DatasetSpec::new("TEST").add_variable(
             VariableSpec::numeric("DATE")

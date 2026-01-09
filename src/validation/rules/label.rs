@@ -2,7 +2,7 @@
 
 use crate::error::{ErrorLocation, Severity, ValidationError, ValidationErrorCode};
 use crate::types::{XptColumn, XptDataset};
-use crate::validation::{ValidationContext, ValidationMode, ValidationRule};
+use crate::validation::{ValidationContext, ValidationRule};
 
 use super::is_ascii_printable;
 
@@ -12,10 +12,6 @@ pub struct DatasetLabelRule;
 impl ValidationRule for DatasetLabelRule {
     fn name(&self) -> &'static str {
         "DatasetLabel"
-    }
-
-    fn applies_to(&self, _mode: ValidationMode) -> bool {
-        true
     }
 
     fn validate_dataset(
@@ -44,7 +40,7 @@ impl ValidationRule for DatasetLabelRule {
                 ));
             }
 
-            // Check for non-printable ASCII (FDA requirement)
+            // Check for non-printable ASCII
             if !is_ascii_printable(label) {
                 errors.push(ValidationError::new(
                     ValidationErrorCode::NonAsciiLabel,
@@ -52,11 +48,8 @@ impl ValidationRule for DatasetLabelRule {
                     ErrorLocation::Dataset {
                         name: dataset.name.clone(),
                     },
-                    if ctx.is_fda_compliant() {
-                        Severity::Error
-                    } else {
-                        Severity::Warning
-                    },
+                    // Use Warning by default - policy layer controls strictness
+                    Severity::Warning,
                 ));
             }
         }
@@ -71,10 +64,6 @@ pub struct VariableLabelRule;
 impl ValidationRule for VariableLabelRule {
     fn name(&self) -> &'static str {
         "VariableLabel"
-    }
-
-    fn applies_to(&self, _mode: ValidationMode) -> bool {
-        true
     }
 
     fn validate_column(
@@ -118,11 +107,8 @@ impl ValidationRule for VariableLabelRule {
                         column.name
                     ),
                     location,
-                    if ctx.is_fda_compliant() {
-                        Severity::Error
-                    } else {
-                        Severity::Warning
-                    },
+                    // Use Warning by default - policy layer controls strictness
+                    Severity::Warning,
                 ));
             }
         }
@@ -134,17 +120,11 @@ impl ValidationRule for VariableLabelRule {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::validation::ActionLevel;
     use crate::XptVersion;
 
-    fn make_context(version: XptVersion, fda: bool) -> ValidationContext {
-        ValidationContext::new(
-            version,
-            if fda {
-                ValidationMode::FdaCompliant
-            } else {
-                ValidationMode::Basic
-            },
-        )
+    fn make_context(version: XptVersion) -> ValidationContext {
+        ValidationContext::new(version, ActionLevel::Warn)
     }
 
     #[test]
@@ -152,7 +132,7 @@ mod tests {
         let rule = DatasetLabelRule;
         let mut dataset = XptDataset::new("DM");
         dataset.label = Some("Demographics".to_string());
-        let ctx = make_context(XptVersion::V5, false);
+        let ctx = make_context(XptVersion::V5);
 
         let errors = rule.validate_dataset(&dataset, &ctx);
         assert!(errors.is_empty());
@@ -163,7 +143,7 @@ mod tests {
         let rule = DatasetLabelRule;
         let mut dataset = XptDataset::new("DM");
         dataset.label = Some("A".repeat(50)); // > 40 chars
-        let ctx = make_context(XptVersion::V5, false);
+        let ctx = make_context(XptVersion::V5);
 
         let errors = rule.validate_dataset(&dataset, &ctx);
         assert!(
@@ -179,8 +159,8 @@ mod tests {
         let mut column = XptColumn::character("USUBJID", 20);
         column.label = Some("A".repeat(100)); // > 40 but < 256
 
-        let ctx_v5 = make_context(XptVersion::V5, false);
-        let ctx_v8 = make_context(XptVersion::V8, false);
+        let ctx_v5 = make_context(XptVersion::V5);
+        let ctx_v8 = make_context(XptVersion::V8);
 
         let errors_v5 = rule.validate_column(&column, 0, "DM", &ctx_v5);
         let errors_v8 = rule.validate_column(&column, 0, "DM", &ctx_v8);
@@ -198,27 +178,20 @@ mod tests {
     }
 
     #[test]
-    fn test_label_non_ascii_fda() {
+    fn test_label_non_ascii() {
         let rule = VariableLabelRule;
         let mut column = XptColumn::character("USUBJID", 20);
         column.label = Some("Subject Idéntifier".to_string()); // non-ASCII 'é'
 
-        let ctx_fda = make_context(XptVersion::V5, true);
-        let ctx_basic = make_context(XptVersion::V5, false);
+        let ctx = make_context(XptVersion::V5);
+        let errors = rule.validate_column(&column, 0, "DM", &ctx);
 
-        let errors_fda = rule.validate_column(&column, 0, "DM", &ctx_fda);
-        let errors_basic = rule.validate_column(&column, 0, "DM", &ctx_basic);
-
-        // FDA mode: error
+        // Non-ASCII should be a warning (policy layer makes it error for FDA)
         assert!(
-            errors_fda
+            errors
                 .iter()
                 .any(|e| e.code == ValidationErrorCode::NonAsciiLabel
-                    && e.severity == Severity::Error)
+                    && e.severity == Severity::Warning)
         );
-        // Basic mode: warning
-        assert!(errors_basic.iter().any(
-            |e| e.code == ValidationErrorCode::NonAsciiLabel && e.severity == Severity::Warning
-        ));
     }
 }

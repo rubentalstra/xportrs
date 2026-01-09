@@ -5,19 +5,19 @@
 
 use std::path::Path;
 
+use crate::XptVersion;
+use crate::core::writer::write_xpt_with_options;
 use crate::error::TransformError;
 use crate::spec::DatasetSpec;
 use crate::types::{XptDataset, XptWriterOptions};
 use crate::validation::ActionLevel;
-use crate::core::writer::write_xpt_with_options;
-use crate::XptVersion;
 
 use super::apply_df_label::apply_df_label;
-use super::apply_format::{apply_format, ApplyFormatConfig};
-use super::apply_label::{apply_label, ApplyLabelConfig};
-use super::apply_length::{apply_length, ApplyLengthConfig};
-use super::apply_order::{apply_order, ApplyOrderConfig};
-use super::coerce_type::{coerce_type, CoerceTypeConfig};
+use super::apply_format::{ApplyFormatConfig, apply_format};
+use super::apply_label::{ApplyLabelConfig, apply_label};
+use super::apply_length::{ApplyLengthConfig, apply_length};
+use super::apply_order::{ApplyOrderConfig, apply_order};
+use super::coerce_type::{CoerceTypeConfig, coerce_type};
 use super::report::TransformReport;
 
 /// Configuration for the full xportr pipeline.
@@ -538,14 +538,11 @@ mod tests {
         let mut dataset = XptDataset::with_columns(
             "TEST",
             vec![
-                XptColumn::character("AGE", 8), // Wrong type
+                XptColumn::character("AGE", 8),    // Wrong type
                 XptColumn::character("NAME", 100), // Wrong length
             ],
         );
-        dataset.add_row(vec![
-            XptValue::character("25"),
-            XptValue::character("John"),
-        ]);
+        dataset.add_row(vec![XptValue::character("25"), XptValue::character("John")]);
 
         let spec = DatasetSpec::new("TEST")
             .with_label("Test Dataset")
@@ -616,10 +613,7 @@ mod tests {
 
     #[test]
     fn test_xportr_selective_transforms() {
-        let mut dataset = XptDataset::with_columns(
-            "TEST",
-            vec![XptColumn::character("AGE", 8)],
-        );
+        let mut dataset = XptDataset::with_columns("TEST", vec![XptColumn::character("AGE", 8)]);
         dataset.add_row(vec![XptValue::character("25")]);
 
         let spec = DatasetSpec::new("TEST")
@@ -651,7 +645,9 @@ mod tests {
         report
             .type_report
             .type_conversions
-            .push(super::super::report::TypeConversion::new("AGE", "Char", "Num"));
+            .push(super::super::report::TypeConversion::new(
+                "AGE", "Char", "Num",
+            ));
         report.type_report.warnings.push("Test warning".into());
         report.dataset_label_changed = true;
 

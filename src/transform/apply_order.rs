@@ -197,10 +197,7 @@ pub fn apply_order(
     // Add unmatched columns based on config
     match config.unmatched_position {
         UnmatchedPosition::Start => {
-            new_order = unmatched_indices
-                .into_iter()
-                .chain(new_order)
-                .collect();
+            new_order = unmatched_indices.into_iter().chain(new_order).collect();
         }
         UnmatchedPosition::End => {
             new_order.extend(unmatched_indices);
@@ -299,10 +296,7 @@ mod tests {
     fn test_apply_order_by_spec_position() {
         let mut dataset = XptDataset::with_columns(
             "TEST",
-            vec![
-                XptColumn::character("B", 1),
-                XptColumn::character("A", 1),
-            ],
+            vec![XptColumn::character("B", 1), XptColumn::character("A", 1)],
         );
         dataset.add_row(vec![XptValue::character("b"), XptValue::character("a")]);
 
@@ -321,10 +315,7 @@ mod tests {
     fn test_apply_order_no_change_needed() {
         let mut dataset = XptDataset::with_columns(
             "TEST",
-            vec![
-                XptColumn::character("A", 1),
-                XptColumn::character("B", 1),
-            ],
+            vec![XptColumn::character("A", 1), XptColumn::character("B", 1)],
         );
         dataset.add_row(vec![XptValue::character("a"), XptValue::character("b")]);
 
@@ -349,8 +340,7 @@ mod tests {
         );
         dataset.add_row(vec![XptValue::character("x"), XptValue::character("a")]);
 
-        let spec = DatasetSpec::new("TEST")
-            .add_variable(VariableSpec::character("A", 1));
+        let spec = DatasetSpec::new("TEST").add_variable(VariableSpec::character("A", 1));
 
         let config = ApplyOrderConfig::default().with_unmatched_position(UnmatchedPosition::End);
         let result = apply_order(dataset, &spec, config).unwrap();
@@ -371,8 +361,7 @@ mod tests {
         );
         dataset.add_row(vec![XptValue::character("a"), XptValue::character("x")]);
 
-        let spec = DatasetSpec::new("TEST")
-            .add_variable(VariableSpec::character("A", 1));
+        let spec = DatasetSpec::new("TEST").add_variable(VariableSpec::character("A", 1));
 
         let config = ApplyOrderConfig::default().with_unmatched_position(UnmatchedPosition::Start);
         let result = apply_order(dataset, &spec, config).unwrap();
@@ -393,8 +382,7 @@ mod tests {
         );
         dataset.add_row(vec![XptValue::character("a"), XptValue::character("x")]);
 
-        let spec = DatasetSpec::new("TEST")
-            .add_variable(VariableSpec::character("A", 1));
+        let spec = DatasetSpec::new("TEST").add_variable(VariableSpec::character("A", 1));
 
         let config = ApplyOrderConfig::default().with_unmatched_position(UnmatchedPosition::Remove);
         let result = apply_order(dataset, &spec, config).unwrap();
@@ -407,10 +395,7 @@ mod tests {
 
     #[test]
     fn test_apply_order_variable_not_in_data() {
-        let mut dataset = XptDataset::with_columns(
-            "TEST",
-            vec![XptColumn::character("A", 1)],
-        );
+        let mut dataset = XptDataset::with_columns("TEST", vec![XptColumn::character("A", 1)]);
         dataset.add_row(vec![XptValue::character("a")]);
 
         let spec = DatasetSpec::new("TEST")
@@ -431,8 +416,7 @@ mod tests {
         );
         dataset.add_row(vec![XptValue::character("25")]);
 
-        let spec = DatasetSpec::new("TEST")
-            .add_variable(VariableSpec::character("age", 1)); // Lowercase
+        let spec = DatasetSpec::new("TEST").add_variable(VariableSpec::character("age", 1)); // Lowercase
 
         let result = apply_order(dataset, &spec, ApplyOrderConfig::default()).unwrap();
 

@@ -37,13 +37,13 @@ use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::Path;
 
-use crate::error::{Result, XptError};
 use crate::core::header::{
     LabelSectionType, RECORD_LEN, align_to_record, is_label_header, parse_dataset_label,
     parse_dataset_name, parse_dataset_type, parse_labelv8_data, parse_labelv9_data,
     parse_namestr_len, parse_namestr_records, parse_variable_count, validate_dscrptr_header,
     validate_library_header, validate_member_header, validate_namestr_header, validate_obs_header,
 };
+use crate::error::{Result, XptError};
 use crate::types::{XptDataset, XptReaderOptions, XptValue};
 
 pub use observation::{decode_char, decode_numeric, observation_length, parse_observation};

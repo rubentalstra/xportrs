@@ -78,11 +78,15 @@ impl ErrorCodeExt for XptError {
             )),
             Self::DatasetNameTooLong { name, limit } => Some(format!(
                 "Dataset name '{}' has {} characters. Maximum for this version is {}. Consider using V8 format for longer names.",
-                name, name.len(), limit
+                name,
+                name.len(),
+                limit
             )),
             Self::VariableNameTooLong { name, limit } => Some(format!(
                 "Variable name '{}' has {} characters. Maximum is {}. Consider using V8 format for longer names.",
-                name, name.len(), limit
+                name,
+                name.len(),
+                limit
             )),
             Self::DuplicateVariable { name } => Some(format!(
                 "Variable '{}' appears more than once. Remove or rename duplicates.",
@@ -115,7 +119,12 @@ impl ErrorCodeExt for TransformError {
                 "Failed to convert variable '{}': {}. Check that the data type in your spec matches the actual data.",
                 variable, message
             )),
-            Self::Truncation { variable, original_length, max_length, .. } => Some(format!(
+            Self::Truncation {
+                variable,
+                original_length,
+                max_length,
+                ..
+            } => Some(format!(
                 "Value in '{}' was {} characters but max is {}. Consider increasing length in spec or truncating data.",
                 variable, original_length, max_length
             )),
@@ -127,7 +136,11 @@ impl ErrorCodeExt for TransformError {
                 "Variable '{}' is in spec but missing from data. Add it to your data or remove from spec.",
                 variable
             )),
-            Self::LabelTooLong { variable, max_length, actual_length } => Some(format!(
+            Self::LabelTooLong {
+                variable,
+                max_length,
+                actual_length,
+            } => Some(format!(
                 "Label for '{}' is {} characters but max is {}. Shorten the label in your spec.",
                 variable, actual_length, max_length
             )),
@@ -146,7 +159,9 @@ impl ErrorCodeExt for ValidationError {
             ValidationErrorCode::EmptyName => "xportrs::validation::empty_name",
             ValidationErrorCode::NameTooLong => "xportrs::validation::name_too_long",
             ValidationErrorCode::InvalidNameCharacter => "xportrs::validation::invalid_name_char",
-            ValidationErrorCode::NameStartsWithNumber => "xportrs::validation::name_starts_with_number",
+            ValidationErrorCode::NameStartsWithNumber => {
+                "xportrs::validation::name_starts_with_number"
+            }
             ValidationErrorCode::NonAsciiName => "xportrs::validation::non_ascii_name",
             ValidationErrorCode::LowercaseName => "xportrs::validation::lowercase_name",
             ValidationErrorCode::LabelTooLong => "xportrs::validation::label_too_long",
@@ -154,19 +169,29 @@ impl ErrorCodeExt for ValidationError {
             ValidationErrorCode::NonPrintableLabel => "xportrs::validation::non_printable_label",
             ValidationErrorCode::FormatNameTooLong => "xportrs::validation::format_name_too_long",
             ValidationErrorCode::InvalidFormatName => "xportrs::validation::invalid_format_name",
-            ValidationErrorCode::InformatNameTooLong => "xportrs::validation::informat_name_too_long",
-            ValidationErrorCode::InvalidInformatName => "xportrs::validation::invalid_informat_name",
+            ValidationErrorCode::InformatNameTooLong => {
+                "xportrs::validation::informat_name_too_long"
+            }
+            ValidationErrorCode::InvalidInformatName => {
+                "xportrs::validation::invalid_informat_name"
+            }
             ValidationErrorCode::CustomFormat => "xportrs::validation::custom_format",
             ValidationErrorCode::DuplicateColumnName => "xportrs::validation::duplicate_column",
             ValidationErrorCode::ZeroLengthColumn => "xportrs::validation::zero_length_column",
-            ValidationErrorCode::ColumnLengthTooLong => "xportrs::validation::column_length_too_long",
+            ValidationErrorCode::ColumnLengthTooLong => {
+                "xportrs::validation::column_length_too_long"
+            }
             ValidationErrorCode::EmptyDataset => "xportrs::validation::empty_dataset",
             ValidationErrorCode::TooManyColumns => "xportrs::validation::too_many_columns",
             ValidationErrorCode::RowLengthMismatch => "xportrs::validation::row_length_mismatch",
-            ValidationErrorCode::CharacterValueTooLong => "xportrs::validation::char_value_too_long",
+            ValidationErrorCode::CharacterValueTooLong => {
+                "xportrs::validation::char_value_too_long"
+            }
             ValidationErrorCode::NonAsciiValue => "xportrs::validation::non_ascii_value",
             ValidationErrorCode::WrongVersion => "xportrs::validation::wrong_version",
-            ValidationErrorCode::DatasetNameMismatch => "xportrs::validation::dataset_name_mismatch",
+            ValidationErrorCode::DatasetNameMismatch => {
+                "xportrs::validation::dataset_name_mismatch"
+            }
             ValidationErrorCode::MultipleDatasets => "xportrs::validation::multiple_datasets",
             ValidationErrorCode::CompressedData => "xportrs::validation::compressed_data",
             ValidationErrorCode::VariableNotInSpec => "xportrs::validation::variable_not_in_spec",
@@ -176,8 +201,12 @@ impl ErrorCodeExt for ValidationError {
             ValidationErrorCode::OrderMismatch => "xportrs::validation::order_mismatch",
             ValidationErrorCode::FormatMismatch => "xportrs::validation::format_mismatch",
             ValidationErrorCode::LabelMismatch => "xportrs::validation::label_mismatch",
-            ValidationErrorCode::DatasetNameSpecMismatch => "xportrs::validation::dataset_name_spec_mismatch",
-            ValidationErrorCode::DatasetLabelMismatch => "xportrs::validation::dataset_label_mismatch",
+            ValidationErrorCode::DatasetNameSpecMismatch => {
+                "xportrs::validation::dataset_name_spec_mismatch"
+            }
+            ValidationErrorCode::DatasetLabelMismatch => {
+                "xportrs::validation::dataset_label_mismatch"
+            }
         }
     }
 
@@ -210,7 +239,8 @@ impl Diagnostic for XptError {
     }
 
     fn help<'a>(&'a self) -> Option<Box<dyn std::fmt::Display + 'a>> {
-        self.help_message().map(|s| Box::new(s) as Box<dyn std::fmt::Display>)
+        self.help_message()
+            .map(|s| Box::new(s) as Box<dyn std::fmt::Display>)
     }
 }
 
@@ -221,7 +251,8 @@ impl Diagnostic for TransformError {
     }
 
     fn help<'a>(&'a self) -> Option<Box<dyn std::fmt::Display + 'a>> {
-        self.help_message().map(|s| Box::new(s) as Box<dyn std::fmt::Display>)
+        self.help_message()
+            .map(|s| Box::new(s) as Box<dyn std::fmt::Display>)
     }
 }
 
@@ -232,7 +263,9 @@ mod tests {
 
     #[test]
     fn test_xpt_error_codes() {
-        let err = XptError::FileNotFound { path: PathBuf::from("test.xpt") };
+        let err = XptError::FileNotFound {
+            path: PathBuf::from("test.xpt"),
+        };
         assert_eq!(err.error_code(), "xportrs::file_not_found");
         assert!(err.help_message().is_some());
     }

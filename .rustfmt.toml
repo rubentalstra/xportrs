@@ -6,22 +6,22 @@ tab_spaces = 4
 newline_style = "Auto"
 
 # Import organization
-imports_granularity = "Module"
-group_imports = "StdExternalCrate"
+#imports_granularity = "Module" # unstable feature
+#group_imports = "StdExternalCrate" # unstable feature
 reorder_imports = true
 
 # Formatting style
 use_field_init_shorthand = true
 use_try_shorthand = true
-format_strings = false
-format_macro_matchers = false
+#format_strings = false # unstable feature
+#format_macro_matchers = false # unstable feature
 
 # Comments and docs
-wrap_comments = true
-comment_width = 80
-normalize_comments = true
-normalize_doc_attributes = true
+#wrap_comments = true # unstable feature
+#comment_width = 80 # unstable feature
+#normalize_comments = true # unstable feature
+#normalize_doc_attributes = true # unstable feature
 
 # Control flow
-match_arm_blocks = true
+#match_arm_blocks = true # unstable feature
 match_arm_leading_pipes = "Never"

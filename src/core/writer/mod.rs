@@ -76,7 +76,6 @@ use std::io::{BufWriter, Write};
 use std::path::Path;
 
 use crate::XptVersion;
-use crate::error::{Result, XptError};
 use crate::core::header::{
     LabelSectionType, LibraryInfo, RECORD_LEN, build_dscrptr_header, build_labelv8_data,
     build_labelv8_header, build_labelv9_data, build_labelv9_header, build_library_header,
@@ -84,6 +83,7 @@ use crate::core::header::{
     build_namestr_header, build_obs_header, build_real_header, build_second_header,
     determine_label_section,
 };
+use crate::error::{Result, XptError};
 use crate::types::{XptColumn, XptDataset, XptWriterOptions};
 
 pub use builder::{ValidatedWriter, XptWriterBuilder, validate_dataset};

@@ -111,7 +111,11 @@ impl LabelChange {
 impl fmt::Display for LabelChange {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self.old_label {
-            Some(old) => write!(f, "{}: \"{}\" -> \"{}\"", self.variable, old, self.new_label),
+            Some(old) => write!(
+                f,
+                "{}: \"{}\" -> \"{}\"",
+                self.variable, old, self.new_label
+            ),
             None => write!(f, "{}: (none) -> \"{}\"", self.variable, self.new_label),
         }
     }
@@ -341,7 +345,10 @@ impl TransformReport {
         let mut parts = Vec::new();
 
         if !self.type_conversions.is_empty() {
-            parts.push(format!("{} type conversion(s)", self.type_conversions.len()));
+            parts.push(format!(
+                "{} type conversion(s)",
+                self.type_conversions.len()
+            ));
         }
         if !self.label_changes.is_empty() {
             parts.push(format!("{} label change(s)", self.label_changes.len()));

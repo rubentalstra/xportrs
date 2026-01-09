@@ -6,7 +6,7 @@
 //! Run with: `cargo run --example custom_policy`
 
 use xportrs::policy::AgencyPolicy;
-use xportrs::validation::{ValidationMode, Validator};
+use xportrs::validation::Validator;
 use xportrs::{CustomPolicy, FdaPolicy, NmpaPolicy, PmdaPolicy, XptDataset, XptVersion};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -15,13 +15,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create a sample dataset for validation
     let mut dataset = XptDataset::new("DM");
     dataset.label = Some("Demographics".to_string());
-    dataset.columns.push(
-        xportrs::XptColumn::character("STUDYID", 12).with_label("Study Identifier"),
-    );
-    dataset.columns.push(
-        xportrs::XptColumn::character("USUBJID", 20).with_label("Unique Subject Identifier"),
-    );
-    dataset.columns.push(xportrs::XptColumn::numeric("AGE").with_label("Age"));
+    dataset
+        .columns
+        .push(xportrs::XptColumn::character("STUDYID", 12).with_label("Study Identifier"));
+    dataset
+        .columns
+        .push(xportrs::XptColumn::character("USUBJID", 20).with_label("Unique Subject Identifier"));
+    dataset
+        .columns
+        .push(xportrs::XptColumn::numeric("AGE").with_label("Age"));
 
     // =========================================
     // Built-in FDA Policy (Strict)
@@ -48,9 +50,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         fda_strict.require_uppercase_names()
     );
 
-    let validator = Validator::fda_compliant(XptVersion::V5);
+    let validator = Validator::fda();
     let report = validator.validate(&dataset);
-    println!("   Validation: {} issues found\n", report.errors.len() + report.warnings.len());
+    println!(
+        "   Validation: {} issues found\n",
+        report.errors.len() + report.warnings.len()
+    );
 
     // =========================================
     // Built-in FDA Policy (Lenient)
@@ -60,9 +65,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("   - Is strict: {}", fda_lenient.is_strict());
     println!("   - Description: {}", fda_lenient.description());
 
-    let validator = Validator::new(XptVersion::V5);
+    let validator = Validator::basic(XptVersion::V5);
     let report = validator.validate(&dataset);
-    println!("   Validation: {} issues found\n", report.errors.len() + report.warnings.len());
+    println!(
+        "   Validation: {} issues found\n",
+        report.errors.len() + report.warnings.len()
+    );
 
     // =========================================
     // Built-in NMPA Policy (China)
@@ -72,9 +80,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("   - Description: {}", nmpa.description());
     println!("   - Requires ASCII: {}", nmpa.require_ascii());
 
-    let validator = Validator::new(XptVersion::V5);
+    let validator = Validator::basic(XptVersion::V5);
     let report = validator.validate(&dataset);
-    println!("   Validation: {} issues found\n", report.errors.len() + report.warnings.len());
+    println!(
+        "   Validation: {} issues found\n",
+        report.errors.len() + report.warnings.len()
+    );
 
     // =========================================
     // Built-in PMDA Policy (Japan)
@@ -83,9 +94,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let pmda = PmdaPolicy::default();
     println!("   - Description: {}", pmda.description());
 
-    let validator = Validator::new(XptVersion::V5);
+    let validator = Validator::basic(XptVersion::V5);
     let report = validator.validate(&dataset);
-    println!("   Validation: {} issues found\n", report.errors.len() + report.warnings.len());
+    println!(
+        "   Validation: {} issues found\n",
+        report.errors.len() + report.warnings.len()
+    );
 
     // =========================================
     // Custom Policy - Research Use
@@ -107,9 +121,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("   - Policy description: {}", research_policy.description());
 
-    let validator = Validator::new(XptVersion::V8);
+    let validator = Validator::basic(XptVersion::V8);
     let report = validator.validate(&dataset);
-    println!("   Validation: {} issues found\n", report.errors.len() + report.warnings.len());
+    println!(
+        "   Validation: {} issues found\n",
+        report.errors.len() + report.warnings.len()
+    );
 
     // =========================================
     // Custom Policy - Internal QC
@@ -126,9 +143,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("   - Policy description: {}", qc_policy.description());
     println!("   - Max file size: {:?}", qc_policy.max_file_size());
 
-    let validator = Validator::fda_compliant(XptVersion::V5);
+    let validator = Validator::fda();
     let report = validator.validate(&dataset);
-    println!("   Validation: {} issues found\n", report.errors.len() + report.warnings.len());
+    println!(
+        "   Validation: {} issues found\n",
+        report.errors.len() + report.warnings.len()
+    );
 
     // =========================================
     // Custom Policy - External Partner
@@ -145,9 +165,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("   - Policy description: {}", partner_policy.description());
 
-    let validator = Validator::new(XptVersion::V8).with_mode(ValidationMode::Custom);
+    let validator = Validator::basic(XptVersion::V8);
     let report = validator.validate(&dataset);
-    println!("   Validation: {} issues found\n", report.errors.len() + report.warnings.len());
+    println!(
+        "   Validation: {} issues found\n",
+        report.errors.len() + report.warnings.len()
+    );
 
     // =========================================
     // Comparing Policy Constraints

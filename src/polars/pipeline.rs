@@ -7,11 +7,11 @@ use std::path::Path;
 
 use polars::prelude::DataFrame;
 
+use crate::core::writer::write_xpt_with_options;
 use crate::error::TransformError;
 use crate::spec::DatasetSpec;
 use crate::transform::{PipelineReport, XportrConfig};
 use crate::types::{XptDataset, XptWriterOptions};
-use crate::core::writer::write_xpt_with_options;
 
 /// Write a DataFrame to an XPT file with full xportr pipeline.
 ///

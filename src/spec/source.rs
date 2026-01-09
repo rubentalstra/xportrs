@@ -186,7 +186,10 @@ mod polars_source {
 
         /// Check if a column exists in the DataFrame.
         fn has_column(&self, name: &str) -> bool {
-            self.df.get_column_names().iter().any(|c| c.as_str() == name)
+            self.df
+                .get_column_names()
+                .iter()
+                .any(|c| c.as_str() == name)
         }
 
         /// Get a string value from a row.
@@ -443,7 +446,10 @@ mod polars_source {
             assert_eq!(spec.name, "DM");
             assert_eq!(spec.variables.len(), 3);
             assert_eq!(spec.variables[0].name, "USUBJID");
-            assert_eq!(spec.variables[0].label.as_deref(), Some("Unique Subject ID"));
+            assert_eq!(
+                spec.variables[0].label.as_deref(),
+                Some("Unique Subject ID")
+            );
             assert!(spec.variables[0].data_type.is_character());
             assert_eq!(spec.variables[0].length, Some(20));
             assert_eq!(spec.variables[0].order, Some(1));

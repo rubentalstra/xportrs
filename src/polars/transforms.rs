@@ -7,16 +7,16 @@ use std::path::Path;
 
 use polars::prelude::DataFrame;
 
+use crate::core::writer::write_xpt_with_options;
 use crate::error::TransformError;
 use crate::spec::DatasetSpec;
 use crate::transform::{
-    apply_format, apply_label, apply_length, apply_order, coerce_type, ApplyFormatConfig,
-    ApplyLabelConfig, ApplyLengthConfig, ApplyOrderConfig, CoerceTypeConfig, PipelineReport,
-    XportrConfig,
+    ApplyFormatConfig, ApplyLabelConfig, ApplyLengthConfig, ApplyOrderConfig, CoerceTypeConfig,
+    PipelineReport, XportrConfig, apply_format, apply_label, apply_length, apply_order,
+    coerce_type,
 };
 use crate::types::{XptDataset, XptWriterOptions};
 use crate::validation::ActionLevel;
-use crate::core::writer::write_xpt_with_options;
 
 use super::metadata::MetadataFrame;
 
@@ -525,7 +525,11 @@ mod tests {
 
     fn create_test_spec() -> DatasetSpec {
         DatasetSpec::new("TEST")
-            .add_variable(VariableSpec::numeric("AGE").with_label("Age in Years").with_order(1))
+            .add_variable(
+                VariableSpec::numeric("AGE")
+                    .with_label("Age in Years")
+                    .with_order(1),
+            )
             .add_variable(
                 VariableSpec::character("NAME", 20)
                     .with_label("Subject Name")
