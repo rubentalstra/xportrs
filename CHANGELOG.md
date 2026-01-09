@@ -17,11 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - IEEE to IBM floating-point conversion and vice versa
 - All 28 SAS missing value codes (`.`, `.A`-`.Z`, `._`)
 - Streaming API for memory-efficient processing of large files
-- Optional Polars integration (`polars` feature)
+- Polars DataFrame integration (included by default)
 - Optional Serde support (`serde` feature)
 - CDISC validation rules
 - FDA compliance checking
 
-[unreleased]: https://github.com/rubentalstra/xportrs/compare/v0.0.1...HEAD
+[unreleased]: https://github.com/rubentalstra/xportrs/compare/v0.1.0...HEAD
+
+[0.1.0]: https://github.com/rubentalstra/xportrs/compare/v0.0.1...v0.1.0
 
 [0.0.1]: https://github.com/rubentalstra/xportrs/releases/tag/v0.0.1

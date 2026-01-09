@@ -1,0 +1,27 @@
+# Rust formatting configuration - best practices for library code
+edition = "2024"
+max_width = 100
+use_small_heuristics = "Default"
+tab_spaces = 4
+newline_style = "Auto"
+
+# Import organization
+#imports_granularity = "Module" # unstable feature
+#group_imports = "StdExternalCrate" # unstable feature
+reorder_imports = true
+
+# Formatting style
+use_field_init_shorthand = true
+use_try_shorthand = true
+#format_strings = false # unstable feature
+#format_macro_matchers = false # unstable feature
+
+# Comments and docs
+#wrap_comments = true # unstable feature
+#comment_width = 80 # unstable feature
+#normalize_comments = true # unstable feature
+#normalize_doc_attributes = true # unstable feature
+
+# Control flow
+#match_arm_blocks = true # unstable feature
+match_arm_leading_pipes = "Never"

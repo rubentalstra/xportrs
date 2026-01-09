@@ -1,116 +1,143 @@
-//! SAS Transport (XPT) file format reader and writer.
+//! # xportrs
 //!
-//! This crate provides functionality to read and write SAS Transport V5 and V8 format files,
-//! commonly used for SDTM datasets in regulatory submissions.
+//! Pure Rust SAS XPORT (XPT) reader and writer for CDISC domain datasets.
 //!
-//! # Features
+//! `xportrs` provides a safe, DataFrame-agnostic implementation of XPT v5 I/O
+//! and compliance tooling for clinical trial data submissions.
 //!
-//! - Full SAS Transport V5 format support (default, for maximum compatibility)
-//! - SAS Transport V8 format support (longer names, labels, and formats)
-//! - IEEE ↔ IBM mainframe floating-point conversion
-//! - Support for all 28 SAS missing value codes (`.`, `._`, `.A`-`.Z`)
-//! - Variable metadata including formats and informats
-//! - Optional Polars DataFrame integration (with `polars` feature)
+//! ## Features
 //!
-//! # Format Versions
+//! - **Pure Rust**: No unsafe code (`#![forbid(unsafe_code)]`)
+//! - **DataFrame-agnostic**: Works with any in-memory table representation
+//! - **Agency compliance**: Built-in validation for FDA, NMPA, and PMDA
+//! - **XPT v5**: Full read and write support
+//! - **XPT v8**: API-ready (not yet implemented)
 //!
-//! | Feature | V5 Limit | V8 Limit |
-//! |---------|----------|----------|
-//! | Variable name | 8 chars | 32 chars |
-//! | Variable label | 40 chars | 256 chars |
-//! | Format name | 8 chars | 32 chars |
-//! | Dataset name | 8 chars | 32 chars |
+//! ## Quick Start
 //!
-//! By default, files are written in V5 format. Use [`XptWriterOptions::with_version`]
-//! to write V8 format files. When reading, the format is auto-detected.
-//!
-//! # Example
+//! ### Reading an XPT file
 //!
 //! ```no_run
-//! use std::path::Path;
-//! use xportrs::{XptDataset, XptColumn, XptValue, read_xpt, write_xpt};
+//! use xportrs::Xpt;
 //!
-//! // Read an XPT file
-//! let dataset = read_xpt(Path::new("dm.xpt")).unwrap();
-//! println!("Dataset: {} ({} rows)", dataset.name, dataset.num_rows());
+//! // Simple: read first dataset
+//! let dataset = Xpt::read("ae.xpt")?;
+//! println!("Domain: {}", dataset.domain_code);
+//! println!("Rows: {}", dataset.nrows);
 //!
-//! // Create a new dataset
-//! let mut ds = XptDataset::with_columns(
-//!     "DM",
+//! // With options or specific member
+//! let dm = Xpt::reader("study.xpt")?.read_member("DM")?;
+//! # Ok::<(), xportrs::XportrsError>(())
+//! ```
+//!
+//! ### Writing an XPT file
+//!
+//! ```no_run
+//! use xportrs::{Xpt, Agency, DomainDataset, Column, ColumnData};
+//!
+//! let dataset = DomainDataset::new(
+//!     "AE".to_string(),
 //!     vec![
-//!         XptColumn::character("USUBJID", 20).with_label("Unique Subject ID"),
-//!         XptColumn::numeric("AGE").with_label("Age in Years"),
+//!         Column::new("USUBJID", ColumnData::String(vec![
+//!             Some("01-001".into()),
+//!             Some("01-002".into()),
+//!         ])),
+//!         Column::new("AESEQ", ColumnData::I64(vec![Some(1), Some(1)])),
 //!     ],
-//! );
-//! ds.add_row(vec![
-//!     XptValue::character("STUDY-001"),
-//!     XptValue::numeric(35.0),
-//! ]);
+//! )?;
 //!
-//! // Write to XPT file
-//! write_xpt(Path::new("dm_out.xpt"), &ds).unwrap();
+//! // Without agency: applies only XPT v5 structural validation
+//! Xpt::writer(dataset.clone())
+//!     .finalize()?
+//!     .write_path("ae.xpt")?;
+//!
+//! // With agency: applies agency-specific validation rules
+//! Xpt::writer(dataset)
+//!     .agency(Agency::FDA)
+//!     .finalize()?
+//!     .write_path("ae_fda.xpt")?;
+//! # Ok::<(), xportrs::XportrsError>(())
 //! ```
 //!
-//! # Missing Values
+//! ## Modules
 //!
-//! SAS supports 28 different missing value codes:
+//! - [`agency`]: Regulatory agency definitions (FDA, PMDA, NMPA)
+//! - [`config`]: Configuration options for reading and writing
+//! - [`dataset`]: Core data structures (`DomainDataset`, `Column`, `ColumnData`)
+//! - [`metadata`]: Variable and dataset metadata
+//! - [`schema`]: Schema planning for XPT generation
+//! - [`validate`]: Validation logic and issue reporting
+//! - [`xpt`]: XPT format implementation details
 //!
-//! ```
-//! use xportrs::{MissingValue, NumericValue, XptValue};
+//! ## CDISC Terminology
 //!
-//! // Standard missing (.)
-//! let missing = XptValue::numeric_missing();
+//! This crate uses CDISC SDTM vocabulary:
 //!
-//! // Special missing (.A through .Z)
-//! let missing_a = XptValue::numeric_missing_with(MissingValue::Special('A'));
+//! - **Domain dataset**: A table identified by a domain code (e.g., "AE", "DM", "LB")
+//! - **Observation**: One row/record in the dataset
+//! - **Variable**: One column; may have a role (Identifier/Topic/Timing/Qualifier/Rule)
 //!
-//! // Check for missing
-//! assert!(missing.is_missing());
-//! ```
+//! ## Safety
+//!
+//! This crate is built with `#![forbid(unsafe_code)]`. All binary parsing and
+//! encoding uses safe Rust constructs.
 
+#![forbid(unsafe_code)]
+#![warn(missing_docs)]
+#![warn(rust_2018_idioms)]
+#![warn(clippy::all)]
+
+// Core modules
+pub mod agency;
+mod api;
+pub mod config;
+pub mod dataset;
 mod error;
-pub mod float;
-pub mod header;
-pub mod reader;
-mod types;
-pub mod validation;
-mod version;
-pub mod writer;
+pub mod metadata;
+pub mod schema;
+pub mod validate;
+mod write_plan;
+pub mod xpt;
 
-#[cfg(feature = "polars")]
-pub mod polars;
+// Main entry point - the unified API
+pub use api::{Xpt, XptReaderBuilder};
 
-// Re-export error types
-pub use error::{
-    ErrorLocation, Result, Severity, ValidationError, ValidationErrorCode, ValidationResult,
-    XptError,
-};
+// Agency for compliance validation
+pub use agency::Agency;
 
-// Re-export version
-pub use version::XptVersion;
+// Configuration types users may need
+pub use config::{Config, ReadOptions, TextMode, Verbosity, WriteOptions};
 
-// Re-export core types
-pub use types::{
-    FormatSpec, InformatSpec, Justification, MissingValue, NumericValue, Observation,
-    RowLengthError, XptColumn, XptDataset, XptLibrary, XptReaderOptions, XptType, XptValue,
-    XptWriterOptions,
-};
+// Dataset types - needed to construct data
+pub use dataset::{Column, ColumnData, DomainDataset, VariableRole};
 
-// Re-export reader functionality
-pub use reader::{
-    DatasetMeta, ObservationIter, StreamingReader, XptReader, read_xpt, read_xpt_streaming,
-    read_xpt_streaming_with_options, read_xpt_with_options,
-};
+// Error types
+pub use error::{Result, XportrsError};
 
-// Re-export writer functionality
-pub use writer::{
-    DatasetInfo, StreamingWriter, ValidatedWriter, XptWriter, XptWriterBuilder, write_xpt,
-    write_xpt_with_options,
-};
+// Metadata types - for advanced usage
+pub use metadata::{DatasetMetadata, VariableMetadata, XptVarType};
 
-// Re-export Polars integration
-#[cfg(feature = "polars")]
-pub use polars::{read_xpt_to_dataframe, write_dataframe_to_xpt};
+// Schema types - for advanced usage
+pub use schema::{PlannedVariable, SchemaPlan};
 
-/// Crate version.
-pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+// Validation types
+pub use validate::{Issue, Severity, Target};
+
+// Write plan types
+pub use write_plan::{FinalizedWritePlan, XptWritePlan};
+
+// XPT version enum
+pub use xpt::XptVersion;
+
+// XPT file info (for Xpt::inspect)
+pub use xpt::v5::read::XptFile;
+
+/// Temporal conversion utilities.
+///
+/// These functions convert between Rust chrono types and SAS date/time values.
+pub mod temporal {
+    pub use crate::xpt::v5::timestamp::{
+        date_from_sas_days, datetime_from_sas_seconds, sas_days_since_1960, sas_seconds_since_1960,
+        sas_seconds_since_midnight, time_from_sas_seconds,
+    };
+}
