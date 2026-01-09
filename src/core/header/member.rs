@@ -228,6 +228,7 @@ pub fn parse_dataset_name(record: &[u8], version: XptVersion) -> Result<String> 
 /// Parse dataset label from member second record.
 ///
 /// Dataset label is at offset 32-71 (40 characters).
+#[must_use]
 pub fn parse_dataset_label(record: &[u8]) -> Option<String> {
     if record.len() < 72 {
         return None;
@@ -239,6 +240,7 @@ pub fn parse_dataset_label(record: &[u8]) -> Option<String> {
 /// Parse dataset type from member second record.
 ///
 /// Dataset type is at offset 72-79 (8 characters).
+#[must_use]
 pub fn parse_dataset_type(record: &[u8]) -> Option<String> {
     if record.len() < 80 {
         return None;

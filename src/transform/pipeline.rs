@@ -21,7 +21,7 @@ use super::coerce_type::{CoerceTypeConfig, coerce_type};
 use super::report::TransformReport;
 
 /// Configuration for the full xportr pipeline.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct XportrConfig {
     /// Action level for type coercion issues.

@@ -262,7 +262,6 @@ write_xpt_with_options(Path::new("dm.xpt"), & dataset, & options) ?;
 | Feature   | Description                         |
 |-----------|-------------------------------------|
 | `serde`   | Serialization support               |
-| `miette`  | Rich error diagnostics              |
 | `tracing` | Structured logging                  |
 | `full`    | All optional features enabled       |
 

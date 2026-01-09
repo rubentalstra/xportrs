@@ -22,7 +22,7 @@ pub enum MismatchAction {
 }
 
 /// Base configuration for all transform operations.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TransformConfig {
     /// Action level for reporting (none/message/warn/stop).

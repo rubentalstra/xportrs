@@ -179,10 +179,10 @@ impl FileNamingRules {
         }
 
         // Check that filename starts with a letter
-        if let Some(first) = stem.chars().next() {
-            if !first.is_ascii_alphabetic() {
-                issues.push(FileNamingIssue::DoesNotStartWithLetter);
-            }
+        if let Some(first) = stem.chars().next()
+            && !first.is_ascii_alphabetic()
+        {
+            issues.push(FileNamingIssue::DoesNotStartWithLetter);
         }
 
         issues

@@ -132,6 +132,10 @@ fn parse_time(s: &str) -> Option<NaiveTime> {
 /// Get the default epoch datetime (01JAN70:00:00:00).
 ///
 /// This is the default used when no datetime is specified.
+///
+/// # Panics
+///
+/// This function will not panic - the date 1970-01-01 and time 00:00:00 are always valid.
 #[must_use]
 pub fn default_datetime() -> NaiveDateTime {
     NaiveDate::from_ymd_opt(1970, 1, 1)

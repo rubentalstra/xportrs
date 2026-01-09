@@ -164,33 +164,33 @@ impl ValidationRule for TypeConformanceRule {
             return Vec::new();
         }
 
-        if let Some(var_spec) = self.spec.variable(&column.name) {
-            if column.data_type != var_spec.data_type {
-                let expected = if var_spec.data_type.is_numeric() {
-                    "Numeric"
-                } else {
-                    "Character"
-                };
-                let actual = if column.data_type.is_numeric() {
-                    "Numeric"
-                } else {
-                    "Character"
-                };
+        if let Some(var_spec) = self.spec.variable(&column.name)
+            && column.data_type != var_spec.data_type
+        {
+            let expected = if var_spec.data_type.is_numeric() {
+                "Numeric"
+            } else {
+                "Character"
+            };
+            let actual = if column.data_type.is_numeric() {
+                "Numeric"
+            } else {
+                "Character"
+            };
 
-                return vec![ValidationError::new(
-                    ValidationErrorCode::TypeMismatch,
-                    format!(
-                        "Variable '{}' has type {} but specification requires {}",
-                        column.name, actual, expected
-                    ),
-                    ErrorLocation::Column {
-                        dataset: dataset_name.to_string(),
-                        column: column.name.clone(),
-                        index,
-                    },
-                    self.action.to_severity(),
-                )];
-            }
+            return vec![ValidationError::new(
+                ValidationErrorCode::TypeMismatch,
+                format!(
+                    "Variable '{}' has type {} but specification requires {}",
+                    column.name, actual, expected
+                ),
+                ErrorLocation::Column {
+                    dataset: dataset_name.to_string(),
+                    column: column.name.clone(),
+                    index,
+                },
+                self.action.to_severity(),
+            )];
         }
 
         Vec::new()
@@ -228,24 +228,23 @@ impl ValidationRule for LengthConformanceRule {
             return Vec::new();
         }
 
-        if let Some(var_spec) = self.spec.variable(&column.name) {
-            if let Some(spec_length) = var_spec.length {
-                if column.length != spec_length {
-                    return vec![ValidationError::new(
-                        ValidationErrorCode::LengthMismatch,
-                        format!(
-                            "Variable '{}' has length {} but specification requires {}",
-                            column.name, column.length, spec_length
-                        ),
-                        ErrorLocation::Column {
-                            dataset: dataset_name.to_string(),
-                            column: column.name.clone(),
-                            index,
-                        },
-                        self.action.to_severity(),
-                    )];
-                }
-            }
+        if let Some(var_spec) = self.spec.variable(&column.name)
+            && let Some(spec_length) = var_spec.length
+            && column.length != spec_length
+        {
+            return vec![ValidationError::new(
+                ValidationErrorCode::LengthMismatch,
+                format!(
+                    "Variable '{}' has length {} but specification requires {}",
+                    column.name, column.length, spec_length
+                ),
+                ErrorLocation::Column {
+                    dataset: dataset_name.to_string(),
+                    column: column.name.clone(),
+                    index,
+                },
+                self.action.to_severity(),
+            )];
         }
 
         Vec::new()
@@ -299,24 +298,23 @@ impl ValidationRule for OrderConformanceRule {
                 .columns
                 .iter()
                 .position(|c| c.name.as_str() == *var_name)
+                && actual_pos != expected_pos
             {
-                if actual_pos != expected_pos {
-                    errors.push(ValidationError::new(
-                        ValidationErrorCode::OrderMismatch,
-                        format!(
-                            "Variable '{}' is at position {} but specification expects position {}",
-                            var_name,
-                            actual_pos + 1,
-                            expected_pos + 1
-                        ),
-                        ErrorLocation::Column {
-                            dataset: dataset.name.clone(),
-                            column: (*var_name).to_string(),
-                            index: actual_pos,
-                        },
-                        self.action.to_severity(),
-                    ));
-                }
+                errors.push(ValidationError::new(
+                    ValidationErrorCode::OrderMismatch,
+                    format!(
+                        "Variable '{}' is at position {} but specification expects position {}",
+                        var_name,
+                        actual_pos + 1,
+                        expected_pos + 1
+                    ),
+                    ErrorLocation::Column {
+                        dataset: dataset.name.clone(),
+                        column: (*var_name).to_string(),
+                        index: actual_pos,
+                    },
+                    self.action.to_severity(),
+                ));
             }
         }
 
@@ -355,30 +353,28 @@ impl ValidationRule for FormatConformanceRule {
             return Vec::new();
         }
 
-        if let Some(var_spec) = self.spec.variable(&column.name) {
-            if let Some(ref spec_format) = var_spec.format {
-                let column_format_str = column.format.as_ref().map(|f| f.to_string());
-                let spec_format_str = spec_format.to_string();
+        if let Some(var_spec) = self.spec.variable(&column.name)
+            && let Some(ref spec_format) = var_spec.format
+        {
+            let column_format_str = column.format.as_ref().map(std::string::ToString::to_string);
+            let spec_format_str = spec_format.to_string();
 
-                let formats_match = column_format_str
-                    .as_ref()
-                    .map_or(false, |f| f == &spec_format_str);
+            let formats_match = column_format_str.as_ref() == Some(&spec_format_str);
 
-                if !formats_match {
-                    return vec![ValidationError::new(
-                        ValidationErrorCode::FormatMismatch,
-                        format!(
-                            "Variable '{}' has format {:?} but specification requires {}",
-                            column.name, column_format_str, spec_format_str
-                        ),
-                        ErrorLocation::Column {
-                            dataset: dataset_name.to_string(),
-                            column: column.name.clone(),
-                            index,
-                        },
-                        self.action.to_severity(),
-                    )];
-                }
+            if !formats_match {
+                return vec![ValidationError::new(
+                    ValidationErrorCode::FormatMismatch,
+                    format!(
+                        "Variable '{}' has format {:?} but specification requires {}",
+                        column.name, column_format_str, spec_format_str
+                    ),
+                    ErrorLocation::Column {
+                        dataset: dataset_name.to_string(),
+                        column: column.name.clone(),
+                        index,
+                    },
+                    self.action.to_severity(),
+                )];
             }
         }
 
@@ -417,25 +413,25 @@ impl ValidationRule for LabelConformanceRule {
             return Vec::new();
         }
 
-        if let Some(var_spec) = self.spec.variable(&column.name) {
-            if let Some(ref spec_label) = var_spec.label {
-                let labels_match = column.label.as_ref().map_or(false, |l| l == spec_label);
+        if let Some(var_spec) = self.spec.variable(&column.name)
+            && let Some(ref spec_label) = var_spec.label
+        {
+            let labels_match = column.label.as_ref() == Some(spec_label);
 
-                if !labels_match {
-                    return vec![ValidationError::new(
-                        ValidationErrorCode::LabelMismatch,
-                        format!(
-                            "Variable '{}' has label {:?} but specification requires '{}'",
-                            column.name, column.label, spec_label
-                        ),
-                        ErrorLocation::Column {
-                            dataset: dataset_name.to_string(),
-                            column: column.name.clone(),
-                            index,
-                        },
-                        self.action.to_severity(),
-                    )];
-                }
+            if !labels_match {
+                return vec![ValidationError::new(
+                    ValidationErrorCode::LabelMismatch,
+                    format!(
+                        "Variable '{}' has label {:?} but specification requires '{}'",
+                        column.name, column.label, spec_label
+                    ),
+                    ErrorLocation::Column {
+                        dataset: dataset_name.to_string(),
+                        column: column.name.clone(),
+                        index,
+                    },
+                    self.action.to_severity(),
+                )];
             }
         }
 
@@ -493,7 +489,7 @@ impl ValidationRule for DatasetMetaConformanceRule {
 
         // Check dataset label matches (if specified)
         if let Some(ref spec_label) = self.spec.label {
-            let labels_match = dataset.label.as_ref().map_or(false, |l| l == spec_label);
+            let labels_match = dataset.label.as_ref() == Some(spec_label);
 
             if !labels_match {
                 errors.push(ValidationError::new(
@@ -517,7 +513,7 @@ impl ValidationRule for DatasetMetaConformanceRule {
 /// Configuration for spec conformance validation.
 ///
 /// This allows setting different action levels for each type of conformance check.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct SpecConformanceConfig {
     /// Action for variables in data but not in spec.
     pub variable_in_spec_action: ActionLevel,

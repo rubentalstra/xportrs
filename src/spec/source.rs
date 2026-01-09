@@ -200,7 +200,7 @@ mod polars_source {
                 .ok()
                 .and_then(|s| s.str().ok())
                 .and_then(|ca| ca.get(row))
-                .map(|s| s.to_string())
+                .map(std::string::ToString::to_string)
         }
 
         /// Get an optional u16 value from a row.
@@ -306,33 +306,33 @@ mod polars_source {
                 spec = spec.with_order(order);
             }
 
-            if let Some(format_str) = self.get_string(row, &self.mapping.format_col) {
-                if let Some(format) = Self::parse_format(&format_str) {
-                    spec = spec.with_format(format);
-                }
+            if let Some(format_str) = self.get_string(row, &self.mapping.format_col)
+                && let Some(format) = Self::parse_format(&format_str)
+            {
+                spec = spec.with_format(format);
             }
 
-            if let Some(informat_str) = self.get_string(row, &self.mapping.informat_col) {
-                if let Some(informat) = Self::parse_format(&informat_str) {
-                    spec = spec.with_informat(informat);
-                }
+            if let Some(informat_str) = self.get_string(row, &self.mapping.informat_col)
+                && let Some(informat) = Self::parse_format(&informat_str)
+            {
+                spec = spec.with_informat(informat);
             }
 
             if let Some(origin) = self.get_string(row, &self.mapping.origin_col) {
                 spec = spec.with_origin(origin);
             }
 
-            if let Some(core_str) = self.get_string(row, &self.mapping.core_col) {
-                if let Some(core) = Self::parse_core(&core_str) {
-                    spec = spec.with_core(core);
-                }
+            if let Some(core_str) = self.get_string(row, &self.mapping.core_col)
+                && let Some(core) = Self::parse_core(&core_str)
+            {
+                spec = spec.with_core(core);
             }
 
             // Update length if it was specified and type is numeric
-            if var_type.is_numeric() {
-                if let Some(len) = length {
-                    spec = spec.with_length(len);
-                }
+            if var_type.is_numeric()
+                && let Some(len) = length
+            {
+                spec = spec.with_length(len);
             }
 
             Some(spec)

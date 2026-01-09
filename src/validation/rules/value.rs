@@ -82,33 +82,33 @@ impl ValidationRule for AsciiValueRule {
                 }
 
                 let column = &dataset.columns[col_idx];
-                if let XptValue::Char(s) = value {
-                    if !s.is_ascii() {
-                        // Find the first non-ASCII character for the error message
-                        let non_ascii_char = s.chars().find(|c| !c.is_ascii());
-                        let message = if let Some(c) = non_ascii_char {
-                            format!(
-                                "Character value in column '{}' at row {} contains non-ASCII character '{}'",
-                                column.name, row_idx, c
-                            )
-                        } else {
-                            format!(
-                                "Character value in column '{}' at row {} contains non-ASCII characters",
-                                column.name, row_idx
-                            )
-                        };
+                if let XptValue::Char(s) = value
+                    && !s.is_ascii()
+                {
+                    // Find the first non-ASCII character for the error message
+                    let non_ascii_char = s.chars().find(|c| !c.is_ascii());
+                    let message = if let Some(c) = non_ascii_char {
+                        format!(
+                            "Character value in column '{}' at row {} contains non-ASCII character '{}'",
+                            column.name, row_idx, c
+                        )
+                    } else {
+                        format!(
+                            "Character value in column '{}' at row {} contains non-ASCII characters",
+                            column.name, row_idx
+                        )
+                    };
 
-                        errors.push(ValidationError::new(
-                            ValidationErrorCode::NonAsciiValue,
-                            message,
-                            ErrorLocation::Value {
-                                dataset: dataset.name.clone(),
-                                column: column.name.clone(),
-                                row: row_idx,
-                            },
-                            Severity::Warning, // Warning because UTF-8 is technically allowed
-                        ));
-                    }
+                    errors.push(ValidationError::new(
+                        ValidationErrorCode::NonAsciiValue,
+                        message,
+                        ErrorLocation::Value {
+                            dataset: dataset.name.clone(),
+                            column: column.name.clone(),
+                            row: row_idx,
+                        },
+                        Severity::Warning, // Warning because UTF-8 is technically allowed
+                    ));
                 }
             }
         }
@@ -160,12 +160,13 @@ impl ValidationRule for NumericRangeRule {
                 }
 
                 let column = &dataset.columns[col_idx];
-                if let XptValue::Num(num_val) = value {
-                    if let Some(n) = num_val.value() {
-                        let abs_val = n.abs();
+                if let XptValue::Num(num_val) = value
+                    && let Some(n) = num_val.value()
+                {
+                    let abs_val = n.abs();
 
-                        if abs_val > IBM_MAX_MAGNITUDE {
-                            errors.push(ValidationError::new(
+                    if abs_val > IBM_MAX_MAGNITUDE {
+                        errors.push(ValidationError::new(
                                 ValidationErrorCode::NumericRangeExceeded,
                                 format!(
                                     "Numeric value {} in column '{}' at row {} exceeds IBM float maximum magnitude",
@@ -178,8 +179,8 @@ impl ValidationRule for NumericRangeRule {
                                 },
                                 Severity::Error,
                             ));
-                        } else if abs_val > 0.0 && abs_val < IBM_MIN_MAGNITUDE {
-                            errors.push(ValidationError::new(
+                    } else if abs_val > 0.0 && abs_val < IBM_MIN_MAGNITUDE {
+                        errors.push(ValidationError::new(
                                 ValidationErrorCode::NumericRangeTooSmall,
                                 format!(
                                     "Numeric value {} in column '{}' at row {} is below IBM float minimum magnitude (will become zero)",
@@ -192,7 +193,6 @@ impl ValidationRule for NumericRangeRule {
                                 },
                                 Severity::Warning,
                             ));
-                        }
                     }
                 }
             }

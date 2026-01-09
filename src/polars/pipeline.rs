@@ -60,7 +60,7 @@ pub fn write_df_with_pipeline(
     config: XportrConfig,
 ) -> Result<PipelineReport, TransformError> {
     let dataset = XptDataset::from_dataframe(df, &spec.name)?;
-    let result = crate::transform::xportr(dataset, spec, config.clone())?;
+    let result = crate::transform::xportr(dataset, spec, config)?;
 
     let options = XptWriterOptions::default().with_version(config.version);
     write_xpt_with_options(path.as_ref(), &result.dataset, &options)?;

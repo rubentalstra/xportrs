@@ -13,7 +13,7 @@ use super::config::{MismatchAction, TransformConfig};
 use super::report::LengthChange;
 
 /// Configuration for length application.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ApplyLengthConfig {
     /// Base transform configuration.
@@ -187,14 +187,14 @@ fn truncate_column_values(rows: &mut [Vec<XptValue>], col_idx: usize, max_length
             continue;
         }
 
-        if let XptValue::Char(ref mut s) = row[col_idx] {
-            if s.len() > max_len {
-                // Truncate to max_length characters
-                // Be careful with UTF-8: truncate at char boundaries
-                let truncated_str: String = s.chars().take(max_len).collect();
-                *s = truncated_str;
-                truncated += 1;
-            }
+        if let XptValue::Char(ref mut s) = row[col_idx]
+            && s.len() > max_len
+        {
+            // Truncate to max_length characters
+            // Be careful with UTF-8: truncate at char boundaries
+            let truncated_str: String = s.chars().take(max_len).collect();
+            *s = truncated_str;
+            truncated += 1;
         }
     }
 

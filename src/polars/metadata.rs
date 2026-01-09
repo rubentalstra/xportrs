@@ -254,7 +254,7 @@ impl MetadataFrame {
         self.df
             .get_column_names()
             .into_iter()
-            .map(|s| s.to_string())
+            .map(polars::prelude::PlSmallStr::to_string)
             .collect()
     }
 

@@ -12,20 +12,12 @@ use super::config::{MismatchAction, TransformConfig};
 use super::report::TypeConversion;
 
 /// Configuration for type coercion.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CoerceTypeConfig {
     /// Base transform configuration.
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub base: TransformConfig,
-}
-
-impl Default for CoerceTypeConfig {
-    fn default() -> Self {
-        Self {
-            base: TransformConfig::default(),
-        }
-    }
 }
 
 impl CoerceTypeConfig {

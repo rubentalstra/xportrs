@@ -4,6 +4,7 @@
 //! similar to R xportr's messaging system.
 
 use std::fmt;
+use std::str::FromStr;
 
 use crate::error::Severity;
 
@@ -118,18 +119,25 @@ impl ActionLevel {
             Self::Message | Self::None => Severity::Message,
         }
     }
+}
+
+impl FromStr for ActionLevel {
+    type Err = ();
 
     /// Parse from string (case-insensitive).
     ///
     /// Accepts: "none", "message", "msg", "warn", "warning", "stop", "error"
-    #[must_use]
-    pub fn from_str(s: &str) -> Option<Self> {
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err(())` if the string doesn't match any known action level.
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
-            "none" | "silent" => Some(Self::None),
-            "message" | "msg" | "info" => Some(Self::Message),
-            "warn" | "warning" => Some(Self::Warn),
-            "stop" | "error" | "err" => Some(Self::Stop),
-            _ => None,
+            "none" | "silent" => Ok(Self::None),
+            "message" | "msg" | "info" => Ok(Self::Message),
+            "warn" | "warning" => Ok(Self::Warn),
+            "stop" | "error" | "err" => Ok(Self::Stop),
+            _ => Err(()),
         }
     }
 }
@@ -180,15 +188,15 @@ mod tests {
 
     #[test]
     fn test_from_str() {
-        assert_eq!(ActionLevel::from_str("none"), Some(ActionLevel::None));
-        assert_eq!(ActionLevel::from_str("NONE"), Some(ActionLevel::None));
-        assert_eq!(ActionLevel::from_str("message"), Some(ActionLevel::Message));
-        assert_eq!(ActionLevel::from_str("MSG"), Some(ActionLevel::Message));
-        assert_eq!(ActionLevel::from_str("warn"), Some(ActionLevel::Warn));
-        assert_eq!(ActionLevel::from_str("Warning"), Some(ActionLevel::Warn));
-        assert_eq!(ActionLevel::from_str("stop"), Some(ActionLevel::Stop));
-        assert_eq!(ActionLevel::from_str("error"), Some(ActionLevel::Stop));
-        assert_eq!(ActionLevel::from_str("unknown"), None);
+        assert_eq!("none".parse::<ActionLevel>(), Ok(ActionLevel::None));
+        assert_eq!("NONE".parse::<ActionLevel>(), Ok(ActionLevel::None));
+        assert_eq!("message".parse::<ActionLevel>(), Ok(ActionLevel::Message));
+        assert_eq!("MSG".parse::<ActionLevel>(), Ok(ActionLevel::Message));
+        assert_eq!("warn".parse::<ActionLevel>(), Ok(ActionLevel::Warn));
+        assert_eq!("Warning".parse::<ActionLevel>(), Ok(ActionLevel::Warn));
+        assert_eq!("stop".parse::<ActionLevel>(), Ok(ActionLevel::Stop));
+        assert_eq!("error".parse::<ActionLevel>(), Ok(ActionLevel::Stop));
+        assert_eq!("unknown".parse::<ActionLevel>(), Err(()));
     }
 
     #[test]

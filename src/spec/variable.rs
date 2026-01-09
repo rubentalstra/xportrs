@@ -3,6 +3,8 @@
 //! [`VariableSpec`] defines the expected metadata for a variable including
 //! name, type, length, label, format, and ordering information.
 
+use std::str::FromStr;
+
 use crate::types::{FormatSpec, XptType};
 
 /// CDISC Core classification for variables.
@@ -27,15 +29,22 @@ impl Core {
     pub const fn is_required(&self) -> bool {
         matches!(self, Self::Required)
     }
+}
+
+impl FromStr for Core {
+    type Err = ();
 
     /// Parse from string (case-insensitive).
-    #[must_use]
-    pub fn from_str(s: &str) -> Option<Self> {
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err(())` if the string doesn't match any known Core classification.
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_uppercase().as_str() {
-            "REQ" | "REQUIRED" => Some(Self::Required),
-            "EXP" | "EXPECTED" => Some(Self::Expected),
-            "PERM" | "PERMISSIBLE" => Some(Self::Permissible),
-            _ => None,
+            "REQ" | "REQUIRED" => Ok(Self::Required),
+            "EXP" | "EXPECTED" => Ok(Self::Expected),
+            "PERM" | "PERMISSIBLE" => Ok(Self::Permissible),
+            _ => Err(()),
         }
     }
 }
@@ -272,11 +281,11 @@ mod tests {
 
     #[test]
     fn test_core_from_str() {
-        assert_eq!(Core::from_str("REQ"), Some(Core::Required));
-        assert_eq!(Core::from_str("Required"), Some(Core::Required));
-        assert_eq!(Core::from_str("EXP"), Some(Core::Expected));
-        assert_eq!(Core::from_str("PERM"), Some(Core::Permissible));
-        assert_eq!(Core::from_str("unknown"), None);
+        assert_eq!("REQ".parse::<Core>(), Ok(Core::Required));
+        assert_eq!("Required".parse::<Core>(), Ok(Core::Required));
+        assert_eq!("EXP".parse::<Core>(), Ok(Core::Expected));
+        assert_eq!("PERM".parse::<Core>(), Ok(Core::Permissible));
+        assert_eq!("unknown".parse::<Core>(), Err(()));
     }
 
     #[test]

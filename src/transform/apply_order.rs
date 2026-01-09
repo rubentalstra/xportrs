@@ -11,7 +11,7 @@ use super::config::{MismatchAction, TransformConfig};
 use super::report::OrderChange;
 
 /// Configuration for order application.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ApplyOrderConfig {
     /// Base transform configuration.

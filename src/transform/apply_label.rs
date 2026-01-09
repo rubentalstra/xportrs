@@ -11,20 +11,12 @@ use super::config::{MismatchAction, TransformConfig};
 use super::report::LabelChange;
 
 /// Configuration for label application.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ApplyLabelConfig {
     /// Base transform configuration.
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub base: TransformConfig,
-}
-
-impl Default for ApplyLabelConfig {
-    fn default() -> Self {
-        Self {
-            base: TransformConfig::default(),
-        }
-    }
 }
 
 impl ApplyLabelConfig {
@@ -122,7 +114,7 @@ pub fn apply_label(
     }
 
     // Process each column that exists in spec
-    for col in dataset.columns.iter_mut() {
+    for col in &mut dataset.columns {
         let Some(var_spec) = spec_vars.get(&col.name) else {
             continue;
         };

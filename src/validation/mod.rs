@@ -195,7 +195,7 @@ impl Validator {
     /// Get the policy, if set.
     #[must_use]
     pub fn policy(&self) -> Option<&dyn AgencyPolicy> {
-        self.policy.as_ref().map(|p| p.as_ref())
+        self.policy.as_ref().map(std::convert::AsRef::as_ref)
     }
 
     /// Check if a policy is set.
@@ -363,22 +363,22 @@ impl Validator {
         };
 
         // Check version requirement
-        if let Some(required_version) = policy.required_version() {
-            if self.version != required_version {
-                result.add(ValidationError::new(
-                    ValidationErrorCode::WrongVersion,
-                    format!(
-                        "{} requires XPT {} format, but {} is configured",
-                        policy.agency(),
-                        required_version,
-                        self.version
-                    ),
-                    ErrorLocation::Dataset {
-                        name: dataset.name.clone(),
-                    },
-                    severity,
-                ));
-            }
+        if let Some(required_version) = policy.required_version()
+            && self.version != required_version
+        {
+            result.add(ValidationError::new(
+                ValidationErrorCode::WrongVersion,
+                format!(
+                    "{} requires XPT {} format, but {} is configured",
+                    policy.agency(),
+                    required_version,
+                    self.version
+                ),
+                ErrorLocation::Dataset {
+                    name: dataset.name.clone(),
+                },
+                severity,
+            ));
         }
 
         // Check ASCII requirement for character values
@@ -396,28 +396,28 @@ impl Validator {
     ) {
         for (row_idx, row) in dataset.rows.iter().enumerate() {
             for (col_idx, value) in row.iter().enumerate() {
-                if let XptValue::Char(s) = value {
-                    if !s.is_ascii() {
-                        let col_name = dataset
-                            .columns
-                            .get(col_idx)
-                            .map(|c| c.name.as_str())
-                            .unwrap_or("unknown");
+                if let XptValue::Char(s) = value
+                    && !s.is_ascii()
+                {
+                    let col_name = dataset
+                        .columns
+                        .get(col_idx)
+                        .map(|c| c.name.as_str())
+                        .unwrap_or("unknown");
 
-                        result.add(ValidationError::new(
-                            ValidationErrorCode::NonAsciiValue,
-                            format!(
-                                "Non-ASCII character in column '{}' at row {}",
-                                col_name, row_idx
-                            ),
-                            ErrorLocation::Value {
-                                dataset: dataset.name.clone(),
-                                column: col_name.to_string(),
-                                row: row_idx,
-                            },
-                            severity,
-                        ));
-                    }
+                    result.add(ValidationError::new(
+                        ValidationErrorCode::NonAsciiValue,
+                        format!(
+                            "Non-ASCII character in column '{}' at row {}",
+                            col_name, row_idx
+                        ),
+                        ErrorLocation::Value {
+                            dataset: dataset.name.clone(),
+                            column: col_name.to_string(),
+                            row: row_idx,
+                        },
+                        severity,
+                    ));
                 }
             }
         }

@@ -148,6 +148,7 @@ pub fn parse_real_header(record: &[u8]) -> Result<LibraryInfo> {
 /// Parse the second header (modified datetime).
 ///
 /// The modified datetime is at offset 0-15 of this record.
+#[must_use]
 pub fn parse_second_header(record: &[u8]) -> String {
     if record.len() < 16 {
         return String::new();
