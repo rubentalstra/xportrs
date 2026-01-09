@@ -59,28 +59,6 @@ impl ReadResult {
     }
 }
 
-/// Read an XPT file from path.
-///
-/// This is the simplest way to read an XPT file. For more control,
-/// use [`read_xpt_with_options`] or [`read_xpt_with_validation`].
-///
-/// # Errors
-///
-/// Returns an error if the file cannot be opened or parsed.
-///
-/// # Example
-///
-/// ```no_run
-/// use std::path::Path;
-/// use xportrs::io::read_xpt;
-///
-/// let dataset = read_xpt(Path::new("dm.xpt")).unwrap();
-/// println!("Dataset: {}", dataset.name);
-/// ```
-pub fn read_xpt(path: &Path) -> crate::error::Result<XptDataset> {
-    reader::read_xpt(path)
-}
-
 /// Read an XPT file with custom options.
 ///
 /// # Errors

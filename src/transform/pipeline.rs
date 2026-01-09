@@ -367,7 +367,7 @@ impl PipelineReport {
 /// # Example
 ///
 /// ```
-/// use xportrs::{XptDataset, XptColumn, XptValue, DatasetSpec, VariableSpec};
+/// use xportrs::types::{XptDataset, XptColumn, XptValue, DatasetSpec, VariableSpec};
 /// use xportrs::transform::{xportr, XportrConfig};
 ///
 /// let mut dataset = XptDataset::with_columns("DM", vec![
@@ -474,7 +474,7 @@ pub fn xportr(
 ///
 /// ```no_run
 /// use std::path::Path;
-/// use xportrs::{XptDataset, XptColumn, XptValue, DatasetSpec, VariableSpec};
+/// use xportrs::types::{XptDataset, XptColumn, XptValue, DatasetSpec, VariableSpec};
 /// use xportrs::transform::{xportr_write, XportrConfig};
 ///
 /// let mut dataset = XptDataset::with_columns("DM", vec![

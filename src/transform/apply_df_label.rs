@@ -24,7 +24,7 @@ use crate::types::XptDataset;
 /// # Example
 ///
 /// ```
-/// use xportrs::XptDataset;
+/// use xportrs::types::XptDataset;
 /// use xportrs::transform::apply_df_label;
 ///
 /// let dataset = XptDataset::new("DM");

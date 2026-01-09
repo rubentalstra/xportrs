@@ -18,7 +18,7 @@
 //! # Example
 //!
 //! ```
-//! use xportrs::{XptDataset, XptColumn, DatasetSpec, VariableSpec};
+//! use xportrs::types::{XptDataset, XptColumn, DatasetSpec, VariableSpec};
 //! use xportrs::transform::{apply_label, ApplyLabelConfig};
 //! use xportrs::ActionLevel;
 //!

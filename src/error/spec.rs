@@ -148,6 +148,7 @@ impl SpecError {
 }
 
 /// Result type for specification operations.
+#[allow(dead_code)]
 pub type SpecResult<T> = std::result::Result<T, SpecError>;
 
 #[cfg(test)]

@@ -68,7 +68,7 @@ impl DatasetInfo {
 ///
 /// ```no_run
 /// use std::fs::File;
-/// use xportrs::{XptColumn, Observation, XptValue};
+/// use xportrs::types::{XptColumn, Observation, XptValue};
 /// use xportrs::core::writer::{DatasetInfo, StreamingWriter};
 ///
 /// let file = File::create("large.xpt").unwrap();
@@ -409,7 +409,7 @@ fn build_member_second_from_info(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::XptValue;
+    use crate::types::XptValue;
 
     #[test]
     fn test_dataset_info() {

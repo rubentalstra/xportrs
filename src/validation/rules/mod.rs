@@ -13,7 +13,7 @@
 //!
 //! ```
 //! use xportrs::validation::Validator;
-//! use xportrs::{XptDataset, XptVersion};
+//! use xportrs::types::{XptDataset, XptVersion};
 //!
 //! let dataset = XptDataset::new("DM");
 //!

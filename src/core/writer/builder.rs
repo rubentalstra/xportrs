@@ -23,7 +23,8 @@ use crate::validation::Validator;
 ///
 /// ```no_run
 /// use std::path::Path;
-/// use xportrs::{XptDataset, XptColumn, XptWriterBuilder};
+/// use xportrs::types::{XptDataset, XptColumn};
+/// use xportrs::core::writer::XptWriterBuilder;
 ///
 /// let dataset = XptDataset::with_columns("DM", vec![
 ///     XptColumn::character("USUBJID", 20),
@@ -328,7 +329,7 @@ pub(crate) fn validate_dataset_quick(dataset: &XptDataset, version: XptVersion) 
 
 #[cfg(test)]
 mod tests {
-    use crate::XptColumn;
+    use crate::types::XptColumn;
 
     use super::*;
 

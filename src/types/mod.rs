@@ -23,26 +23,11 @@ mod options;
 mod value;
 mod version;
 
-// Column types
 pub use column::{Justification, XptColumn, XptType};
-
-// Dataset types
 pub use dataset::{RowLengthError, XptDataset, XptLibrary};
-
-// Format types
 pub use format::{FormatSpec, InformatSpec};
-
-// Missing value types
 pub use missing::MissingValue;
-
-// Observation type for streaming
 pub use observation::Observation;
-
-// Reader/Writer options
 pub use options::{XptReaderOptions, XptWriterOptions};
-
-// Version enum
-pub use version::XptVersion;
-
-// Value types
 pub use value::{NumericValue, XptValue};
+pub use version::XptVersion;

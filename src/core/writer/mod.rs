@@ -9,7 +9,7 @@
 //!
 //! ```no_run
 //! use std::path::Path;
-//! use xportrs::{XptDataset, XptColumn, XptValue, write_xpt};
+//! use xportrs::types::{XptDataset, XptColumn, XptValue, write_xpt};
 //!
 //! let mut dataset = XptDataset::with_columns("DM", vec![
 //!     XptColumn::character("USUBJID", 20),
@@ -27,7 +27,8 @@
 //!
 //! ```no_run
 //! use std::path::Path;
-//! use xportrs::{XptDataset, XptColumn, XptWriterBuilder};
+//! use xportrs::types::{XptDataset, XptColumn};
+//! use xportrs::core::writer::XptWriterBuilder;
 //!
 //! let dataset = XptDataset::with_columns("DM", vec![
 //!     XptColumn::character("USUBJID", 20),
@@ -46,7 +47,7 @@
 //!
 //! ```no_run
 //! use std::path::Path;
-//! use xportrs::{XptColumn, Observation, XptValue};
+//! use xportrs::types::{XptColumn, Observation, XptValue};
 //! use xportrs::core::writer::{DatasetInfo, StreamingWriter};
 //!
 //! let info = DatasetInfo::new("DM", vec![

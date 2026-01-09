@@ -7,6 +7,7 @@ use std::path::Path;
 
 use polars::prelude::DataFrame;
 
+use crate::config::ActionLevel;
 use crate::core::writer::write_xpt_with_options;
 use crate::error::TransformError;
 use crate::spec::DatasetSpec;
@@ -16,7 +17,6 @@ use crate::transform::{
     coerce_type,
 };
 use crate::types::{XptDataset, XptWriterOptions};
-use crate::validation::ActionLevel;
 
 use super::metadata::MetadataFrame;
 

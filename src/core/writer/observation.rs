@@ -111,7 +111,7 @@ pub fn observation_length(columns: &[XptColumn]) -> usize {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::MissingValue;
+    use crate::types::MissingValue;
 
     #[test]
     fn test_encode_char() {

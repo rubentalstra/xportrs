@@ -9,12 +9,8 @@
 //!
 //! ```no_run
 //! use std::path::Path;
-//! use xportrs::io::{read_xpt, read_xpt_with_validation};
+//! use xportrs::io::{read_xpt_with_validation};
 //! use xportrs::XptVersion;
-//!
-//! // Simple read
-//! let dataset = read_xpt(Path::new("dm.xpt")).unwrap();
-//! println!("Read {} rows", dataset.num_rows());
 //!
 //! // Read with validation
 //! let result = read_xpt_with_validation(Path::new("dm.xpt"), XptVersion::V5).unwrap();
@@ -27,14 +23,11 @@
 //!
 //! ```no_run
 //! use std::path::Path;
-//! use xportrs::io::{write_xpt, write_xpt_validated};
-//! use xportrs::{XptDataset, XptColumn, XptVersion};
+//! use xportrs::io::{write_xpt_validated};
+//! use xportrs::types::{XptDataset, XptColumn, XptVersion};
 //!
 //! let mut dataset = XptDataset::new("DM");
 //! dataset.columns.push(XptColumn::character("USUBJID", 20));
-//!
-//! // Simple write
-//! write_xpt(Path::new("dm.xpt"), &dataset).unwrap();
 //!
 //! // Write with validation
 //! let result = write_xpt_validated(Path::new("dm.xpt"), &dataset, XptVersion::V5).unwrap();
@@ -59,19 +52,13 @@
 mod reader;
 mod writer;
 
-// Re-export reader types and functions
 pub use reader::{
-    ObservationIter, ReadResult, XptReader, get_xpt_metadata, read_xpt, read_xpt_fda_compliant,
+    ObservationIter, ReadResult, XptReader, get_xpt_metadata, read_xpt_fda_compliant,
     read_xpt_streaming, read_xpt_streaming_with_options, read_xpt_with_options,
     read_xpt_with_validation,
 };
 
-// Re-export writer types and functions
 pub use writer::{
     DatasetInfo, StreamingWriter, ValidatedWriter, WriteResult, XptWriter, XptWriterBuilder,
-    write_xpt, write_xpt_against_spec, write_xpt_fda_compliant, write_xpt_validated,
-    write_xpt_with_options,
+    write_xpt_against_spec, write_xpt_fda_compliant, write_xpt_validated, write_xpt_with_options,
 };
-
-// Re-export commonly used types from core
-pub use crate::core::reader::{DatasetMeta, StreamingReader};

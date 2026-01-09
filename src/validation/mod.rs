@@ -25,7 +25,7 @@
 //! ```
 //! use xportrs::validation::Validator;
 //! use xportrs::policy::FdaPolicy;
-//! use xportrs::{XptDataset, XptVersion};
+//! use xportrs::types::{XptDataset, XptVersion};
 //!
 //! let dataset = XptDataset::new("DM");
 //!
@@ -96,7 +96,7 @@ pub trait ValidationRule: Send + Sync {
 /// ```
 /// use xportrs::validation::{Validator, ActionLevel};
 /// use xportrs::policy::FdaPolicy;
-/// use xportrs::{XptDataset, XptVersion};
+/// use xportrs::types::{XptDataset, XptVersion};
 ///
 /// // Basic validation
 /// let validator = Validator::basic(XptVersion::V5);
@@ -254,7 +254,7 @@ impl Validator {
     /// ```
     /// use xportrs::validation::Validator;
     /// use xportrs::spec::{DatasetSpec, VariableSpec};
-    /// use xportrs::{XptDataset, XptColumn, XptVersion};
+    /// use xportrs::types::{XptDataset, XptColumn, XptVersion};
     ///
     /// let spec = DatasetSpec::new("DM")
     ///     .add_variable(VariableSpec::character("USUBJID", 20));
@@ -286,7 +286,7 @@ impl Validator {
     /// ```
     /// use xportrs::validation::{Validator, ActionLevel, rules::SpecConformanceConfig};
     /// use xportrs::spec::{DatasetSpec, VariableSpec};
-    /// use xportrs::{XptDataset, XptColumn, XptVersion};
+    /// use xportrs::types::{XptDataset, XptColumn, XptVersion};
     ///
     /// let spec = DatasetSpec::new("DM")
     ///     .add_variable(VariableSpec::character("USUBJID", 20));

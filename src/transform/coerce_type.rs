@@ -70,7 +70,7 @@ pub struct CoerceTypeResult {
 /// # Example
 ///
 /// ```
-/// use xportrs::{XptDataset, XptColumn, XptValue, DatasetSpec, VariableSpec};
+/// use xportrs::types::{XptDataset, XptColumn, XptValue, DatasetSpec, VariableSpec};
 /// use xportrs::transform::{coerce_type, CoerceTypeConfig};
 ///
 /// let mut dataset = XptDataset::with_columns("DM", vec![

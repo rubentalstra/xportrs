@@ -16,8 +16,8 @@ mod validation;
 use std::path::PathBuf;
 use thiserror::Error;
 
-pub use spec::{SpecError, SpecResult};
-pub use transform::{TransformError, TransformResult};
+pub use spec::SpecError;
+pub use transform::TransformError;
 pub use validation::{
     ErrorLocation, Severity, ValidationError, ValidationErrorCode, ValidationResult,
 };

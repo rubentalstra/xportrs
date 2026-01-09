@@ -180,6 +180,7 @@ impl From<Vec<ValidationError>> for TransformError {
 }
 
 /// Result type for transform operations.
+#[allow(dead_code)]
 pub type TransformResult<T> = std::result::Result<T, TransformError>;
 
 #[cfg(test)]

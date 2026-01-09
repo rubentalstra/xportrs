@@ -7,14 +7,11 @@
 //!
 //! ```no_run
 //! use std::path::Path;
-//! use xportrs::io::{write_xpt, write_xpt_validated};
-//! use xportrs::{XptDataset, XptColumn, XptVersion};
+//! use xportrs::io::{write_xpt_validated};
+//! use xportrs::types::{XptDataset, XptColumn, XptVersion};
 //!
 //! let mut dataset = XptDataset::new("DM");
 //! dataset.columns.push(XptColumn::character("USUBJID", 20));
-//!
-//! // Simple write
-//! write_xpt(Path::new("dm.xpt"), &dataset).unwrap();
 //!
 //! // Write with validation
 //! let result = write_xpt_validated(Path::new("dm.xpt"), &dataset, XptVersion::V5).unwrap();
@@ -58,30 +55,6 @@ impl WriteResult {
     }
 }
 
-/// Write a dataset to an XPT file.
-///
-/// This is the simplest way to write an XPT file. For more control,
-/// use [`write_xpt_with_options`] or [`write_xpt_validated`].
-///
-/// # Errors
-///
-/// Returns an error if the file cannot be created or written.
-///
-/// # Example
-///
-/// ```no_run
-/// use std::path::Path;
-/// use xportrs::io::write_xpt;
-/// use xportrs::{XptDataset, XptColumn};
-///
-/// let mut dataset = XptDataset::new("DM");
-/// dataset.columns.push(XptColumn::character("USUBJID", 20));
-/// write_xpt(Path::new("dm.xpt"), &dataset).unwrap();
-/// ```
-pub fn write_xpt(path: &Path, dataset: &XptDataset) -> Result<()> {
-    writer::write_xpt(path, dataset)
-}
-
 /// Write a dataset to an XPT file with custom options.
 ///
 /// # Errors
@@ -93,7 +66,7 @@ pub fn write_xpt(path: &Path, dataset: &XptDataset) -> Result<()> {
 /// ```no_run
 /// use std::path::Path;
 /// use xportrs::io::write_xpt_with_options;
-/// use xportrs::{XptDataset, XptColumn, XptWriterOptions, XptVersion};
+/// use xportrs::types::{XptDataset, XptColumn, XptWriterOptions, XptVersion};
 ///
 /// let mut dataset = XptDataset::new("DM");
 /// dataset.columns.push(XptColumn::character("USUBJID", 20));
@@ -124,7 +97,7 @@ pub fn write_xpt_with_options(
 /// ```no_run
 /// use std::path::Path;
 /// use xportrs::io::write_xpt_validated;
-/// use xportrs::{XptDataset, XptColumn, XptVersion};
+/// use xportrs::types::{XptDataset, XptColumn, XptVersion};
 ///
 /// let mut dataset = XptDataset::new("DM");
 /// dataset.columns.push(XptColumn::character("USUBJID", 20));
@@ -172,7 +145,7 @@ pub fn write_xpt_validated(
 /// ```no_run
 /// use std::path::Path;
 /// use xportrs::io::write_xpt_fda_compliant;
-/// use xportrs::{XptDataset, XptColumn};
+/// use xportrs::types::{XptDataset, XptColumn};
 ///
 /// let mut dataset = XptDataset::new("DM");
 /// dataset.columns.push(XptColumn::character("USUBJID", 20));
@@ -215,7 +188,7 @@ pub fn write_xpt_fda_compliant(path: &Path, dataset: &XptDataset) -> Result<Writ
 /// use std::path::Path;
 /// use xportrs::io::write_xpt_against_spec;
 /// use xportrs::spec::{DatasetSpec, VariableSpec};
-/// use xportrs::{XptDataset, XptColumn, XptVersion};
+/// use xportrs::types::{XptDataset, XptColumn, XptVersion};
 ///
 /// let spec = DatasetSpec::new("DM")
 ///     .add_variable(VariableSpec::character("USUBJID", 20));

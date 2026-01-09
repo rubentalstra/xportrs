@@ -64,7 +64,7 @@ pub struct ApplyFormatResult {
 /// # Example
 ///
 /// ```
-/// use xportrs::{XptDataset, XptColumn, DatasetSpec, VariableSpec, FormatSpec};
+/// use xportrs::types::{XptDataset, XptColumn, DatasetSpec, VariableSpec, FormatSpec};
 /// use xportrs::transform::{apply_format, ApplyFormatConfig};
 ///
 /// let dataset = XptDataset::with_columns("DM", vec![
