@@ -31,7 +31,7 @@ impl<'a, R: Read> ObservationReader<'a, R> {
     ///
     /// Returns an error if the reader cannot be initialized.
     pub fn new(reader: &'a mut R, variables: &[NamestrV5], options: &ReadOptions) -> Result<Self> {
-        let row_len: usize = variables.iter().map(|v| v.length()).sum();
+        let row_len: usize = variables.iter().map(NamestrV5::length).sum();
 
         Ok(Self {
             reader,
@@ -116,16 +116,14 @@ impl<'a, R: Read> ObservationReader<'a, R> {
 
         while row_data.len() < self.row_len {
             // Refill buffer if needed
-            if self.buffer_pos >= self.buffer_len {
-                if !self.refill_buffer()? {
-                    // EOF reached
-                    if row_data.is_empty() {
-                        return Ok(None);
-                    }
-                    // Partial row - likely end of file
-                    self.at_eof = true;
+            if self.buffer_pos >= self.buffer_len && !self.refill_buffer()? {
+                // EOF reached
+                if row_data.is_empty() {
                     return Ok(None);
                 }
+                // Partial row - likely end of file
+                self.at_eof = true;
+                return Ok(None);
             }
 
             // Copy available bytes

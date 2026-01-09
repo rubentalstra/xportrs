@@ -53,12 +53,12 @@ pub fn inspect_xpt(path: impl AsRef<Path>) -> Result<XptFile> {
 /// ```no_run
 /// use xportrs::{read_xpt, ReadOptions};
 ///
-/// let dataset = read_xpt("ae.xpt", ReadOptions::default())?;
+/// let dataset = read_xpt("ae.xpt", &ReadOptions::default())?;
 /// println!("Domain: {}", dataset.domain_code);
 /// println!("Rows: {}", dataset.nrows);
 /// # Ok::<(), xportrs::XportrsError>(())
 /// ```
-pub fn read_xpt(path: impl AsRef<Path>, options: ReadOptions) -> Result<DomainDataset> {
+pub fn read_xpt(path: impl AsRef<Path>, options: &ReadOptions) -> Result<DomainDataset> {
     let file = File::open(path.as_ref()).map_err(XportrsError::Io)?;
     let mut reader = XptReader::new(BufReader::new(file))?;
 
@@ -70,7 +70,7 @@ pub fn read_xpt(path: impl AsRef<Path>, options: ReadOptions) -> Result<DomainDa
         .name
         .clone();
 
-    reader.read_member(&first_member, &options)
+    reader.read_member(&first_member, options)
 }
 
 /// Reads a specific member from an XPT file by domain code.
@@ -86,18 +86,18 @@ pub fn read_xpt(path: impl AsRef<Path>, options: ReadOptions) -> Result<DomainDa
 /// ```no_run
 /// use xportrs::{read_xpt_member, ReadOptions};
 ///
-/// let dataset = read_xpt_member("study.xpt", "DM", ReadOptions::default())?;
+/// let dataset = read_xpt_member("study.xpt", "DM", &ReadOptions::default())?;
 /// println!("Domain: {}", dataset.domain_code);
 /// # Ok::<(), xportrs::XportrsError>(())
 /// ```
 pub fn read_xpt_member(
     path: impl AsRef<Path>,
     domain_code: &str,
-    options: ReadOptions,
+    options: &ReadOptions,
 ) -> Result<DomainDataset> {
     let file = File::open(path.as_ref()).map_err(XportrsError::Io)?;
     let mut reader = XptReader::new(BufReader::new(file))?;
-    reader.read_member(domain_code, &options)
+    reader.read_member(domain_code, options)
 }
 
 /// Reads all members from an XPT file.
@@ -111,16 +111,16 @@ pub fn read_xpt_member(
 /// ```no_run
 /// use xportrs::{read_xpt_all, ReadOptions};
 ///
-/// let datasets = read_xpt_all("study.xpt", ReadOptions::default())?;
+/// let datasets = read_xpt_all("study.xpt", &ReadOptions::default())?;
 /// for ds in &datasets {
 ///     println!("Domain: {} ({} rows)", ds.domain_code, ds.nrows);
 /// }
 /// # Ok::<(), xportrs::XportrsError>(())
 /// ```
-pub fn read_xpt_all(path: impl AsRef<Path>, options: ReadOptions) -> Result<Vec<DomainDataset>> {
+pub fn read_xpt_all(path: impl AsRef<Path>, options: &ReadOptions) -> Result<Vec<DomainDataset>> {
     let file = File::open(path.as_ref()).map_err(XportrsError::Io)?;
     let mut reader = XptReader::new(BufReader::new(file))?;
-    reader.read_all(&options)
+    reader.read_all(options)
 }
 
 /// Writes a dataset to an XPT v5 file with default settings.

@@ -41,26 +41,42 @@ pub fn parse_sas_timestamp(s: &str) -> Option<DateTime<Utc>> {
 }
 
 /// Converts a [`chrono::NaiveDate`] to SAS date value (days since 1960-01-01).
+///
+/// # Panics
+///
+/// This function will not panic under normal conditions. The SAS epoch date
+/// (1960-01-01) is always valid.
 #[must_use]
 pub fn sas_days_since_1960(date: chrono::NaiveDate) -> i64 {
-    let sas_epoch = chrono::NaiveDate::from_ymd_opt(1960, 1, 1).unwrap();
+    let sas_epoch =
+        chrono::NaiveDate::from_ymd_opt(1960, 1, 1).expect("SAS epoch 1960-01-01 is always valid");
     (date - sas_epoch).num_days()
 }
 
 /// Converts a [`chrono::NaiveDateTime`] to SAS datetime value (seconds since 1960-01-01 00:00:00).
+///
+/// # Panics
+///
+/// This function will not panic under normal conditions. The SAS epoch datetime
+/// (1960-01-01 00:00:00) is always valid.
 #[must_use]
 pub fn sas_seconds_since_1960(dt: chrono::NaiveDateTime) -> i64 {
     let sas_epoch = chrono::NaiveDateTime::new(
-        chrono::NaiveDate::from_ymd_opt(1960, 1, 1).unwrap(),
-        chrono::NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
+        chrono::NaiveDate::from_ymd_opt(1960, 1, 1).expect("SAS epoch date is always valid"),
+        chrono::NaiveTime::from_hms_opt(0, 0, 0).expect("midnight is always valid"),
     );
     (dt - sas_epoch).num_seconds()
 }
 
 /// Converts a [`chrono::NaiveTime`] to SAS time value (seconds since midnight).
+///
+/// # Panics
+///
+/// This function will not panic under normal conditions. Midnight (00:00:00)
+/// is always a valid time.
 #[must_use]
 pub fn sas_seconds_since_midnight(time: chrono::NaiveTime) -> i64 {
-    let midnight = chrono::NaiveTime::from_hms_opt(0, 0, 0).unwrap();
+    let midnight = chrono::NaiveTime::from_hms_opt(0, 0, 0).expect("midnight is always valid");
     (time - midnight).num_seconds()
 }
 
@@ -84,7 +100,7 @@ pub fn datetime_from_sas_seconds(seconds: i64) -> Option<chrono::NaiveDateTime> 
 /// Converts a SAS time value to [`chrono::NaiveTime`].
 #[must_use]
 pub fn time_from_sas_seconds(seconds: i64) -> Option<chrono::NaiveTime> {
-    if seconds < 0 || seconds >= 86400 {
+    if !(0..86400).contains(&seconds) {
         return None;
     }
     let hours = (seconds / 3600) as u32;

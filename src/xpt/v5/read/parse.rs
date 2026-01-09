@@ -2,7 +2,7 @@
 //!
 //! This module handles parsing the header sections of XPT v5 files.
 
-use std::io::{Read, Seek, SeekFrom};
+use std::io::{Read, Seek};
 
 use crate::error::{Result, XportrsError};
 use crate::xpt::v5::constants::{
@@ -125,7 +125,7 @@ fn parse_member<R: Read + Seek>(reader: &mut R) -> Result<XptMemberInfo> {
     // Read NAMESTR records
     let mut variables = Vec::with_capacity(nvars);
     let namestr_total_bytes = nvars * NAMESTR_LEN;
-    let namestr_records = (namestr_total_bytes + RECORD_LEN - 1) / RECORD_LEN;
+    let namestr_records = namestr_total_bytes.div_ceil(RECORD_LEN);
 
     let mut namestr_data = vec![0u8; namestr_records * RECORD_LEN];
     reader
@@ -146,7 +146,7 @@ fn parse_member<R: Read + Seek>(reader: &mut R) -> Result<XptMemberInfo> {
     }
 
     // Calculate row length
-    let row_len: usize = variables.iter().map(|v| v.length()).sum();
+    let row_len: usize = variables.iter().map(NamestrV5::length).sum();
 
     // Read OBS header
     reader.read_exact(&mut buf).map_err(XportrsError::Io)?;
@@ -156,9 +156,7 @@ fn parse_member<R: Read + Seek>(reader: &mut R) -> Result<XptMemberInfo> {
     }
 
     // Record the offset to observation data
-    let obs_offset = reader
-        .seek(SeekFrom::Current(0))
-        .map_err(XportrsError::Io)?;
+    let obs_offset = reader.stream_position().map_err(XportrsError::Io)?;
 
     Ok(XptMemberInfo {
         name,

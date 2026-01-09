@@ -26,6 +26,7 @@ pub const fn is_supported() -> bool {
 /// # Errors
 ///
 /// Always returns [`XportrsError::UnsupportedVersion`].
+#[must_use]
 pub fn unsupported_error() -> XportrsError {
     XportrsError::UnsupportedVersion {
         version: XptVersion::V8,
@@ -33,11 +34,19 @@ pub fn unsupported_error() -> XportrsError {
 }
 
 /// Placeholder for future V8 reader.
+///
+/// # Errors
+///
+/// Always returns [`XportrsError::UnsupportedVersion`] as V8 is not yet implemented.
 pub fn read_v8() -> Result<()> {
     Err(unsupported_error())
 }
 
 /// Placeholder for future V8 writer.
+///
+/// # Errors
+///
+/// Always returns [`XportrsError::UnsupportedVersion`] as V8 is not yet implemented.
 pub fn write_v8() -> Result<()> {
     Err(unsupported_error())
 }

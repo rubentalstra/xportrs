@@ -56,7 +56,7 @@ impl DomainDataset {
     ///
     /// Returns an error if any column has a different length than the others.
     pub fn new(domain_code: String, columns: Vec<Column>) -> Result<Self> {
-        let nrows = columns.first().map_or(0, |c| c.len());
+        let nrows = columns.first().map_or(0, Column::len);
 
         // Validate all columns have the same length
         for col in &columns {
@@ -217,7 +217,7 @@ pub enum ColumnData {
     /// unless metadata specifies character format.
     Date(Vec<Option<NaiveDate>>),
 
-    /// DateTime values.
+    /// `DateTime` values.
     ///
     /// Converted to XPT Numeric (SAS datetime: seconds since 1960-01-01 00:00:00)
     /// when writing, unless metadata specifies character format.

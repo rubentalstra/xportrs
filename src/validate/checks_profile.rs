@@ -59,22 +59,21 @@ pub fn validate_profile(
             }
 
             Rule::DatasetNameMatchesFileStem => {
-                if let Some(path) = file_path {
-                    if let Some(stem) = path.file_stem().and_then(|s| s.to_str()) {
-                        if !stem.eq_ignore_ascii_case(&plan.domain_code) {
-                            issues.push(
-                                Issue::new(
-                                    Severity::Error,
-                                    "PROFILE_003",
-                                    format!(
-                                        "dataset name '{}' does not match file stem '{}'",
-                                        plan.domain_code, stem
-                                    ),
-                                )
-                                .with_dataset(&plan.domain_code),
-                            );
-                        }
-                    }
+                if let Some(path) = file_path
+                    && let Some(stem) = path.file_stem().and_then(|s| s.to_str())
+                    && !stem.eq_ignore_ascii_case(&plan.domain_code)
+                {
+                    issues.push(
+                        Issue::new(
+                            Severity::Error,
+                            "PROFILE_003",
+                            format!(
+                                "dataset name '{}' does not match file stem '{}'",
+                                plan.domain_code, stem
+                            ),
+                        )
+                        .with_dataset(&plan.domain_code),
+                    );
                 }
             }
 
@@ -111,17 +110,17 @@ pub fn validate_profile(
             }
 
             Rule::RequireAsciiLabels => {
-                if let Some(ref label) = plan.dataset_label {
-                    if !label.is_ascii() {
-                        issues.push(
-                            Issue::new(
-                                Severity::Error,
-                                "PROFILE_005",
-                                "dataset label contains non-ASCII characters",
-                            )
-                            .with_dataset(&plan.domain_code),
-                        );
-                    }
+                if let Some(ref label) = plan.dataset_label
+                    && !label.is_ascii()
+                {
+                    issues.push(
+                        Issue::new(
+                            Severity::Error,
+                            "PROFILE_005",
+                            "dataset label contains non-ASCII characters",
+                        )
+                        .with_dataset(&plan.domain_code),
+                    );
                 }
 
                 for var in &plan.variables {
@@ -186,21 +185,21 @@ pub fn validate_profile(
             }
 
             Rule::LabelMaxBytes(max) => {
-                if let Some(ref label) = plan.dataset_label {
-                    if label.len() > *max {
-                        issues.push(
-                            Issue::new(
-                                Severity::Error,
-                                "PROFILE_008",
-                                format!(
-                                    "dataset label exceeds {} bytes (has {} bytes)",
-                                    max,
-                                    label.len()
-                                ),
-                            )
-                            .with_dataset(&plan.domain_code),
-                        );
-                    }
+                if let Some(ref label) = plan.dataset_label
+                    && label.len() > *max
+                {
+                    issues.push(
+                        Issue::new(
+                            Severity::Error,
+                            "PROFILE_008",
+                            format!(
+                                "dataset label exceeds {} bytes (has {} bytes)",
+                                max,
+                                label.len()
+                            ),
+                        )
+                        .with_dataset(&plan.domain_code),
+                    );
                 }
 
                 for var in &plan.variables {
@@ -264,9 +263,9 @@ mod tests {
         ];
         plan.recalculate_positions();
 
-        let issues = validate_profile(&plan, &*FDA_PROFILE, None);
+        let issues = validate_profile(&plan, &FDA_PROFILE, None);
         // Should have no errors (warnings about pattern might exist)
-        assert!(!issues.iter().any(|i| i.is_error()));
+        assert!(!issues.iter().any(Issue::is_error));
     }
 
     #[test]
@@ -275,7 +274,7 @@ mod tests {
         plan.variables = vec![PlannedVariable::numeric("AESEQ")];
         plan.recalculate_positions();
 
-        let issues = validate_profile(&plan, &*FDA_PROFILE, None);
+        let issues = validate_profile(&plan, &FDA_PROFILE, None);
         assert!(issues.iter().any(|i| i.code == "PROFILE_004"));
     }
 }

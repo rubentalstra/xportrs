@@ -23,7 +23,7 @@ use super::plan::{PlannedVariable, SchemaPlan};
 /// 4. Determine XPT types
 /// 5. Determine lengths
 /// 6. Apply ordering
-/// 7. Compute byte positions and row_len
+/// 7. Compute byte positions and `row_len`
 ///
 /// # Errors
 ///
@@ -97,11 +97,11 @@ pub fn derive_schema_plan(
         // Sort by order if metadata provides it
         let mut has_order = false;
         for pv in &planned_vars {
-            if let Some(m) = var_meta_map.get(pv.name.as_str()) {
-                if m.order.is_some() {
-                    has_order = true;
-                    break;
-                }
+            if let Some(m) = var_meta_map.get(pv.name.as_str())
+                && m.order.is_some()
+            {
+                has_order = true;
+                break;
             }
         }
 
@@ -126,14 +126,14 @@ pub fn derive_schema_plan(
     plan.recalculate_positions();
 
     // Apply profile name normalization if auto_fix is enabled
-    if config.auto_fix {
-        if let Some(prof) = profile {
-            // Uppercase names if profile requires ASCII names
-            if prof.requires_ascii_names() {
-                plan.domain_code = plan.domain_code.to_ascii_uppercase();
-                for var in &mut plan.variables {
-                    var.name = var.name.to_ascii_uppercase();
-                }
+    if config.auto_fix
+        && let Some(prof) = profile
+    {
+        // Uppercase names if profile requires ASCII names
+        if prof.requires_ascii_names() {
+            plan.domain_code = plan.domain_code.to_ascii_uppercase();
+            for var in &mut plan.variables {
+                var.name = var.name.to_ascii_uppercase();
             }
         }
     }
@@ -188,13 +188,13 @@ fn compute_max_string_length(data: &ColumnData) -> usize {
         ColumnData::String(vals) => vals
             .iter()
             .filter_map(|v| v.as_ref())
-            .map(|s| s.len())
+            .map(String::len)
             .max()
             .unwrap_or(0),
         ColumnData::Bytes(vals) => vals
             .iter()
             .filter_map(|v| v.as_ref())
-            .map(|b| b.len())
+            .map(Vec::len)
             .max()
             .unwrap_or(0),
         _ => 0,

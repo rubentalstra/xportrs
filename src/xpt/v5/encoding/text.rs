@@ -75,15 +75,19 @@ pub enum TextEncodingError {
     NonAscii(String),
 }
 
-/// Validates that a string contains only ASCII characters suitable for XPT.
+/// Validates that a string contains only printable ASCII characters suitable for XPT.
 ///
-/// Returns `true` if the string is valid.
+/// XPT files typically only support printable ASCII characters (0x20-0x7E).
+///
+/// Returns `true` if the string contains only valid characters.
 #[must_use]
 pub fn is_valid_xpt_string(s: &str) -> bool {
-    s.bytes().all(|b| b >= 0x20 && b < 0x7F)
+    s.bytes().all(|b| (0x20..0x7F).contains(&b))
 }
 
 /// Truncates a string to a maximum byte length, respecting UTF-8 boundaries.
+///
+/// This ensures the truncation doesn't split a multi-byte UTF-8 character.
 #[must_use]
 pub fn truncate_utf8(s: &str, max_bytes: usize) -> &str {
     if s.len() <= max_bytes {

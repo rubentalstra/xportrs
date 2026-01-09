@@ -97,21 +97,20 @@ impl<W: Write> XptWriter<W> {
             .map_err(XportrsError::Io)?;
 
         // Record 2: Member descriptor
-        let now = Utc::now();
-        let created = self.options.created.unwrap_or(now);
-        let modified = self.options.modified.unwrap_or(now);
-
-        let created_str = format_sas_timestamp(created);
-        let modified_str = format_sas_timestamp(modified);
-
+        // Format (must match parse.rs expectations):
+        // [0..8]: SAS identifier
+        // [8..16]: member name
+        // [16..24]: SAS type ("DATA    ")
+        // [24..32]: padding
+        // [32..72]: label (40 bytes)
+        // [72..80]: padding
         let mut rec = [PAD_CHAR; RECORD_LEN];
-        rec[..8].copy_from_slice(pad_string(&plan.domain_code, 8).as_slice());
-        rec[8..16].copy_from_slice(b"DATA    ");
-        rec[16..32].copy_from_slice(created_str.as_bytes());
-        rec[32..48].copy_from_slice(modified_str.as_bytes());
+        rec[..8].copy_from_slice(b"SAS     ");
+        rec[8..16].copy_from_slice(pad_string(&plan.domain_code, 8).as_slice());
+        rec[16..24].copy_from_slice(b"DATA    ");
         if let Some(ref label) = plan.dataset_label {
             let label_bytes = pad_string(label, 40);
-            rec[48..88].copy_from_slice(&label_bytes[..40]);
+            rec[32..72].copy_from_slice(&label_bytes);
         }
 
         self.writer.write_record(&rec).map_err(XportrsError::Io)?;

@@ -47,21 +47,21 @@ pub fn validate_v5_schema(plan: &SchemaPlan) -> Vec<Issue> {
     }
 
     // Check dataset label length
-    if let Some(ref label) = plan.dataset_label {
-        if label.len() > constraints::MAX_LABEL_BYTES {
-            issues.push(
-                Issue::new(
-                    Severity::Error,
-                    "XPT_V5_002",
-                    format!(
-                        "dataset label exceeds {} bytes (has {} bytes)",
-                        constraints::MAX_LABEL_BYTES,
-                        label.len()
-                    ),
-                )
-                .with_dataset(&plan.domain_code),
-            );
-        }
+    if let Some(ref label) = plan.dataset_label
+        && label.len() > constraints::MAX_LABEL_BYTES
+    {
+        issues.push(
+            Issue::new(
+                Severity::Error,
+                "XPT_V5_002",
+                format!(
+                    "dataset label exceeds {} bytes (has {} bytes)",
+                    constraints::MAX_LABEL_BYTES,
+                    label.len()
+                ),
+            )
+            .with_dataset(&plan.domain_code),
+        );
     }
 
     // Check each variable
@@ -126,6 +126,23 @@ pub fn validate_v5_schema(plan: &SchemaPlan) -> Vec<Issue> {
                         "character variable '{}' must have length >= {} (has {})",
                         var.name,
                         constraints::MIN_CHARACTER_LENGTH,
+                        var.length
+                    ),
+                )
+                .with_variable(&var.name),
+            );
+        }
+
+        // Character length must be <= 200
+        if var.xpt_type.is_character() && var.length > constraints::MAX_CHARACTER_LENGTH {
+            issues.push(
+                Issue::new(
+                    Severity::Error,
+                    "XPT_V5_008",
+                    format!(
+                        "character variable '{}' must have length <= {} (has {})",
+                        var.name,
+                        constraints::MAX_CHARACTER_LENGTH,
                         var.length
                     ),
                 )

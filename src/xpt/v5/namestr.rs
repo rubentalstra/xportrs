@@ -112,22 +112,20 @@ pub fn pack_namestr(var: &PlannedVariable, var_num: usize) -> Result<[u8; NAMEST
     let ntype: i16 = if var.xpt_type.is_numeric() { 1 } else { 2 };
     cursor
         .write_i16::<BigEndian>(ntype)
-        .map_err(|e| XportrsError::Io(e))?;
+        .map_err(XportrsError::Io)?;
 
     // nhfun: hash (unused)
-    cursor
-        .write_i16::<BigEndian>(0)
-        .map_err(|e| XportrsError::Io(e))?;
+    cursor.write_i16::<BigEndian>(0).map_err(XportrsError::Io)?;
 
     // nlng: length
     cursor
         .write_i16::<BigEndian>(var.length as i16)
-        .map_err(|e| XportrsError::Io(e))?;
+        .map_err(XportrsError::Io)?;
 
     // nvar0: variable number (1-based)
     cursor
         .write_i16::<BigEndian>((var_num + 1) as i16)
-        .map_err(|e| XportrsError::Io(e))?;
+        .map_err(XportrsError::Io)?;
 
     // nname: variable name (8 bytes, space-padded)
     let name_bytes = pad_string(&var.name, 8);
@@ -155,15 +153,9 @@ pub fn pack_namestr(var: &PlannedVariable, var_num: usize) -> Result<[u8; NAMEST
 
     // nfl, nfd, nfj: format length, decimals, justification
     cursor.set_position(64);
-    cursor
-        .write_i16::<BigEndian>(0)
-        .map_err(|e| XportrsError::Io(e))?; // nfl
-    cursor
-        .write_i16::<BigEndian>(0)
-        .map_err(|e| XportrsError::Io(e))?; // nfd
-    cursor
-        .write_i16::<BigEndian>(0)
-        .map_err(|e| XportrsError::Io(e))?; // nfj
+    cursor.write_i16::<BigEndian>(0).map_err(XportrsError::Io)?; // nfl
+    cursor.write_i16::<BigEndian>(0).map_err(XportrsError::Io)?; // nfd
+    cursor.write_i16::<BigEndian>(0).map_err(XportrsError::Io)?; // nfj
 
     // nfill: 2 bytes unused
     cursor.set_position(72);
@@ -178,18 +170,14 @@ pub fn pack_namestr(var: &PlannedVariable, var_num: usize) -> Result<[u8; NAMEST
 
     // nifl, nifd: informat length, decimals
     cursor.set_position(80);
-    cursor
-        .write_i16::<BigEndian>(0)
-        .map_err(|e| XportrsError::Io(e))?; // nifl
-    cursor
-        .write_i16::<BigEndian>(0)
-        .map_err(|e| XportrsError::Io(e))?; // nifd
+    cursor.write_i16::<BigEndian>(0).map_err(XportrsError::Io)?; // nifl
+    cursor.write_i16::<BigEndian>(0).map_err(XportrsError::Io)?; // nifd
 
     // npos: position (8 bytes, big-endian)
     cursor.set_position(84);
     cursor
         .write_i64::<BigEndian>(var.position as i64)
-        .map_err(|e| XportrsError::Io(e))?;
+        .map_err(XportrsError::Io)?;
 
     // rest: 48 bytes unused (already zeroed)
 
@@ -204,18 +192,10 @@ pub fn pack_namestr(var: &PlannedVariable, var_num: usize) -> Result<[u8; NAMEST
 pub fn unpack_namestr(data: &[u8; NAMESTR_LEN]) -> Result<NamestrV5> {
     let mut cursor = Cursor::new(data);
 
-    let ntype = cursor
-        .read_i16::<BigEndian>()
-        .map_err(|e| XportrsError::Io(e))?;
-    let nhfun = cursor
-        .read_i16::<BigEndian>()
-        .map_err(|e| XportrsError::Io(e))?;
-    let nlng = cursor
-        .read_i16::<BigEndian>()
-        .map_err(|e| XportrsError::Io(e))?;
-    let nvar0 = cursor
-        .read_i16::<BigEndian>()
-        .map_err(|e| XportrsError::Io(e))?;
+    let ntype = cursor.read_i16::<BigEndian>().map_err(XportrsError::Io)?;
+    let nhfun = cursor.read_i16::<BigEndian>().map_err(XportrsError::Io)?;
+    let nlng = cursor.read_i16::<BigEndian>().map_err(XportrsError::Io)?;
+    let nvar0 = cursor.read_i16::<BigEndian>().map_err(XportrsError::Io)?;
 
     let nname = String::from_utf8_lossy(&data[8..16]).trim_end().to_string();
     let nlabel = String::from_utf8_lossy(&data[16..56])
@@ -226,15 +206,9 @@ pub fn unpack_namestr(data: &[u8; NAMESTR_LEN]) -> Result<NamestrV5> {
         .to_string();
 
     cursor.set_position(64);
-    let nfl = cursor
-        .read_i16::<BigEndian>()
-        .map_err(|e| XportrsError::Io(e))?;
-    let nfd = cursor
-        .read_i16::<BigEndian>()
-        .map_err(|e| XportrsError::Io(e))?;
-    let nfj = cursor
-        .read_i16::<BigEndian>()
-        .map_err(|e| XportrsError::Io(e))?;
+    let nfl = cursor.read_i16::<BigEndian>().map_err(XportrsError::Io)?;
+    let nfd = cursor.read_i16::<BigEndian>().map_err(XportrsError::Io)?;
+    let nfj = cursor.read_i16::<BigEndian>().map_err(XportrsError::Io)?;
 
     let mut nfill = [0u8; 2];
     nfill.copy_from_slice(&data[70..72]);
@@ -244,17 +218,11 @@ pub fn unpack_namestr(data: &[u8; NAMESTR_LEN]) -> Result<NamestrV5> {
         .to_string();
 
     cursor.set_position(80);
-    let nifl = cursor
-        .read_i16::<BigEndian>()
-        .map_err(|e| XportrsError::Io(e))?;
-    let nifd = cursor
-        .read_i16::<BigEndian>()
-        .map_err(|e| XportrsError::Io(e))?;
+    let nifl = cursor.read_i16::<BigEndian>().map_err(XportrsError::Io)?;
+    let nifd = cursor.read_i16::<BigEndian>().map_err(XportrsError::Io)?;
 
     cursor.set_position(84);
-    let npos = cursor
-        .read_i64::<BigEndian>()
-        .map_err(|e| XportrsError::Io(e))?;
+    let npos = cursor.read_i64::<BigEndian>().map_err(XportrsError::Io)?;
 
     let mut rest = [0u8; 48];
     rest.copy_from_slice(&data[92..140]);

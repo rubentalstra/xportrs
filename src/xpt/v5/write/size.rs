@@ -36,7 +36,7 @@ pub fn estimate_file_size(plan: &SchemaPlan, nrows: usize) -> usize {
     // NAMESTR section
     size += overhead::NAMESTR_HEADER;
     let namestr_bytes = plan.variables.len() * NAMESTR_LEN;
-    let namestr_records = (namestr_bytes + RECORD_LEN - 1) / RECORD_LEN;
+    let namestr_records = namestr_bytes.div_ceil(RECORD_LEN);
     size += namestr_records * RECORD_LEN;
 
     // OBS header
@@ -44,7 +44,7 @@ pub fn estimate_file_size(plan: &SchemaPlan, nrows: usize) -> usize {
 
     // Observation data
     let obs_bytes = nrows * plan.row_len;
-    let obs_records = (obs_bytes + RECORD_LEN - 1) / RECORD_LEN;
+    let obs_records = obs_bytes.div_ceil(RECORD_LEN);
     size += obs_records * RECORD_LEN;
 
     size
@@ -69,7 +69,7 @@ pub fn max_rows_for_size(plan: &SchemaPlan, max_bytes: usize) -> Option<usize> {
         + overhead::OBS_HEADER;
 
     let namestr_bytes = plan.variables.len() * NAMESTR_LEN;
-    let namestr_records = (namestr_bytes + RECORD_LEN - 1) / RECORD_LEN;
+    let namestr_records = namestr_bytes.div_ceil(RECORD_LEN);
     fixed_overhead += namestr_records * RECORD_LEN;
 
     if fixed_overhead >= max_bytes {

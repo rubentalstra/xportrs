@@ -60,6 +60,85 @@ pub fn is_missing_value(bytes: &[u8; 8]) -> bool {
     }
 }
 
+/// SAS missing value types.
+///
+/// In SAS, missing values can be:
+/// - Standard missing (`.`)
+/// - Special missing (`.A` through `.Z`)
+/// - Underscore missing (`._`)
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum SasMissingValue {
+    /// Standard missing value (`.`)
+    Standard,
+    /// Special missing value `.A` through `.Z`
+    Special(char),
+    /// Underscore missing value (`._`)
+    Underscore,
+}
+
+impl SasMissingValue {
+    /// Returns the byte pattern for this missing value type.
+    #[must_use]
+    pub const fn to_bytes(self) -> [u8; 8] {
+        let first_byte = match self {
+            Self::Standard => 0x2E,      // .
+            Self::Underscore => 0x5F,    // _
+            Self::Special(c) => c as u8, // A-Z (0x41-0x5A)
+        };
+        [first_byte, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+    }
+}
+
+impl std::fmt::Display for SasMissingValue {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Standard => write!(f, "."),
+            Self::Special(c) => write!(f, ".{}", c),
+            Self::Underscore => write!(f, "._"),
+        }
+    }
+}
+
+/// Identifies the specific type of SAS missing value from bytes.
+///
+/// Returns `None` if the bytes do not represent a missing value.
+#[must_use]
+pub fn identify_missing_value(bytes: &[u8; 8]) -> Option<SasMissingValue> {
+    if !is_missing_value(bytes) {
+        return None;
+    }
+
+    let first_byte = bytes[0];
+    Some(match first_byte {
+        0x2E => SasMissingValue::Standard,
+        0x5F => SasMissingValue::Underscore,
+        b'A'..=b'Z' => SasMissingValue::Special(first_byte as char),
+        _ => return None,
+    })
+}
+
+/// Encodes a SAS missing value to IBM float format.
+#[must_use]
+pub const fn encode_missing_value(missing: SasMissingValue) -> [u8; 8] {
+    missing.to_bytes()
+}
+
+/// SAS missing value patterns for reference.
+pub mod missing_patterns {
+    use super::SasMissingValue;
+
+    /// Standard missing value (`.`)
+    pub const MISSING: [u8; 8] = SasMissingValue::Standard.to_bytes();
+    /// Missing A (`.A`)
+    pub const MISSING_A: [u8; 8] = SasMissingValue::Special('A').to_bytes();
+    /// Missing B (`.B`)
+    pub const MISSING_B: [u8; 8] = SasMissingValue::Special('B').to_bytes();
+    /// Missing C (`.C`)
+    pub const MISSING_C: [u8; 8] = SasMissingValue::Special('C').to_bytes();
+    /// Missing underscore (`._`)
+    pub const MISSING_UNDERSCORE: [u8; 8] = SasMissingValue::Underscore.to_bytes();
+}
+
 /// SAS missing value pattern (standard '.').
 const MISSING_PATTERN: [u8; 8] = [0x2E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
 
@@ -270,7 +349,8 @@ mod tests {
 
     #[test]
     fn test_roundtrip_fractions() {
-        for &val in &[0.5, 0.25, 0.125, 3.14159, 2.71828] {
+        use std::f64::consts::{E, PI};
+        for &val in &[0.5, 0.25, 0.125, PI, E] {
             let encoded = encode_ibm_float(Some(val));
             let decoded = decode_ibm_float(&encoded).unwrap();
             let rel_error = ((decoded - val) / val).abs();
