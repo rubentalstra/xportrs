@@ -1,8 +1,8 @@
 //! Column name mapping for flexible metadata input formats.
 //!
-//! This module provides [`ColumnMapping`] for configuring how DataFrame
+//! This module provides [`ColumnMapping`] for configuring how `DataFrame`
 //! columns are mapped to specification fields. This allows users to use
-//! their own column naming conventions when loading specs from DataFrames.
+//! their own column naming conventions when loading specs from `DataFrames`.
 //!
 //! # Example
 //!
@@ -21,11 +21,11 @@
 //!     .with_type_col("Data Type");
 //! ```
 
-/// Column name mapping for metadata specification DataFrames.
+/// Column name mapping for metadata specification `DataFrames`.
 ///
-/// This struct defines the mapping between DataFrame column names and
+/// This struct defines the mapping between `DataFrame` column names and
 /// the specification fields. It allows users to load specifications from
-/// DataFrames with any column naming convention.
+/// `DataFrames` with any column naming convention.
 ///
 /// # Default Column Names
 ///

@@ -40,7 +40,7 @@ use super::common::{NAMESTR_LEN, read_i16, read_string, write_i16, write_i32, wr
 use crate::error::{Result, XptError};
 use crate::types::{Justification, XptColumn, XptType, XptVersion};
 
-/// Parse a single NAMESTR record into an XptColumn.
+/// Parse a single NAMESTR record into an `XptColumn`.
 ///
 /// # Arguments
 /// * `data` - Byte slice containing the NAMESTR data
@@ -50,6 +50,11 @@ use crate::types::{Justification, XptColumn, XptType, XptVersion};
 ///
 /// # Returns
 /// Parsed `XptColumn` on success.
+///
+/// # Errors
+///
+/// Returns an error if the data is too short, the variable type is invalid,
+/// the variable length is zero, or the variable name is empty.
 pub fn parse_namestr(
     data: &[u8],
     namestr_len: usize,
@@ -135,7 +140,7 @@ pub fn parse_namestr(
     })
 }
 
-/// Build a NAMESTR record from an XptColumn.
+/// Build a NAMESTR record from an `XptColumn`.
 ///
 /// # Arguments
 /// * `column` - The column definition
@@ -237,6 +242,11 @@ pub fn build_namestr(
 ///
 /// # Returns
 /// Vector of parsed columns.
+///
+/// # Errors
+///
+/// Returns an error if there is an arithmetic overflow, the NAMESTR data is
+/// out of bounds, or any individual NAMESTR record is invalid.
 pub fn parse_namestr_records(
     data: &[u8],
     var_count: usize,

@@ -1,10 +1,10 @@
-//! Optional Polars DataFrame integration.
+//! Optional Polars `DataFrame` integration.
 //!
-//! This module provides conversion between XPT datasets and Polars DataFrames,
-//! along with xportr-style transform methods for DataFrame pipelines.
+//! This module provides conversion between XPT datasets and Polars `DataFrames`,
+//! along with xportr-style transform methods for `DataFrame` pipelines.
 //! Enable with the `polars` feature.
 //!
-//! # Reading XPT to DataFrame
+//! # Reading XPT to `DataFrame`
 //!
 //! ```no_run
 //! use std::path::Path;
@@ -14,7 +14,7 @@
 //! println!("{}", df);
 //! ```
 //!
-//! # Writing DataFrame to XPT
+//! # Writing `DataFrame` to XPT
 //!
 //! ```no_run
 //! use std::path::Path;
@@ -79,13 +79,13 @@ pub use transforms::XportrTransforms;
 // Re-export pipeline functions
 pub use pipeline::{write_df_fda_compliant, write_df_with_pipeline};
 
-/// Read an XPT file directly to a Polars DataFrame.
+/// Read an XPT file directly to a Polars `DataFrame`.
 ///
 /// # Arguments
 /// * `path` - Path to the XPT file
 ///
 /// # Returns
-/// A Polars DataFrame containing the XPT data.
+/// A Polars `DataFrame` containing the XPT data.
 ///
 /// # Example
 /// ```no_run
@@ -95,16 +95,20 @@ pub use pipeline::{write_df_fda_compliant, write_df_with_pipeline};
 /// let df = read_xpt_to_dataframe(Path::new("dm.xpt")).unwrap();
 /// println!("{}", df);
 /// ```
+///
+/// # Errors
+///
+/// Returns an error if the file cannot be read or converted to a `DataFrame`.
 pub fn read_xpt_to_dataframe(path: &Path) -> Result<DataFrame> {
     let dataset = read_xpt(path)?;
     dataset.to_dataframe()
 }
 
-/// Write a Polars DataFrame to an XPT file.
+/// Write a Polars `DataFrame` to an XPT file.
 ///
 /// # Arguments
 /// * `path` - Output path for the XPT file
-/// * `df` - The DataFrame to write
+/// * `df` - The `DataFrame` to write
 /// * `name` - Dataset name (1-8 characters)
 ///
 /// # Returns
@@ -123,6 +127,10 @@ pub fn read_xpt_to_dataframe(path: &Path) -> Result<DataFrame> {
 ///
 /// write_dataframe_to_xpt(Path::new("out.xpt"), &df, "DM").unwrap();
 /// ```
+///
+/// # Errors
+///
+/// Returns an error if the `DataFrame` cannot be converted or written to the file.
 pub fn write_dataframe_to_xpt(path: &Path, df: &DataFrame, name: &str) -> Result<()> {
     let dataset = XptDataset::from_dataframe(df, name)?;
     write_xpt_with_options(path, &dataset, &XptWriterOptions::default())

@@ -108,11 +108,19 @@ impl<W: Write> StreamingWriter<W> {
     /// Create a new streaming writer.
     ///
     /// Writes all headers immediately, then observations can be added.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if writing the headers fails.
     pub fn new(writer: W, info: DatasetInfo) -> Result<Self> {
         Self::with_options(writer, info, XptWriterOptions::default())
     }
 
     /// Create a streaming writer with options.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if writing the headers fails.
     pub fn with_options(writer: W, info: DatasetInfo, options: XptWriterOptions) -> Result<Self> {
         let mut writer = BufWriter::new(writer);
         let version = options.version;
@@ -161,6 +169,10 @@ impl<W: Write> StreamingWriter<W> {
     }
 
     /// Write a single observation.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if writing to the underlying writer fails.
     pub fn write_observation(&mut self, observation: &Observation) -> Result<()> {
         let bytes = encode_observation(observation, &self.columns, &self.options);
         self.write_bytes(&bytes)
@@ -193,6 +205,10 @@ impl<W: Write> StreamingWriter<W> {
     /// Finish writing and flush the output.
     ///
     /// This must be called after all observations have been written.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if flushing the output fails.
     pub fn finish(mut self) -> Result<()> {
         if let Some(state) = self.record_writer.take()
             && state.pos > 0
@@ -221,12 +237,20 @@ impl<W: Write> StreamingWriter<W> {
 
 impl StreamingWriter<File> {
     /// Create a streaming writer to a file.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the file cannot be created or header writing fails.
     pub fn create(path: &Path, info: DatasetInfo) -> Result<Self> {
         let file = File::create(path)?;
         Self::new(file, info)
     }
 
     /// Create a streaming writer to a file with options.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the file cannot be created or header writing fails.
     pub fn create_with_options(
         path: &Path,
         info: DatasetInfo,
@@ -333,7 +357,7 @@ fn write_with_padding<W: Write>(writer: &mut W, data: &[u8]) -> Result<()> {
     Ok(())
 }
 
-/// Build member data record from DatasetInfo.
+/// Build member data record from `DatasetInfo`.
 fn build_member_data_from_info(info: &DatasetInfo, options: &XptWriterOptions) -> [u8; RECORD_LEN] {
     use crate::core::header::{format_xpt_datetime, write_string};
 
@@ -362,7 +386,7 @@ fn build_member_data_from_info(info: &DatasetInfo, options: &XptWriterOptions) -
     record
 }
 
-/// Build member second record from DatasetInfo.
+/// Build member second record from `DatasetInfo`.
 fn build_member_second_from_info(
     info: &DatasetInfo,
     _options: &XptWriterOptions,

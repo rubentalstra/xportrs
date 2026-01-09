@@ -1,4 +1,4 @@
-//! Label application transform (xportr_label equivalent).
+//! Label application transform (`xportr_label` equivalent).
 //!
 //! Applies variable labels from the specification to the dataset columns.
 

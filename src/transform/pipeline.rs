@@ -1,4 +1,4 @@
-//! Full xportr pipeline (xportr and xportr_write equivalents).
+//! Full xportr pipeline (xportr and `xportr_write` equivalents).
 //!
 //! This module provides the complete xportr-style pipeline that applies all
 //! metadata transforms in sequence and writes the result to an XPT file.

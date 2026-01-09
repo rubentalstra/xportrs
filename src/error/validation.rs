@@ -343,9 +343,9 @@ impl ValidationError {
 /// issues to be reported at once rather than failing on the first error.
 ///
 /// Severity levels map to action levels:
-/// - `errors` - Issues that must be fixed (ActionLevel::Stop)
-/// - `warnings` - Issues that should be reviewed (ActionLevel::Warn)
-/// - `messages` - Informational notes (ActionLevel::Message)
+/// - `errors` - Issues that must be fixed (`ActionLevel::Stop`)
+/// - `warnings` - Issues that should be reviewed (`ActionLevel::Warn`)
+/// - `messages` - Informational notes (`ActionLevel::Message`)
 #[derive(Debug, Clone, Default)]
 pub struct ValidationResult {
     /// Validation errors (must be fixed)
@@ -452,6 +452,10 @@ impl ValidationResult {
     }
 
     /// Convert to a Result, failing if there are any errors.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` containing the list of validation errors if there are any.
     pub fn into_result(self) -> std::result::Result<(), Vec<ValidationError>> {
         if self.is_valid() {
             Ok(())

@@ -55,7 +55,7 @@ pub fn encode_char(value: &str, length: u16) -> Vec<u8> {
 
 /// Encode a numeric value to IBM float format.
 ///
-/// Non-finite values (NaN, infinity) are converted to missing.
+/// Non-finite values (`NaN`, infinity) are converted to missing.
 #[must_use]
 pub fn encode_numeric(value: &NumericValue, length: u16, options: &XptWriterOptions) -> Vec<u8> {
     let bytes = match value {

@@ -1,4 +1,4 @@
-//! DataFrame ↔ XPT conversion utilities.
+//! `DataFrame` ↔ XPT conversion utilities.
 //!
 //! This module provides the internal conversion logic between
 //! Polars Series/DataFrames and XPT types.
@@ -9,10 +9,14 @@ use crate::error::{Result, XptError};
 use crate::types::{NumericValue, XptColumn, XptDataset, XptType, XptValue};
 
 impl XptDataset {
-    /// Convert this XPT dataset to a Polars DataFrame.
+    /// Convert this XPT dataset to a Polars `DataFrame`.
     ///
     /// - Numeric columns become Float64 (with None for missing values)
     /// - Character columns become String
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the `DataFrame` cannot be constructed from the columns.
     pub fn to_dataframe(&self) -> Result<DataFrame> {
         let mut series_vec = Vec::with_capacity(self.columns.len());
 
@@ -49,10 +53,10 @@ impl XptDataset {
         DataFrame::new(series_vec).map_err(|e| XptError::invalid_format(e.to_string()))
     }
 
-    /// Create an XPT dataset from a Polars DataFrame.
+    /// Create an XPT dataset from a Polars `DataFrame`.
     ///
     /// # Arguments
-    /// * `df` - The DataFrame to convert
+    /// * `df` - The `DataFrame` to convert
     /// * `name` - Dataset name (1-8 characters)
     ///
     /// # Column Type Mapping
@@ -61,6 +65,10 @@ impl XptDataset {
     /// - String/Categorical → Character (length = max string length, min 1)
     /// - Boolean → Character (length 1, "Y"/"N")
     /// - Other → Character (converted to string)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if any column cannot be converted to XPT format.
     pub fn from_dataframe(df: &DataFrame, name: &str) -> Result<Self> {
         let mut columns = Vec::with_capacity(df.width());
         let mut rows: Vec<Vec<XptValue>> = vec![Vec::with_capacity(df.width()); df.height()];

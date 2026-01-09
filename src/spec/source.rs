@@ -2,7 +2,7 @@
 //!
 //! This module provides the [`MetadataSource`] trait for loading specifications
 //! from various sources. The primary implementation is [`DataFrameMetadataSource`]
-//! which loads specs from Polars DataFrames.
+//! which loads specs from Polars `DataFrames`.
 //!
 //! # Usage
 //!
@@ -29,7 +29,7 @@ use crate::spec::DatasetSpec;
 /// Trait for loading specifications from various sources.
 ///
 /// Implementations of this trait provide the ability to load dataset
-/// specifications from different formats (DataFrames, etc.).
+/// specifications from different formats (`DataFrames`, etc.).
 ///
 /// # Example
 ///
@@ -83,9 +83,9 @@ mod polars_source {
 
     use super::MetadataSource;
 
-    /// Load specifications from a Polars DataFrame.
+    /// Load specifications from a Polars `DataFrame`.
     ///
-    /// This source expects a DataFrame with rows representing variable specifications.
+    /// This source expects a `DataFrame` with rows representing variable specifications.
     /// Each row should contain metadata for one variable, with columns mapped according
     /// to the [`ColumnMapping`] configuration.
     ///
@@ -134,7 +134,7 @@ mod polars_source {
     }
 
     impl DataFrameMetadataSource {
-        /// Create a new metadata source from a DataFrame with default column mapping.
+        /// Create a new metadata source from a `DataFrame` with default column mapping.
         #[must_use]
         pub fn new(df: DataFrame) -> Self {
             Self {
@@ -169,7 +169,7 @@ mod polars_source {
             self
         }
 
-        /// Get the underlying DataFrame.
+        /// Get the underlying `DataFrame`.
         #[must_use]
         pub fn dataframe(&self) -> &DataFrame {
             &self.df
@@ -181,7 +181,7 @@ mod polars_source {
             &self.mapping
         }
 
-        /// Check if a column exists in the DataFrame.
+        /// Check if a column exists in the `DataFrame`.
         fn has_column(&self, name: &str) -> bool {
             self.df
                 .get_column_names()
@@ -246,7 +246,7 @@ mod polars_source {
             })
         }
 
-        /// Parse a type string into XptType.
+        /// Parse a type string into `XptType`.
         fn parse_type(type_str: &str) -> XptType {
             let normalized = type_str.trim().to_lowercase();
             if normalized == "num" || normalized == "numeric" || normalized == "n" {
@@ -277,7 +277,7 @@ mod polars_source {
             Some(FormatSpec::with_name(trimmed, 8))
         }
 
-        /// Build a VariableSpec from a DataFrame row.
+        /// Build a `VariableSpec` from a `DataFrame` row.
         fn build_variable_spec(&self, row: usize) -> Option<VariableSpec> {
             // Variable name is required
             let name = self.get_string(row, &self.mapping.variable_col)?;

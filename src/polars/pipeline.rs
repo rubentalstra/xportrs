@@ -1,6 +1,6 @@
-//! DataFrame pipeline utilities.
+//! `DataFrame` pipeline utilities.
 //!
-//! This module provides helper functions for working with DataFrames
+//! This module provides helper functions for working with `DataFrames`
 //! in xportr-style pipelines.
 
 use std::path::Path;
@@ -13,7 +13,7 @@ use crate::spec::DatasetSpec;
 use crate::transform::{PipelineReport, XportrConfig};
 use crate::types::{XptDataset, XptWriterOptions};
 
-/// Write a DataFrame to an XPT file with full xportr pipeline.
+/// Write a `DataFrame` to an XPT file with full xportr pipeline.
 ///
 /// This is a convenience function that applies the full xportr pipeline
 /// and writes the result to an XPT file.
@@ -21,13 +21,17 @@ use crate::types::{XptDataset, XptWriterOptions};
 /// # Arguments
 ///
 /// * `path` - Output path for the XPT file
-/// * `df` - The DataFrame to transform and write
+/// * `df` - The `DataFrame` to transform and write
 /// * `spec` - Dataset specification
 /// * `config` - Pipeline configuration
 ///
 /// # Returns
 ///
 /// Pipeline report with details of all transformations.
+///
+/// # Errors
+///
+/// Returns an error if conversion, transformation, or writing fails.
 ///
 /// # Example
 ///
@@ -68,7 +72,7 @@ pub fn write_df_with_pipeline(
     Ok(result.report)
 }
 
-/// Write a DataFrame to an XPT file with FDA-compliant settings.
+/// Write a `DataFrame` to an XPT file with FDA-compliant settings.
 ///
 /// This is a convenience function that applies strict FDA-compliant
 /// settings and writes to XPT V5 format.
@@ -76,12 +80,16 @@ pub fn write_df_with_pipeline(
 /// # Arguments
 ///
 /// * `path` - Output path for the XPT file
-/// * `df` - The DataFrame to transform and write
+/// * `df` - The `DataFrame` to transform and write
 /// * `spec` - Dataset specification
 ///
 /// # Returns
 ///
 /// Pipeline report with details of all transformations.
+///
+/// # Errors
+///
+/// Returns an error if conversion, transformation, or writing fails.
 ///
 /// # Example
 ///

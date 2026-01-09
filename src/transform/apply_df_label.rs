@@ -1,4 +1,4 @@
-//! Dataset label application transform (xportr_df_label equivalent).
+//! Dataset label application transform (`xportr_df_label` equivalent).
 //!
 //! Sets the dataset label from either a string value or from a specification.
 

@@ -1,6 +1,6 @@
-//! Polars DataFrame pipeline example.
+//! Polars `DataFrame` pipeline example.
 //!
-//! This example demonstrates the xportr-style workflow using Polars DataFrames.
+//! This example demonstrates the xportr-style workflow using Polars `DataFrames`.
 //! It shows how to apply metadata-driven transformations to create compliant XPT files.
 //!
 //! Run with: `cargo run --example polars_pipeline`

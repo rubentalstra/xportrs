@@ -1,4 +1,4 @@
-//! Format application transform (xportr_format equivalent).
+//! Format application transform (`xportr_format` equivalent).
 //!
 //! Applies SAS formats from the specification to the dataset columns.
 

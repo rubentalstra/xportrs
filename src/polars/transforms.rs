@@ -1,7 +1,7 @@
-//! XportrTransforms trait for DataFrame operations.
+//! `XportrTransforms` trait for `DataFrame` operations.
 //!
 //! This module provides the [`XportrTransforms`] trait which adds xportr-style
-//! methods to Polars DataFrames and MetadataFrames.
+//! methods to Polars `DataFrames` and `MetadataFrames`.
 
 use std::path::Path;
 
@@ -20,10 +20,10 @@ use crate::validation::ActionLevel;
 
 use super::metadata::MetadataFrame;
 
-/// Extension trait providing xportr-style transforms for DataFrames.
+/// Extension trait providing xportr-style transforms for `DataFrames`.
 ///
 /// This trait adds methods like `xportr_type()`, `xportr_label()`, etc.
-/// to Polars DataFrames and MetadataFrames, enabling R xportr-style workflows.
+/// to Polars `DataFrames` and `MetadataFrames`, enabling R xportr-style workflows.
 ///
 /// # Example
 ///
@@ -53,7 +53,7 @@ use super::metadata::MetadataFrame;
 /// // result.xportr_write("dm.xpt", "DM", &spec, false).unwrap();
 /// ```
 pub trait XportrTransforms {
-    /// Apply type coercion to match specification (xportr_type equivalent).
+    /// Apply type coercion to match specification (`xportr_type` equivalent).
     ///
     /// Converts column types to match the spec:
     /// - Character → Numeric (parse as float)
@@ -73,7 +73,7 @@ pub trait XportrTransforms {
         action: ActionLevel,
     ) -> Result<MetadataFrame, TransformError>;
 
-    /// Apply variable lengths from specification (xportr_length equivalent).
+    /// Apply variable lengths from specification (`xportr_length` equivalent).
     ///
     /// Sets column lengths from the spec. For character columns, values
     /// may be truncated if they exceed the specified length.
@@ -82,28 +82,36 @@ pub trait XportrTransforms {
     ///
     /// * `spec` - Dataset specification with lengths
     /// * `action` - Action level for truncation
+    ///
+    /// # Errors
+    ///
+    /// Returns error if `action` is `Stop` and length issues are found.
     fn xportr_length(
         self,
         spec: &DatasetSpec,
         action: ActionLevel,
     ) -> Result<MetadataFrame, TransformError>;
 
-    /// Apply variable labels from specification (xportr_label equivalent).
+    /// Apply variable labels from specification (`xportr_label` equivalent).
     ///
     /// Sets column labels from the spec. Labels are stored as column
-    /// metadata in the resulting MetadataFrame.
+    /// metadata in the resulting `MetadataFrame`.
     ///
     /// # Arguments
     ///
     /// * `spec` - Dataset specification with labels
     /// * `action` - Action level for missing labels
+    ///
+    /// # Errors
+    ///
+    /// Returns error if `action` is `Stop` and label issues are found.
     fn xportr_label(
         self,
         spec: &DatasetSpec,
         action: ActionLevel,
     ) -> Result<MetadataFrame, TransformError>;
 
-    /// Apply variable ordering from specification (xportr_order equivalent).
+    /// Apply variable ordering from specification (`xportr_order` equivalent).
     ///
     /// Reorders columns to match the order specified in the spec.
     ///
@@ -111,13 +119,17 @@ pub trait XportrTransforms {
     ///
     /// * `spec` - Dataset specification with order information
     /// * `action` - Action level for ordering issues
+    ///
+    /// # Errors
+    ///
+    /// Returns error if `action` is `Stop` and order issues are found.
     fn xportr_order(
         self,
         spec: &DatasetSpec,
         action: ActionLevel,
     ) -> Result<MetadataFrame, TransformError>;
 
-    /// Apply SAS formats from specification (xportr_format equivalent).
+    /// Apply SAS formats from specification (`xportr_format` equivalent).
     ///
     /// Sets format and informat for columns from the spec.
     ///
@@ -125,22 +137,26 @@ pub trait XportrTransforms {
     ///
     /// * `spec` - Dataset specification with formats
     /// * `action` - Action level for format issues
+    ///
+    /// # Errors
+    ///
+    /// Returns error if `action` is `Stop` and format issues are found.
     fn xportr_format(
         self,
         spec: &DatasetSpec,
         action: ActionLevel,
     ) -> Result<MetadataFrame, TransformError>;
 
-    /// Set the dataset label (xportr_df_label equivalent).
+    /// Set the dataset label (`xportr_df_label` equivalent).
     ///
     /// # Arguments
     ///
     /// * `label` - The dataset label
     fn xportr_df_label(self, label: impl Into<String>) -> MetadataFrame;
 
-    /// Attach metadata specification to the DataFrame.
+    /// Attach metadata specification to the `DataFrame`.
     ///
-    /// This creates a MetadataFrame with the spec attached, enabling
+    /// This creates a `MetadataFrame` with the spec attached, enabling
     /// subsequent transform operations to use the spec automatically.
     ///
     /// # Arguments
@@ -161,13 +177,17 @@ pub trait XportrTransforms {
     ///
     /// * `spec` - Dataset specification
     /// * `config` - Pipeline configuration
+    ///
+    /// # Errors
+    ///
+    /// Returns error if any transform fails based on its configured action level.
     fn xportr(
         self,
         spec: &DatasetSpec,
         config: XportrConfig,
     ) -> Result<MetadataFrame, TransformError>;
 
-    /// Write to XPT file with full pipeline (xportr_write equivalent).
+    /// Write to XPT file with full pipeline (`xportr_write` equivalent).
     ///
     /// Applies the full xportr pipeline and writes the result to an XPT file.
     ///
@@ -181,6 +201,10 @@ pub trait XportrTransforms {
     /// # Returns
     ///
     /// Pipeline report with details of all transformations applied.
+    ///
+    /// # Errors
+    ///
+    /// Returns error if transformation or writing fails.
     fn xportr_write(
         self,
         path: impl AsRef<Path>,

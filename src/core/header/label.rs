@@ -229,6 +229,11 @@ pub fn build_labelv9_data(columns: &[XptColumn]) -> Vec<u8> {
 /// # Arguments
 /// * `data` - The label section data (after the header)
 /// * `columns` - Mutable slice of columns to update
+///
+/// # Errors
+///
+/// This function currently does not return errors, but returns `Result` for
+/// API consistency and future extensibility.
 pub fn parse_labelv8_data(data: &[u8], columns: &mut [XptColumn]) -> Result<()> {
     let mut pos = 0;
 
@@ -291,6 +296,11 @@ pub fn parse_labelv8_data(data: &[u8], columns: &mut [XptColumn]) -> Result<()> 
 /// # Arguments
 /// * `data` - The label section data (after the header)
 /// * `columns` - Mutable slice of columns to update
+///
+/// # Errors
+///
+/// This function currently does not return errors, but returns `Result` for
+/// API consistency and future extensibility.
 pub fn parse_labelv9_data(data: &[u8], columns: &mut [XptColumn]) -> Result<()> {
     let mut pos = 0;
 

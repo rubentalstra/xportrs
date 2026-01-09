@@ -41,6 +41,11 @@ pub fn detect_member_version(record: &[u8]) -> Option<XptVersion> {
 }
 
 /// Validate a member header record (auto-detect version).
+///
+/// # Errors
+///
+/// Returns an error if the record is too short or does not contain a valid
+/// member header prefix.
 pub fn validate_member_header(record: &[u8]) -> Result<XptVersion> {
     if record.len() < RECORD_LEN {
         return Err(XptError::invalid_format("member header too short"));
@@ -49,6 +54,11 @@ pub fn validate_member_header(record: &[u8]) -> Result<XptVersion> {
 }
 
 /// Validate a member header for a specific version.
+///
+/// # Errors
+///
+/// Returns an error if the record is too short or does not match the expected
+/// version's header prefix.
 pub fn validate_member_header_version(record: &[u8], version: XptVersion) -> Result<()> {
     if record.len() < RECORD_LEN {
         return Err(XptError::invalid_format("member header too short"));
@@ -67,6 +77,11 @@ pub fn validate_member_header_version(record: &[u8], version: XptVersion) -> Res
 }
 
 /// Validate a DSCRPTR header record (auto-detect version).
+///
+/// # Errors
+///
+/// Returns an error if the record is too short or does not contain a valid
+/// DSCRPTR header prefix.
 pub fn validate_dscrptr_header(record: &[u8]) -> Result<XptVersion> {
     if record.len() < RECORD_LEN {
         return Err(XptError::invalid_format("dscrptr header too short"));
@@ -81,6 +96,11 @@ pub fn validate_dscrptr_header(record: &[u8]) -> Result<XptVersion> {
 }
 
 /// Validate a DSCRPTR header for a specific version.
+///
+/// # Errors
+///
+/// Returns an error if the record is too short or does not match the expected
+/// version's header prefix.
 pub fn validate_dscrptr_header_version(record: &[u8], version: XptVersion) -> Result<()> {
     if record.len() < RECORD_LEN {
         return Err(XptError::invalid_format("dscrptr header too short"));
@@ -99,6 +119,11 @@ pub fn validate_dscrptr_header_version(record: &[u8], version: XptVersion) -> Re
 }
 
 /// Validate a NAMESTR header record (auto-detect version).
+///
+/// # Errors
+///
+/// Returns an error if the record is too short or does not contain a valid
+/// NAMESTR header prefix.
 pub fn validate_namestr_header(record: &[u8]) -> Result<XptVersion> {
     if record.len() < RECORD_LEN {
         return Err(XptError::invalid_format("namestr header too short"));
@@ -113,6 +138,11 @@ pub fn validate_namestr_header(record: &[u8]) -> Result<XptVersion> {
 }
 
 /// Validate a NAMESTR header for a specific version.
+///
+/// # Errors
+///
+/// Returns an error if the record is too short or does not match the expected
+/// version's header prefix.
 pub fn validate_namestr_header_version(record: &[u8], version: XptVersion) -> Result<()> {
     if record.len() < RECORD_LEN {
         return Err(XptError::invalid_format("namestr header too short"));
@@ -131,6 +161,11 @@ pub fn validate_namestr_header_version(record: &[u8], version: XptVersion) -> Re
 }
 
 /// Validate an OBS header record (auto-detect version).
+///
+/// # Errors
+///
+/// Returns an error if the record is too short or does not contain a valid
+/// OBS header prefix.
 pub fn validate_obs_header(record: &[u8]) -> Result<XptVersion> {
     if record.len() < RECORD_LEN {
         return Err(XptError::invalid_format("obs header too short"));
@@ -145,6 +180,11 @@ pub fn validate_obs_header(record: &[u8]) -> Result<XptVersion> {
 }
 
 /// Validate an OBS header for a specific version.
+///
+/// # Errors
+///
+/// Returns an error if the record is too short or does not match the expected
+/// version's header prefix.
 pub fn validate_obs_header_version(record: &[u8], version: XptVersion) -> Result<()> {
     if record.len() < RECORD_LEN {
         return Err(XptError::invalid_format("obs header too short"));
@@ -166,6 +206,11 @@ pub fn validate_obs_header_version(record: &[u8], version: XptVersion) -> Result
 ///
 /// The NAMESTR length is at offset 74-77 (4 ASCII digits).
 /// Returns 140 (standard) or 136 (VAX/VMS).
+///
+/// # Errors
+///
+/// Returns an error if the record is too short or the NAMESTR length field
+/// cannot be parsed as a number.
 pub fn parse_namestr_len(record: &[u8]) -> Result<usize> {
     if record.len() < 78 {
         return Err(XptError::invalid_format("member header too short"));
@@ -184,6 +229,11 @@ pub fn parse_namestr_len(record: &[u8]) -> Result<usize> {
 /// # Arguments
 /// * `record` - The NAMESTR header record
 /// * `version` - XPT version (V5 or V8)
+///
+/// # Errors
+///
+/// Returns an error if the record is too short or the variable count field
+/// cannot be parsed as a number.
 pub fn parse_variable_count(record: &[u8], version: XptVersion) -> Result<usize> {
     let len = match version {
         XptVersion::V5 => 4,
@@ -208,6 +258,10 @@ pub fn parse_variable_count(record: &[u8], version: XptVersion) -> Result<usize>
 /// # Arguments
 /// * `record` - The member data record
 /// * `version` - XPT version (V5 or V8)
+///
+/// # Errors
+///
+/// Returns an error if the record is too short or the dataset name is empty.
 pub fn parse_dataset_name(record: &[u8], version: XptVersion) -> Result<String> {
     let (offset, len) = match version {
         XptVersion::V5 => (8, 8),
@@ -316,21 +370,21 @@ pub fn build_obs_header(version: XptVersion) -> [u8; RECORD_LEN] {
 /// Build member data record.
 ///
 /// V5 layout (80 bytes):
-/// - 0-7: sas_symbol ("SAS     ")
-/// - 8-15: sas_dsname (8 chars)
+/// - 0-7: `sas_symbol` ("SAS     ")
+/// - 8-15: `sas_dsname` (8 chars)
 /// - 16-23: sasdata ("SASDATA ")
 /// - 24-31: sasver (8 chars)
-/// - 32-39: sas_osname (8 chars)
+/// - 32-39: `sas_osname` (8 chars)
 /// - 40-63: blanks (24 chars)
-/// - 64-79: sas_create (16 chars)
+/// - 64-79: `sas_create` (16 chars)
 ///
 /// V8 layout (80 bytes):
-/// - 0-7: sas_symbol ("SAS     ")
-/// - 8-39: sas_dsname (32 chars)
+/// - 0-7: `sas_symbol` ("SAS     ")
+/// - 8-39: `sas_dsname` (32 chars)
 /// - 40-47: sasdata ("SASDATA ")
 /// - 48-55: sasver (8 chars)
-/// - 56-63: sas_osname (8 chars)
-/// - 64-79: sas_create (16 chars)
+/// - 56-63: `sas_osname` (8 chars)
+/// - 64-79: `sas_create` (16 chars)
 #[must_use]
 pub fn build_member_data(dataset: &XptDataset, options: &XptWriterOptions) -> [u8; RECORD_LEN] {
     let mut record = [b' '; RECORD_LEN];

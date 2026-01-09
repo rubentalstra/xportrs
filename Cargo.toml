@@ -59,10 +59,10 @@ redundant_closure_for_method_calls = "warn"
 inefficient_to_string = "warn"
 
 # Pedantic (selective)
-# TODO: Fix documentation issues incrementally (suppressed for alpha)
-doc_markdown = "allow"
-missing_errors_doc = "allow"
-missing_panics_doc = "allow"
+# Documentation quality
+doc_markdown = "warn"
+missing_errors_doc = "warn"
+missing_panics_doc = "warn"
 must_use_candidate = "warn"
 semicolon_if_nothing_returned = "warn"
 explicit_iter_loop = "warn"

@@ -82,7 +82,12 @@ pub fn detect_version(record: &[u8]) -> Option<XptVersion> {
 /// * `record` - 80-byte record
 ///
 /// # Returns
-/// Ok(detected_version) if valid, error otherwise.
+/// `Ok(detected_version)` if valid, error otherwise.
+///
+/// # Errors
+///
+/// Returns an error if the record is too short or does not contain a valid
+/// library header prefix.
 pub fn validate_library_header(record: &[u8]) -> Result<XptVersion> {
     if record.len() < RECORD_LEN {
         return Err(XptError::invalid_format("record too short"));
@@ -98,6 +103,11 @@ pub fn validate_library_header(record: &[u8]) -> Result<XptVersion> {
 ///
 /// # Returns
 /// Ok(()) if valid for the specified version, error otherwise.
+///
+/// # Errors
+///
+/// Returns an error if the record is too short or does not match the expected
+/// version's header prefix.
 pub fn validate_library_header_version(record: &[u8], version: XptVersion) -> Result<()> {
     if record.len() < RECORD_LEN {
         return Err(XptError::invalid_format("record too short"));
@@ -119,15 +129,19 @@ pub fn validate_library_header_version(record: &[u8], version: XptVersion) -> Re
 ///
 /// # Structure
 ///
-/// | Offset | Length | Field       | Description              |
-/// |--------|--------|-------------|--------------------------|
-/// | 0-7    | 8      | sas_symbol1 | "SAS     "               |
-/// | 8-15   | 8      | sas_symbol2 | "SAS     "               |
-/// | 16-23  | 8      | saslib      | "SASLIB  "               |
-/// | 24-31  | 8      | sasver      | SAS version              |
-/// | 32-39  | 8      | sas_os      | Operating system         |
-/// | 40-63  | 24     | blanks      | Spaces                   |
-/// | 64-79  | 16     | created     | Created datetime         |
+/// | Offset | Length | Field         | Description              |
+/// |--------|--------|---------------|--------------------------|
+/// | 0-7    | 8      | `sas_symbol1` | "SAS     "               |
+/// | 8-15   | 8      | `sas_symbol2` | "SAS     "               |
+/// | 16-23  | 8      | `saslib`      | "SASLIB  "               |
+/// | 24-31  | 8      | `sasver`      | SAS version              |
+/// | 32-39  | 8      | `sas_os`      | Operating system         |
+/// | 40-63  | 24     | `blanks`      | Spaces                   |
+/// | 64-79  | 16     | `created`     | Created datetime         |
+///
+/// # Errors
+///
+/// Returns an error if the record is shorter than 80 bytes.
 pub fn parse_real_header(record: &[u8]) -> Result<LibraryInfo> {
     if record.len() < RECORD_LEN {
         return Err(XptError::invalid_format("real header too short"));

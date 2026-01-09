@@ -1,4 +1,4 @@
-//! Order application transform (xportr_order equivalent).
+//! Order application transform (`xportr_order` equivalent).
 //!
 //! Reorders variables (columns) in the dataset to match the specification order.
 

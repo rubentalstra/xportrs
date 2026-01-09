@@ -1,6 +1,6 @@
-//! MetadataFrame - DataFrame wrapper with attached specification.
+//! `MetadataFrame` - `DataFrame` wrapper with attached specification.
 //!
-//! This module provides [`MetadataFrame`], a wrapper around Polars DataFrame
+//! This module provides [`MetadataFrame`], a wrapper around Polars `DataFrame`
 //! that carries metadata specification through transform pipelines. This enables
 //! xportr-style workflows where metadata is attached and tracked.
 
@@ -9,12 +9,12 @@ use polars::prelude::DataFrame;
 use crate::spec::DatasetSpec;
 use crate::transform::TransformReport;
 
-/// DataFrame wrapper that carries metadata specification through pipeline.
+/// `DataFrame` wrapper that carries metadata specification through pipeline.
 ///
-/// `MetadataFrame` wraps a Polars DataFrame along with an optional dataset
+/// `MetadataFrame` wraps a Polars `DataFrame` along with an optional dataset
 /// specification and accumulated transform report. It provides an explicit
 /// API (no `Deref` magic) for clarity about when you're accessing the
-/// DataFrame vs metadata.
+/// `DataFrame` vs metadata.
 ///
 /// # Example
 ///
@@ -43,7 +43,7 @@ use crate::transform::TransformReport;
 /// ```
 #[derive(Debug, Clone)]
 pub struct MetadataFrame {
-    /// The underlying DataFrame.
+    /// The underlying `DataFrame`.
     df: DataFrame,
     /// Optional dataset specification.
     spec: Option<DatasetSpec>,
@@ -54,11 +54,11 @@ pub struct MetadataFrame {
 }
 
 impl MetadataFrame {
-    /// Create a new MetadataFrame from a DataFrame without a spec.
+    /// Create a new `MetadataFrame` from a `DataFrame` without a spec.
     ///
     /// # Arguments
     ///
-    /// * `df` - The DataFrame to wrap
+    /// * `df` - The `DataFrame` to wrap
     ///
     /// # Example
     ///
@@ -80,11 +80,11 @@ impl MetadataFrame {
         }
     }
 
-    /// Create a MetadataFrame with an attached specification.
+    /// Create a `MetadataFrame` with an attached specification.
     ///
     /// # Arguments
     ///
-    /// * `df` - The DataFrame to wrap
+    /// * `df` - The `DataFrame` to wrap
     /// * `spec` - The dataset specification
     ///
     /// # Example
@@ -109,7 +109,7 @@ impl MetadataFrame {
         }
     }
 
-    /// Access the underlying DataFrame (immutable).
+    /// Access the underlying `DataFrame` (immutable).
     ///
     /// Use this to perform Polars operations on the data.
     ///
@@ -129,15 +129,15 @@ impl MetadataFrame {
         &self.df
     }
 
-    /// Access the underlying DataFrame (mutable).
+    /// Access the underlying `DataFrame` (mutable).
     ///
-    /// Use this to modify the DataFrame in place.
+    /// Use this to modify the `DataFrame` in place.
     #[must_use]
     pub fn df_mut(&mut self) -> &mut DataFrame {
         &mut self.df
     }
 
-    /// Take ownership of the DataFrame, discarding metadata.
+    /// Take ownership of the `DataFrame`, discarding metadata.
     ///
     /// # Example
     ///
@@ -176,7 +176,7 @@ impl MetadataFrame {
         self.spec.as_ref()
     }
 
-    /// Take the specification, removing it from the MetadataFrame.
+    /// Take the specification, removing it from the `MetadataFrame`.
     #[must_use]
     pub fn take_spec(&mut self) -> Option<DatasetSpec> {
         self.spec.take()
@@ -248,7 +248,7 @@ impl MetadataFrame {
         self.spec.is_some()
     }
 
-    /// Get column names from the DataFrame.
+    /// Get column names from the `DataFrame`.
     #[must_use]
     pub fn column_names(&self) -> Vec<String> {
         self.df
@@ -270,14 +270,14 @@ impl MetadataFrame {
         self.df.width()
     }
 
-    /// Create a new MetadataFrame with a fresh report but same data and spec.
+    /// Create a new `MetadataFrame` with a fresh report but same data and spec.
     #[must_use]
     pub fn with_fresh_report(mut self) -> Self {
         self.report = TransformReport::new();
         self
     }
 
-    /// Replace the DataFrame, keeping metadata.
+    /// Replace the `DataFrame`, keeping metadata.
     #[must_use]
     pub fn with_df(mut self, df: DataFrame) -> Self {
         self.df = df;

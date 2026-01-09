@@ -29,9 +29,9 @@
 //! assert_eq!(spec.variables.len(), 2);
 //! ```
 //!
-//! # Loading Specs from DataFrames
+//! # Loading Specs from `DataFrames`
 //!
-//! You can load specifications from Polars DataFrames:
+//! You can load specifications from Polars `DataFrames`:
 //!
 //! ```ignore
 //! use polars::prelude::*;

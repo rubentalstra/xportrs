@@ -106,11 +106,19 @@ impl<R: Read + Seek> StreamingReader<R> {
     /// Create a new streaming reader.
     ///
     /// Parses all headers and positions at the start of observation data.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if header parsing fails or the file is not valid XPT.
     pub fn new(reader: R) -> Result<Self> {
         Self::with_options(reader, XptReaderOptions::default())
     }
 
     /// Create a streaming reader with options.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if header parsing fails or the file is not valid XPT.
     pub fn with_options(reader: R, options: XptReaderOptions) -> Result<Self> {
         let mut reader = BufReader::new(reader);
         #[allow(unused_assignments)]
@@ -241,6 +249,10 @@ impl<R: Read + Seek> StreamingReader<R> {
     }
 
     /// Reset to the beginning of observations.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if seeking to the observation start position fails.
     pub fn reset(&mut self) -> Result<()> {
         self.reader.seek(SeekFrom::Start(self.obs_start))?;
         self.current_obs = 0;
@@ -255,6 +267,10 @@ impl<R: Read + Seek> StreamingReader<R> {
     /// Read all observations into a vector.
     ///
     /// This consumes all remaining observations from the current position.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if reading any observation fails.
     pub fn read_all_observations(&mut self) -> Result<Vec<Observation>> {
         let count = self.total_obs.unwrap_or(0);
         let mut observations = Vec::with_capacity(count);

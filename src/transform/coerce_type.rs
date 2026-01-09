@@ -1,4 +1,4 @@
-//! Type coercion transform (xportr_type equivalent).
+//! Type coercion transform (`xportr_type` equivalent).
 //!
 //! Coerces column types to match the specification. This handles converting
 //! between numeric and character types as needed.
@@ -201,7 +201,7 @@ fn type_description(xpt_type: XptType) -> &'static str {
 
 /// Convert values in a column from one type to another.
 ///
-/// Returns (converted_count, failed_count).
+/// Returns (`converted_count`, `failed_count`).
 fn convert_column_values(
     rows: &mut [Vec<XptValue>],
     col_idx: usize,
@@ -232,7 +232,7 @@ fn convert_column_values(
 
 /// Convert a single value from one type to another.
 ///
-/// Returns (converted_value, success).
+/// Returns (`converted_value`, success).
 fn convert_value(value: XptValue, from_type: XptType, to_type: XptType) -> (XptValue, bool) {
     match (from_type, to_type) {
         (XptType::Char, XptType::Num) => char_to_num(value),

@@ -79,6 +79,10 @@ impl<R: Read> XptReader<R> {
     ///
     /// # Returns
     /// The first dataset in the file.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if reading fails or the file is not a valid XPT format.
     pub fn read_dataset(mut self) -> Result<XptDataset> {
         let data = self.read_all_bytes()?;
         parse_xpt_data(&data, &self.options)
@@ -97,6 +101,10 @@ impl XptReader<File> {
     ///
     /// # Arguments
     /// * `path` - Path to the XPT file
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the file does not exist or cannot be opened.
     pub fn open(path: &Path) -> Result<Self> {
         let file = File::open(path).map_err(|e| {
             if e.kind() == std::io::ErrorKind::NotFound {
@@ -111,6 +119,10 @@ impl XptReader<File> {
     }
 
     /// Open an XPT file with options.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the file does not exist or cannot be opened.
     pub fn open_with_options(path: &Path, options: XptReaderOptions) -> Result<Self> {
         let file = File::open(path).map_err(|e| {
             if e.kind() == std::io::ErrorKind::NotFound {
@@ -144,11 +156,21 @@ impl XptReader<File> {
 /// let dataset = read_xpt(Path::new("dm.xpt")).unwrap();
 /// println!("Dataset: {}", dataset.name);
 /// ```
+///
+/// # Errors
+///
+/// Returns an error if the file does not exist, cannot be opened, or is not
+/// a valid XPT format.
 pub fn read_xpt(path: &Path) -> Result<XptDataset> {
     XptReader::open(path)?.read_dataset()
 }
 
 /// Read an XPT file with options.
+///
+/// # Errors
+///
+/// Returns an error if the file does not exist, cannot be opened, or is not
+/// a valid XPT format.
 pub fn read_xpt_with_options(path: &Path, options: XptReaderOptions) -> Result<XptDataset> {
     XptReader::open_with_options(path, options)?.read_dataset()
 }
@@ -172,6 +194,11 @@ pub fn read_xpt_with_options(path: &Path, options: XptReaderOptions) -> Result<X
 ///     // Process observation...
 /// }
 /// ```
+///
+/// # Errors
+///
+/// Returns an error if the file does not exist, cannot be opened, or the
+/// headers cannot be parsed.
 pub fn read_xpt_streaming(path: &Path) -> Result<StreamingReader<File>> {
     let file = File::open(path).map_err(|e| {
         if e.kind() == std::io::ErrorKind::NotFound {
@@ -186,6 +213,11 @@ pub fn read_xpt_streaming(path: &Path) -> Result<StreamingReader<File>> {
 }
 
 /// Open an XPT file for streaming with options.
+///
+/// # Errors
+///
+/// Returns an error if the file does not exist, cannot be opened, or the
+/// headers cannot be parsed.
 pub fn read_xpt_streaming_with_options(
     path: &Path,
     options: XptReaderOptions,

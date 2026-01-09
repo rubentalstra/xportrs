@@ -126,6 +126,10 @@ impl XptWriterBuilder {
     /// Validate and write in one step, returning on first error.
     ///
     /// Use this for simple cases where you don't need to inspect all errors.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if validation fails or writing to the file fails.
     pub fn write(self, path: &Path, dataset: &XptDataset) -> crate::Result<()> {
         let validated = self.validate(dataset);
 
@@ -180,6 +184,8 @@ impl ValidatedWriter {
 
     /// Write the dataset to a file.
     ///
+    /// # Errors
+    ///
     /// Returns an error if validation failed or if writing fails.
     pub fn write_to_file(self, path: &Path, dataset: &XptDataset) -> crate::Result<()> {
         if !self.is_valid() {
@@ -194,6 +200,10 @@ impl ValidatedWriter {
     }
 
     /// Write the dataset to any writer.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if validation failed or if writing fails.
     pub fn write_to<W: Write>(self, writer: W, dataset: &XptDataset) -> crate::Result<()> {
         if !self.is_valid() {
             if let Some(error) = self.result.errors.first() {
@@ -218,6 +228,11 @@ impl ValidatedWriter {
 ///
 /// # Returns
 /// `Ok(())` if valid, `Err` with the first validation error otherwise.
+///
+/// # Errors
+///
+/// Returns an error if any validation check fails (empty name, name too long,
+/// duplicate columns, zero-length columns, label too long, etc.).
 pub fn validate_dataset(dataset: &XptDataset, version: XptVersion) -> Result<()> {
     validate_dataset_quick(dataset, version)
 }

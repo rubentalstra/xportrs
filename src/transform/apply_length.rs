@@ -1,4 +1,4 @@
-//! Length application transform (xportr_length equivalent).
+//! Length application transform (`xportr_length` equivalent).
 //!
 //! Applies variable lengths from the specification to the dataset columns.
 //! For character variables, this may involve truncating values that exceed

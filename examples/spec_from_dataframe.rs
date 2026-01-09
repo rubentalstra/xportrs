@@ -1,7 +1,7 @@
-//! Loading specifications from DataFrames example.
+//! Loading specifications from `DataFrames` example.
 //!
 //! This example demonstrates how to load variable specifications from
-//! a Polars DataFrame. In practice, you would typically load this from
+//! a Polars `DataFrame`. In practice, you would typically load this from
 //! a CSV, Excel, or other file using Polars.
 //!
 //! Run with: `cargo run --example spec_from_dataframe`

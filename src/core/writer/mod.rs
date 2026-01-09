@@ -116,6 +116,11 @@ impl<W: Write> XptWriter<W> {
     }
 
     /// Write a dataset to the XPT file.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if validation fails or writing to the underlying
+    /// writer fails.
     pub fn write_dataset(mut self, dataset: &XptDataset) -> Result<()> {
         let version = self.options.version;
         builder::validate_dataset_quick(dataset, version)?;
@@ -231,12 +236,20 @@ impl<W: Write> XptWriter<W> {
 
 impl XptWriter<File> {
     /// Create an XPT file for writing.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the file cannot be created.
     pub fn create(path: &Path) -> Result<Self> {
         let file = File::create(path)?;
         Ok(Self::new(file))
     }
 
     /// Create an XPT file with options.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the file cannot be created.
     pub fn create_with_options(path: &Path, options: XptWriterOptions) -> Result<Self> {
         let file = File::create(path)?;
         Ok(Self::with_options(file, options))
@@ -253,11 +266,21 @@ impl XptWriter<File> {
 ///
 /// # Returns
 /// Ok(()) on success.
+///
+/// # Errors
+///
+/// Returns an error if the file cannot be created, validation fails, or
+/// writing fails.
 pub fn write_xpt(path: &Path, dataset: &XptDataset) -> Result<()> {
     XptWriter::create(path)?.write_dataset(dataset)
 }
 
 /// Write a dataset to an XPT file with options.
+///
+/// # Errors
+///
+/// Returns an error if the file cannot be created, validation fails, or
+/// writing fails.
 pub fn write_xpt_with_options(
     path: &Path,
     dataset: &XptDataset,

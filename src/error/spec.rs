@@ -8,7 +8,7 @@ use thiserror::Error;
 /// Error type for specification operations.
 ///
 /// These errors occur when loading metadata specifications from
-/// DataFrames or other sources.
+/// `DataFrames` or other sources.
 #[derive(Debug, Error)]
 #[non_exhaustive]
 pub enum SpecError {

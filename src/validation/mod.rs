@@ -237,6 +237,10 @@ impl Validator {
     }
 
     /// Validate and return an error if validation fails.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` containing the list of validation errors if there are any.
     pub fn validate_or_error(&self, dataset: &XptDataset) -> Result<(), Vec<ValidationError>> {
         self.validate(dataset).into_result()
     }
