@@ -1,23 +1,35 @@
 //! Validation rules for XPT datasets.
 //!
 //! This module contains individual validation rules organized by category:
-//! - Name validation (dataset and variable names)
-//! - Label validation
-//! - Format validation
-//! - Dataset structure validation
-//! - FDA-specific rules
-//! - Spec conformance rules
+//!
+//! - **Name validation** ([`DatasetNameRule`], [`VariableNameRule`])
+//! - **Label validation** ([`DatasetLabelRule`], [`VariableLabelRule`])
+//! - **Format validation** ([`FormatNameRule`])
+//! - **Structure validation** ([`DuplicateVariableRule`], [`VariableLengthRule`])
+//! - **Value validation** ([`CharacterLengthRule`], [`AsciiValueRule`], [`NumericRangeRule`])
+//! - **Spec conformance** ([`SpecConformanceConfig`] and related rules)
+//!
+//! # Example
+//!
+//! ```
+//! use xportrs::validation::Validator;
+//! use xportrs::{XptDataset, XptVersion};
+//!
+//! let dataset = XptDataset::new("DM");
+//!
+//! // Rules are typically used through the Validator
+//! let validator = Validator::new(XptVersion::V5);
+//! let result = validator.validate(&dataset);
+//! ```
 
-mod dataset;
-mod fda;
 mod format;
 mod label;
 mod name;
 mod spec_conformance;
+mod structure;
 mod value;
 
-pub use dataset::{DuplicateVariableRule, VariableLengthRule};
-pub use fda::{FdaAsciiRule, FdaVersionRule};
+// Re-export rules
 pub use format::FormatNameRule;
 pub use label::{DatasetLabelRule, VariableLabelRule};
 pub use name::{DatasetNameRule, VariableNameRule};
@@ -26,12 +38,18 @@ pub use spec_conformance::{
     LengthConformanceRule, OrderConformanceRule, SpecConformanceConfig, TypeConformanceRule,
     VariableInDataRule, VariableInSpecRule,
 };
+pub use structure::{DuplicateVariableRule, VariableLengthRule};
 pub use value::{AsciiValueRule, CharacterLengthRule, NumericRangeRule};
 
 use crate::core::header::normalize_name;
 
 /// Check if a name contains only valid SAS characters (A-Z, 0-9, _).
-fn is_valid_sas_name(name: &str) -> bool {
+///
+/// SAS names must:
+/// - Start with a letter (A-Z)
+/// - Contain only letters, digits, and underscores
+/// - Be non-empty
+pub(crate) fn is_valid_sas_name(name: &str) -> bool {
     if name.is_empty() {
         return false;
     }
@@ -48,8 +66,8 @@ fn is_valid_sas_name(name: &str) -> bool {
     chars.iter().all(|c| c.is_ascii_alphanumeric() || *c == '_')
 }
 
-/// Check if a string contains only ASCII printable characters.
-fn is_ascii_printable(s: &str) -> bool {
+/// Check if a string contains only ASCII printable characters (0x20-0x7E).
+pub(crate) fn is_ascii_printable(s: &str) -> bool {
     s.bytes().all(|b| (0x20..=0x7E).contains(&b))
 }
 
