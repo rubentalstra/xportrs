@@ -3,7 +3,8 @@
 [![Crates.io](https://img.shields.io/crates/v/xportrs.svg)](https://crates.io/crates/xportrs)
 [![Documentation](https://docs.rs/xportrs/badge.svg)](https://docs.rs/xportrs)
 [![CI](https://github.com/rubentalstra/xportrs/actions/workflows/ci.yml/badge.svg)](https://github.com/rubentalstra/xportrs/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![dependency status](https://deps.rs/repo/github/rubentalstra/xportrs/status.svg)](https://deps.rs/repo/github/rubentalstra/xportrs)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 SAS Transport (XPT) V5/V8 format reader and writer in pure Rust.
 
