@@ -3,7 +3,7 @@
 //! This module provides the [`XptWritePlan`] and [`FinalizedWritePlan`] types
 //! for planning and executing XPT file writes.
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use crate::agency::Agency;
 use crate::config::Config;
@@ -13,7 +13,7 @@ use crate::metadata::{DatasetMetadata, VariableMetadata};
 use crate::schema::{SchemaPlan, derive_schema_plan};
 use crate::validate::{Issue, IssueCollection, validate_v5_schema};
 use crate::xpt::XptVersion;
-use crate::xpt::v5::write::XptWriter;
+use crate::xpt::v5::write::{SplitWriter, XptWriter, estimate_file_size_gb};
 
 /// A mutable builder for XPT write operations.
 ///
@@ -121,17 +121,28 @@ impl XptWritePlan {
     /// 1. XPT v5 structural requirements (always)
     /// 2. Agency-specific requirements (if an agency is set)
     ///
+    /// When an agency is specified and no `max_size_gb` is configured,
+    /// the agency's recommended maximum file size is automatically applied,
+    /// enabling automatic file splitting for large datasets.
+    ///
     /// # Errors
     ///
     /// Returns an error if:
     /// - XPT v8 is requested (not yet implemented)
     /// - Strict mode is enabled and validation errors are found
-    pub fn finalize(self) -> Result<FinalizedWritePlan> {
+    pub fn finalize(mut self) -> Result<FinalizedWritePlan> {
         // Check version support
         if !self.version.is_implemented() {
             return Err(XportrsError::UnsupportedVersion {
                 version: self.version,
             });
+        }
+
+        // Auto-enable file splitting for agency compliance
+        if let Some(agency) = self.agency
+            && self.config.write.max_size_gb.is_none()
+        {
+            self.config.write.max_size_gb = Some(agency.max_file_size_gb());
         }
 
         // Derive schema plan
@@ -208,13 +219,49 @@ impl FinalizedWritePlan {
 
     /// Writes the XPT file to the specified path.
     ///
+    /// Returns a list of file paths created. If the file was split due to size
+    /// limits (configured via `max_size_gb` or automatically when an agency is
+    /// specified), multiple paths are returned (e.g., `ae_001.xpt`, `ae_002.xpt`).
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use xportrs::{Xpt, Agency, DomainDataset};
+    ///
+    /// # let dataset = DomainDataset::new("AE".into(), vec![]).unwrap();
+    /// // With FDA agency, files > 5GB are automatically split
+    /// let files = Xpt::writer(dataset)
+    ///     .agency(Agency::FDA)
+    ///     .finalize()?
+    ///     .write_path("ae.xpt")?;
+    ///
+    /// println!("Created {} file(s)", files.len());
+    /// // Single file: ["ae.xpt"]
+    /// // Split files: ["ae_001.xpt", "ae_002.xpt", ...]
+    /// # Ok::<(), xportrs::XportrsError>(())
+    /// ```
+    ///
     /// # Errors
     ///
     /// Returns an error if writing fails.
-    pub fn write_path(self, path: impl AsRef<Path>) -> Result<()> {
+    pub fn write_path(self, path: impl AsRef<Path>) -> Result<Vec<PathBuf>> {
+        let path = path.as_ref();
+
+        // Check if file splitting is needed
+        if let Some(max_gb) = self.config.write.max_size_gb {
+            let estimated_gb = estimate_file_size_gb(&self.schema, self.dataset.nrows);
+
+            if estimated_gb > max_gb {
+                // Use SplitWriter for large files
+                let split_writer = SplitWriter::new(path, max_gb, self.config.write);
+                return split_writer.write(&self.dataset, &self.schema);
+            }
+        }
+
+        // Use regular writer for small files (or no size limit set)
         let writer = XptWriter::create(path, self.config.write)?;
         writer.write(&self.dataset, &self.schema)?;
-        Ok(())
+        Ok(vec![path.to_path_buf()])
     }
 
     /// Writes the XPT file to a writer.
