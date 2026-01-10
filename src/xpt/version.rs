@@ -4,8 +4,25 @@
 
 /// The XPT format version.
 ///
-/// Currently, only v5 is fully implemented. V8 is API-ready but not yet implemented.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+/// Currently, only [`XptVersion::V5`] is fully implemented. [`XptVersion::V8`] is API-ready but not yet implemented.
+///
+/// # Versions
+///
+/// - [`XptVersion::V5`] - Traditional SAS Transport format with 8-byte names, 40-byte labels
+/// - [`XptVersion::V8`] - Extended format with 32-byte names, 256-byte labels (not yet implemented)
+///
+/// # Example
+///
+/// ```
+/// use xportrs::XptVersion;
+///
+/// let version = XptVersion::default();
+/// if version.is_v5() {
+///     println!("Using XPT v5 with max {} byte variable names",
+///         version.max_variable_name_len());
+/// }
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub enum XptVersion {
@@ -28,13 +45,13 @@ pub enum XptVersion {
 }
 
 impl XptVersion {
-    /// Returns `true` if this is version 5.
+    /// Returns `true` if this is [`XptVersion::V5`].
     #[must_use]
     pub const fn is_v5(&self) -> bool {
         matches!(self, Self::V5)
     }
 
-    /// Returns `true` if this is version 8.
+    /// Returns `true` if this is [`XptVersion::V8`].
     #[must_use]
     pub const fn is_v8(&self) -> bool {
         matches!(self, Self::V8)

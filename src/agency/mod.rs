@@ -1,8 +1,8 @@
 //! Regulatory agency definitions for compliance validation.
 //!
 //! This module provides the [`Agency`] enum for specifying regulatory
-//! requirements when writing XPT files. Each agency has specific validation
-//! rules for variable names, labels, and data formatting.
+//! requirements when writing XPT files. Each agency has specific [`Rule`] items
+//! that produce [`Issue`] items for variable names, labels, and data formatting.
 //!
 //! # Usage
 //!
@@ -11,10 +11,9 @@
 //!
 //! # let dataset = Dataset::new("AE", vec![]).unwrap();
 //! // Write with FDA validation
-//! Xpt::writer(dataset)
-//!     .agency(Agency::FDA)
-//!     .finalize()?
-//!     .write_path("ae.xpt")?;
+//! let mut builder = Xpt::writer(dataset);
+//! builder.agency(Agency::FDA);
+//! builder.finalize()?.write_path("ae.xpt")?;
 //! # Ok::<(), xportrs::Error>(())
 //! ```
 //!
@@ -48,10 +47,9 @@ use crate::xpt::XptVersion;
 /// use xportrs::{Xpt, Agency, Dataset};
 ///
 /// # let dataset = Dataset::new("AE", vec![]).unwrap();
-/// Xpt::writer(dataset)
-///     .agency(Agency::FDA)
-///     .finalize()?
-///     .write_path("ae.xpt")?;
+/// let mut builder = Xpt::writer(dataset);
+/// builder.agency(Agency::FDA);
+/// builder.finalize()?.write_path("ae.xpt")?;
 /// # Ok::<(), xportrs::Error>(())
 /// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -100,9 +98,9 @@ impl Agency {
         }
     }
 
-    /// Returns the default XPT version for this agency.
+    /// Returns the default [`XptVersion`] for this agency.
     ///
-    /// All major agencies currently require XPT v5.
+    /// All major agencies currently require [`XptVersion::V5`].
     #[must_use]
     pub const fn xpt_version(self) -> XptVersion {
         XptVersion::V5
@@ -167,7 +165,7 @@ impl Agency {
         true
     }
 
-    /// Returns the validation rules for this agency.
+    /// Returns the validation [`Rule`] items for this agency.
     ///
     /// Rules are applied in order during validation.
     #[must_use]
@@ -190,7 +188,7 @@ impl Agency {
 
     /// Validates a schema plan against this agency's requirements.
     ///
-    /// Applies all rules for this agency and returns any issues found.
+    /// Applies all [`Rule`] items for this agency and returns any [`Issue`] items found.
     #[must_use]
     pub(crate) fn validate(self, plan: &DatasetSchema, file_path: Option<&Path>) -> Vec<Issue> {
         let mut issues = Vec::new();

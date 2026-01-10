@@ -62,7 +62,9 @@ fn test_fda_agency_validation() {
     )
     .unwrap();
 
-    let validated = Xpt::writer(dataset).agency(Agency::FDA).finalize().unwrap();
+    let mut builder = Xpt::writer(dataset);
+    builder.agency(Agency::FDA);
+    let validated = builder.finalize().unwrap();
 
     // Should have no blocking errors for valid data
     assert!(!validated.has_errors());
@@ -215,7 +217,9 @@ fn test_all_agencies() {
         )
         .unwrap();
 
-        let validated = Xpt::writer(dataset).agency(agency).finalize().unwrap();
+        let mut builder = Xpt::writer(dataset);
+        builder.agency(agency);
+        let validated = builder.finalize().unwrap();
         assert!(!validated.has_errors());
         validated.write_path(&path).unwrap();
 

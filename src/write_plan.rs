@@ -1,7 +1,7 @@
 //! Write plan for xportrs.
 //!
 //! This module provides the [`XptWriterBuilder`] and [`ValidatedWrite`] types
-//! for planning and executing XPT file writes.
+//! for planning and executing XPT file writes from a [`Dataset`].
 
 use std::path::{Path, PathBuf};
 
@@ -31,10 +31,9 @@ use crate::xpt::v5::write::{SplitWriter, XptWriter, estimate_file_size_gb};
 /// )?;
 ///
 /// // With agency validation
-/// Xpt::writer(dataset)
-///     .agency(Agency::FDA)
-///     .finalize()?
-///     .write_path("ae.xpt")?;
+/// let mut builder = Xpt::writer(dataset);
+/// builder.agency(Agency::FDA);
+/// builder.finalize()?.write_path("ae.xpt")?;
 /// # Ok::<(), xportrs::Error>(())
 /// ```
 #[derive(Debug)]
@@ -72,22 +71,19 @@ impl XptWriterBuilder {
     /// use xportrs::{Xpt, Agency, Dataset};
     ///
     /// # let dataset = Dataset::new("AE", vec![]).unwrap();
-    /// Xpt::writer(dataset)
-    ///     .agency(Agency::FDA)
-    ///     .finalize()?
-    ///     .write_path("ae.xpt")?;
+    /// let mut builder = Xpt::writer(dataset);
+    /// builder.agency(Agency::FDA);
+    /// builder.finalize()?.write_path("ae.xpt")?;
     /// # Ok::<(), xportrs::Error>(())
     /// ```
-    #[must_use]
-    pub fn agency(mut self, agency: Agency) -> Self {
+    pub fn agency(&mut self, agency: Agency) -> &mut Self {
         self.agency = Some(agency);
         self
     }
 
     /// Sets the configuration.
-    #[must_use]
     #[allow(dead_code)]
-    pub(crate) fn config(mut self, config: Config) -> Self {
+    pub(crate) fn config(&mut self, config: Config) -> &mut Self {
         self.config = config;
         self
     }
@@ -96,24 +92,21 @@ impl XptWriterBuilder {
     ///
     /// Note: Currently only XPT v5 is supported. XPT v8 will return
     /// an error during finalization.
-    #[must_use]
-    pub fn xpt_version(mut self, version: XptVersion) -> Self {
+    pub fn xpt_version(&mut self, version: XptVersion) -> &mut Self {
         self.version = version;
         self
     }
 
     /// Sets variable metadata.
-    #[must_use]
     #[allow(dead_code)]
-    pub(crate) fn variable_metadata(mut self, meta: Vec<VariableMetadata>) -> Self {
+    pub(crate) fn variable_metadata(&mut self, meta: Vec<VariableMetadata>) -> &mut Self {
         self.variable_meta = Some(meta);
         self
     }
 
     /// Sets dataset metadata.
-    #[must_use]
     #[allow(dead_code)]
-    pub(crate) fn dataset_metadata(mut self, meta: DatasetMetadata) -> Self {
+    pub(crate) fn dataset_metadata(&mut self, meta: DatasetMetadata) -> &mut Self {
         self.dataset_meta = Some(meta);
         self
     }
@@ -121,17 +114,17 @@ impl XptWriterBuilder {
     /// Finalizes the write plan, performing validation.
     ///
     /// This validates:
-    /// 1. XPT v5 structural requirements (always)
-    /// 2. Agency-specific requirements (if an agency is set)
+    /// 1. [`XptVersion::V5`] structural requirements (always)
+    /// 2. [`Agency`]-specific requirements (if an agency is set)
     ///
-    /// When an agency is specified and no `max_size_gb` is configured,
+    /// When an [`Agency`] is specified and no `max_size_gb` is configured,
     /// the agency's recommended maximum file size is automatically applied,
     /// enabling automatic file splitting for large datasets.
     ///
     /// # Errors
     ///
-    /// Returns an error if:
-    /// - XPT v8 is requested (not yet implemented)
+    /// Returns an [`Error`] if:
+    /// - [`XptVersion::V8`] is requested (not yet implemented)
     /// - Strict mode is enabled and validation errors are found
     #[must_use = "this returns a Result that should be handled"]
     pub fn finalize(mut self) -> Result<ValidatedWrite> {
@@ -186,8 +179,8 @@ impl XptWriterBuilder {
 
 /// An immutable, validated write plan ready for execution.
 ///
-/// This struct contains a validated dataset and schema. Use [`write_path`](Self::write_path)
-/// to write the XPT file.
+/// This struct contains a validated [`Dataset`] and schema. Use [`write_path()`](Self::write_path)
+/// to write the XPT file. Check [`issues()`](Self::issues) for any [`Issue`] items found during validation.
 #[derive(Debug)]
 pub struct ValidatedWrite {
     dataset: Dataset,
@@ -197,19 +190,19 @@ pub struct ValidatedWrite {
 }
 
 impl ValidatedWrite {
-    /// Returns any validation issues found during finalization.
+    /// Returns any [`Issue`] items found during finalization.
     #[must_use]
     pub fn issues(&self) -> &[Issue] {
         &self.issues
     }
 
-    /// Returns `true` if there are any error-level issues.
+    /// Returns `true` if there are any [`Severity::Error`] issues.
     #[must_use]
     pub fn has_errors(&self) -> bool {
         self.issues.has_errors()
     }
 
-    /// Returns `true` if there are any warning-level issues.
+    /// Returns `true` if there are any [`Severity::Warning`] issues.
     #[must_use]
     pub fn has_warnings(&self) -> bool {
         self.issues.has_warnings()
@@ -225,7 +218,7 @@ impl ValidatedWrite {
     /// Writes the XPT file to the specified path.
     ///
     /// Returns a list of file paths created. If the file was split due to size
-    /// limits (configured via `max_size_gb` or automatically when an agency is
+    /// limits (configured via `max_size_gb` or automatically when an [`Agency`] is
     /// specified), multiple paths are returned (e.g., `ae_001.xpt`, `ae_002.xpt`).
     ///
     /// # Example
@@ -234,11 +227,10 @@ impl ValidatedWrite {
     /// use xportrs::{Xpt, Agency, Dataset};
     ///
     /// # let dataset = Dataset::new("AE", vec![]).unwrap();
-    /// // With FDA agency, files > 5GB are automatically split
-    /// let files = Xpt::writer(dataset)
-    ///     .agency(Agency::FDA)
-    ///     .finalize()?
-    ///     .write_path("ae.xpt")?;
+    /// // With [`Agency::FDA`], files > 5GB are automatically split
+    /// let mut builder = Xpt::writer(dataset);
+    /// builder.agency(Agency::FDA);
+    /// let files = builder.finalize()?.write_path("ae.xpt")?;
     ///
     /// println!("Created {} file(s)", files.len());
     /// // Single file: ["ae.xpt"]
@@ -248,7 +240,7 @@ impl ValidatedWrite {
     ///
     /// # Errors
     ///
-    /// Returns an error if writing fails.
+    /// Returns an [`Error`] if writing fails.
     #[must_use = "this returns a Result that should be handled"]
     pub fn write_path(self, path: impl AsRef<Path>) -> Result<Vec<PathBuf>> {
         let path = path.as_ref();
@@ -270,11 +262,11 @@ impl ValidatedWrite {
         Ok(vec![path.to_path_buf()])
     }
 
-    /// Writes the XPT file to a writer.
+    /// Writes the XPT file to a [`std::io::Write`] implementor.
     ///
     /// # Errors
     ///
-    /// Returns an error if writing fails.
+    /// Returns an [`Error`] if writing fails.
     #[must_use = "this returns a Result that should be handled"]
     pub fn write_to<W: std::io::Write>(self, writer: W) -> Result<()> {
         let xpt_writer = XptWriter::new(writer, self.config.write);
@@ -299,9 +291,9 @@ mod tests {
         )
         .unwrap();
 
-        let plan = XptWriterBuilder::new(dataset)
-            .xpt_version(XptVersion::V5)
-            .finalize();
+        let mut builder = XptWriterBuilder::new(dataset);
+        builder.xpt_version(XptVersion::V5);
+        let plan = builder.finalize();
 
         assert!(plan.is_ok());
         let finalized = plan.unwrap();
@@ -316,9 +308,9 @@ mod tests {
         )
         .unwrap();
 
-        let plan = XptWriterBuilder::new(dataset)
-            .agency(Agency::FDA)
-            .finalize();
+        let mut builder = XptWriterBuilder::new(dataset);
+        builder.agency(Agency::FDA);
+        let plan = builder.finalize();
 
         assert!(plan.is_ok());
     }
@@ -327,9 +319,9 @@ mod tests {
     fn test_write_plan_v8_unsupported() {
         let dataset = Dataset::new("AE", vec![]).unwrap();
 
-        let plan = XptWriterBuilder::new(dataset)
-            .xpt_version(XptVersion::V8)
-            .finalize();
+        let mut builder = XptWriterBuilder::new(dataset);
+        builder.xpt_version(XptVersion::V8);
+        let plan = builder.finalize();
 
         assert!(plan.is_err());
     }

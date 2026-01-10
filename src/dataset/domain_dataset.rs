@@ -3,21 +3,25 @@
 //! This module provides the [`Dataset`] struct which represents a CDISC
 //! domain dataset (table) in a columnar format.
 
+use std::fmt;
+use std::ops::Index;
+
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 
 use crate::error::{Error, Result};
 
-use super::newtypes::{DomainCode, Label};
+use super::iter::{ColumnNames, IntoIter, Iter, IterMut};
+use super::newtypes::{DomainCode, Label, VariableName};
 
 /// A CDISC domain dataset in columnar format.
 ///
 /// This is the primary data structure for representing tables in xportrs.
-/// It uses CDISC SDTM vocabulary where applicable.
+/// Contains a [`DomainCode`], optional [`Label`], and a collection of [`Column`] items.
 ///
 /// # Invariants
 ///
-/// - All columns must have exactly `nrows` elements.
-/// - Domain code should follow CDISC naming conventions (typically 2-8 characters).
+/// - All [`Column`] items must have exactly `nrows` elements.
+/// - [`DomainCode`] should follow CDISC naming conventions (typically 2-8 characters).
 ///
 /// # Example
 ///
@@ -56,7 +60,7 @@ impl Dataset {
     ///
     /// # Errors
     ///
-    /// Returns an error if any column has a different length than the others.
+    /// Returns [`Error::ColumnLengthMismatch`] if any [`Column`] has a different length than the others.
     #[must_use = "this returns a Result that should be handled"]
     pub fn new(domain_code: impl Into<DomainCode>, columns: Vec<Column>) -> Result<Self> {
         let nrows = columns.first().map_or(0, Column::len);
@@ -84,7 +88,7 @@ impl Dataset {
     ///
     /// # Errors
     ///
-    /// Returns an error if any column has a different length than the others.
+    /// Returns [`Error::ColumnLengthMismatch`] if any [`Column`] has a different length than the others.
     pub fn with_label(
         domain_code: impl Into<DomainCode>,
         dataset_label: Option<impl Into<Label>>,
@@ -107,16 +111,16 @@ impl Dataset {
         self.nrows == 0
     }
 
-    /// Returns the domain code.
+    /// Returns the domain code as a string slice.
     #[must_use]
     pub fn domain_code(&self) -> &str {
-        &self.domain_code
+        self.domain_code.as_str()
     }
 
     /// Returns the dataset label, if any.
     #[must_use]
     pub fn dataset_label(&self) -> Option<&str> {
-        self.dataset_label.as_deref()
+        self.dataset_label.as_ref().map(Label::as_str)
     }
 
     /// Returns a reference to the columns.
@@ -131,39 +135,164 @@ impl Dataset {
         self.nrows
     }
 
-    /// Returns an iterator over the column names.
-    pub fn column_names(&self) -> impl Iterator<Item = &str> {
-        self.columns.iter().map(Column::name)
+    /// Returns an [`Iter`] over references to the columns.
+    #[must_use]
+    pub fn iter(&self) -> Iter<'_> {
+        Iter::new(&self.columns)
     }
 
-    /// Finds a column by name.
+    /// Returns an [`IterMut`] over the columns.
+    #[must_use]
+    pub fn iter_mut(&mut self) -> IterMut<'_> {
+        IterMut::new(&mut self.columns)
+    }
+
+    /// Returns a [`ColumnNames`] iterator over the column names.
+    #[must_use]
+    pub fn column_names(&self) -> ColumnNames<'_> {
+        ColumnNames::new(&self.columns)
+    }
+
+    /// Finds a [`Column`] by name.
     #[must_use]
     pub fn column(&self, name: &str) -> Option<&Column> {
         self.columns.iter().find(|c| c.name() == name)
     }
 }
 
+impl IntoIterator for Dataset {
+    type Item = Column;
+    type IntoIter = IntoIter;
+
+    fn into_iter(self) -> Self::IntoIter {
+        IntoIter::new(self.columns)
+    }
+}
+
+impl<'a> IntoIterator for &'a Dataset {
+    type Item = &'a Column;
+    type IntoIter = Iter<'a>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
+impl<'a> IntoIterator for &'a mut Dataset {
+    type Item = &'a mut Column;
+    type IntoIter = IterMut<'a>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter_mut()
+    }
+}
+
+impl Index<usize> for Dataset {
+    type Output = Column;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.columns[index]
+    }
+}
+
+impl Index<&str> for Dataset {
+    type Output = Column;
+
+    /// Indexes the dataset by column name.
+    ///
+    /// # Panics
+    ///
+    /// Panics if no column with the given name exists.
+    fn index(&self, name: &str) -> &Self::Output {
+        self.columns
+            .iter()
+            .find(|c| c.name() == name)
+            .unwrap_or_else(|| panic!("no column named '{}'", name))
+    }
+}
+
+impl Extend<Column> for Dataset {
+    /// Extends the dataset with columns from an iterator.
+    ///
+    /// # Panics
+    ///
+    /// Panics if any column has a different length than the existing dataset.
+    /// If the dataset is empty (nrows == 0), the first column's length becomes
+    /// the new nrows.
+    fn extend<T: IntoIterator<Item = Column>>(&mut self, iter: T) {
+        for col in iter {
+            if self.nrows == 0 && self.columns.is_empty() {
+                // Empty dataset - take length from first column
+                self.nrows = col.len();
+            } else if col.len() != self.nrows {
+                panic!(
+                    "column '{}' has length {} but dataset has {} rows",
+                    col.name(),
+                    col.len(),
+                    self.nrows
+                );
+            }
+            self.columns.push(col);
+        }
+    }
+}
+
+impl fmt::Display for Dataset {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{} [{} rows × {} cols]",
+            self.domain_code.as_str(),
+            self.nrows,
+            self.columns.len()
+        )
+    }
+}
+
 /// A single column (variable) in a domain dataset.
 ///
-/// Each column has a name, optional role, and typed data.
+/// Each column has a [`VariableName`], optional [`VariableRole`], and typed [`ColumnData`].
+///
+/// # Example
+///
+/// ```
+/// use xportrs::{Column, ColumnData, VariableRole};
+///
+/// // Create a simple string column
+/// let col = Column::new("USUBJID", ColumnData::String(vec![
+///     Some("01-001".into()),
+///     Some("01-002".into()),
+/// ]));
+/// println!("{}", col);  // Prints: USUBJID (String)
+///
+/// // Create a column with a CDISC role
+/// let col = Column::with_role(
+///     "AESEQ",
+///     VariableRole::Identifier,
+///     ColumnData::I64(vec![Some(1), Some(2)]),
+/// );
+/// if let Some(role) = col.role() {
+///     println!("{} is an {} variable", col.name(), role);
+/// }
+/// ```
 #[derive(Debug, Clone, PartialEq)]
 pub struct Column {
     /// The variable name.
     ///
     /// Limited to 8 bytes in XPT v5.
-    name: String,
+    name: VariableName,
 
-    /// The CDISC variable role, if applicable.
+    /// The CDISC [`VariableRole`], if applicable.
     role: Option<VariableRole>,
 
-    /// The column data.
+    /// The [`ColumnData`] containing the typed values.
     data: ColumnData,
 }
 
 impl Column {
     /// Creates a new column with the given name and data.
     #[must_use]
-    pub fn new(name: impl Into<String>, data: ColumnData) -> Self {
+    pub fn new(name: impl Into<VariableName>, data: ColumnData) -> Self {
         Self {
             name: name.into(),
             role: None,
@@ -173,7 +302,7 @@ impl Column {
 
     /// Creates a new column with the given name, role, and data.
     #[must_use]
-    pub fn with_role(name: impl Into<String>, role: VariableRole, data: ColumnData) -> Self {
+    pub fn with_role(name: impl Into<VariableName>, role: VariableRole, data: ColumnData) -> Self {
         Self {
             name: name.into(),
             role: Some(role),
@@ -196,16 +325,16 @@ impl Column {
     /// Returns the column name.
     #[must_use]
     pub fn name(&self) -> &str {
-        &self.name
+        self.name.as_str()
     }
 
-    /// Returns the column role, if any.
+    /// Returns the [`VariableRole`], if any.
     #[must_use]
     pub fn role(&self) -> Option<VariableRole> {
         self.role
     }
 
-    /// Returns a reference to the column data.
+    /// Returns a reference to the [`ColumnData`].
     #[must_use]
     pub fn data(&self) -> &ColumnData {
         &self.data
@@ -224,11 +353,46 @@ impl Column {
     }
 }
 
+impl fmt::Display for Column {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let type_name = match &self.data {
+            ColumnData::F64(_) => "F64",
+            ColumnData::I64(_) => "I64",
+            ColumnData::Bool(_) => "Bool",
+            ColumnData::String(_) => "String",
+            ColumnData::Bytes(_) => "Bytes",
+            ColumnData::Date(_) => "Date",
+            ColumnData::DateTime(_) => "DateTime",
+            ColumnData::Time(_) => "Time",
+        };
+        write!(f, "{} ({})", self.name.as_str(), type_name)
+    }
+}
+
 /// The typed data content of a column.
 ///
 /// XPT v5 only supports two fundamental types: Numeric (8-byte IBM float) and
 /// Character (fixed-width byte string). The variants here represent common
 /// Rust types that can be converted to these XPT types.
+///
+/// # Example
+///
+/// ```
+/// use xportrs::ColumnData;
+///
+/// // Numeric types - None represents missing values
+/// let ages = ColumnData::F64(vec![Some(25.0), Some(30.5), None]);
+/// println!("{}", ages);  // Prints: F64(3)
+///
+/// // Convenience: create from plain vectors (all values present)
+/// let data: ColumnData = vec![1.0, 2.0, 3.0].into();
+/// let data: ColumnData = vec!["Alice", "Bob", "Carol"].into();
+///
+/// // Check type category
+/// if data.is_character() {
+///     println!("Character column with {} values", data.len());
+/// }
+/// ```
 #[derive(Debug, Clone, PartialEq)]
 #[non_exhaustive]
 pub enum ColumnData {
@@ -319,6 +483,22 @@ impl ColumnData {
     }
 }
 
+impl fmt::Display for ColumnData {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let (type_name, len) = match self {
+            Self::F64(v) => ("F64", v.len()),
+            Self::I64(v) => ("I64", v.len()),
+            Self::Bool(v) => ("Bool", v.len()),
+            Self::String(v) => ("String", v.len()),
+            Self::Bytes(v) => ("Bytes", v.len()),
+            Self::Date(v) => ("Date", v.len()),
+            Self::DateTime(v) => ("DateTime", v.len()),
+            Self::Time(v) => ("Time", v.len()),
+        };
+        write!(f, "{}({})", type_name, len)
+    }
+}
+
 // Convenience From implementations for ColumnData.
 // These allow creating columns without wrapping values in Option.
 
@@ -380,6 +560,35 @@ impl From<Vec<NaiveTime>> for ColumnData {
 ///
 /// These roles are metadata that help classify variables according to CDISC SDTM
 /// terminology. They do not affect XPT binary encoding.
+///
+/// # Roles
+///
+/// - [`VariableRole::Identifier`] - Uniquely identifies observations (e.g., STUDYID, USUBJID)
+/// - [`VariableRole::Topic`] - The focus of the observation (e.g., AEDECOD, LBTESTCD)
+/// - [`VariableRole::Timing`] - When the observation occurred (e.g., AESTDTC, VISITNUM)
+/// - [`VariableRole::Qualifier`] - Additional context (e.g., AESER, AESEV)
+/// - [`VariableRole::Rule`] - Derived or algorithmic values (e.g., EPOCH)
+///
+/// # Example
+///
+/// ```
+/// use xportrs::{Column, ColumnData, VariableRole};
+///
+/// // Assign roles to clinical data variables
+/// let usubjid = Column::with_role(
+///     "USUBJID",
+///     VariableRole::Identifier,
+///     ColumnData::String(vec![Some("01-001".into())]),
+/// );
+///
+/// let aedecod = Column::with_role(
+///     "AEDECOD",
+///     VariableRole::Topic,
+///     ColumnData::String(vec![Some("HEADACHE".into())]),
+/// );
+///
+/// println!("{} role: {}", usubjid.name(), usubjid.role().unwrap());
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]

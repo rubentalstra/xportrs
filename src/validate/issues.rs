@@ -9,7 +9,29 @@ use std::path::PathBuf;
 /// A validation issue found during XPT generation or reading.
 ///
 /// Each variant represents a specific type of issue with relevant context data.
-/// The issue's code, severity, and message are derived from the variant.
+/// The issue's code, [`Severity`], and message are derived from the variant.
+///
+/// # Example
+///
+/// ```
+/// use xportrs::{Issue, Severity};
+///
+/// // Issues are returned from validation
+/// let issues = vec![
+///     Issue::VariableNameTooLong {
+///         variable: "TOOLONGNAME".into(),
+///         max: 8,
+///         actual: 11,
+///     },
+/// ];
+///
+/// // Filter and display errors
+/// for issue in &issues {
+///     if issue.is_error() {
+///         eprintln!("{}", issue);
+///     }
+/// }
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Issue {
@@ -195,7 +217,7 @@ pub enum Issue {
 }
 
 impl Issue {
-    /// Returns the severity of this issue.
+    /// Returns the [`Severity`] of this issue.
     #[must_use]
     pub const fn severity(&self) -> Severity {
         match self {
@@ -251,13 +273,13 @@ impl Issue {
         }
     }
 
-    /// Returns `true` if this is an error.
+    /// Returns `true` if this is a [`Severity::Error`].
     #[must_use]
     pub const fn is_error(&self) -> bool {
         matches!(self.severity(), Severity::Error)
     }
 
-    /// Returns `true` if this is a warning.
+    /// Returns `true` if this is a [`Severity::Warning`].
     #[must_use]
     pub const fn is_warning(&self) -> bool {
         matches!(self.severity(), Severity::Warning)
@@ -463,8 +485,27 @@ impl fmt::Display for Issue {
     }
 }
 
-/// The severity level of a validation issue.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+/// The severity level of a validation [`Issue`].
+///
+/// Severities are ordered from least to most severe: [`Severity::Info`] < [`Severity::Warning`] < [`Severity::Error`].
+///
+/// # Example
+///
+/// ```
+/// use xportrs::Severity;
+///
+/// // Filter issues by severity
+/// fn print_high_priority(severity: Severity) {
+///     if severity >= Severity::Warning {
+///         println!("[{}] Needs attention", severity);
+///     }
+/// }
+///
+/// print_high_priority(Severity::Error);   // Prints
+/// print_high_priority(Severity::Warning); // Prints
+/// print_high_priority(Severity::Info);    // Silent
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub enum Severity {
@@ -509,19 +550,19 @@ impl fmt::Display for Target {
     }
 }
 
-/// Extension trait for working with collections of issues.
+/// Extension trait for working with collections of [`Issue`] items.
 #[allow(dead_code)]
 pub trait IssueCollection {
-    /// Returns `true` if there are any errors.
+    /// Returns `true` if there are any [`Severity::Error`] issues.
     fn has_errors(&self) -> bool;
 
-    /// Returns `true` if there are any warnings.
+    /// Returns `true` if there are any [`Severity::Warning`] issues.
     fn has_warnings(&self) -> bool;
 
-    /// Returns an iterator over error issues.
+    /// Returns an iterator over [`Severity::Error`] issues.
     fn errors(&self) -> impl Iterator<Item = &Issue>;
 
-    /// Returns an iterator over warning issues.
+    /// Returns an iterator over [`Severity::Warning`] issues.
     fn warnings(&self) -> impl Iterator<Item = &Issue>;
 }
 
