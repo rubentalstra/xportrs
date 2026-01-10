@@ -252,6 +252,29 @@ impl fmt::Display for Dataset {
 /// A single column (variable) in a domain dataset.
 ///
 /// Each column has a name, optional role, and typed data.
+///
+/// # Example
+///
+/// ```
+/// use xportrs::{Column, ColumnData, VariableRole};
+///
+/// // Create a simple string column
+/// let col = Column::new("USUBJID", ColumnData::String(vec![
+///     Some("01-001".into()),
+///     Some("01-002".into()),
+/// ]));
+/// println!("{}", col);  // Prints: USUBJID (String)
+///
+/// // Create a column with a CDISC role
+/// let col = Column::with_role(
+///     "AESEQ",
+///     VariableRole::Identifier,
+///     ColumnData::I64(vec![Some(1), Some(2)]),
+/// );
+/// if let Some(role) = col.role() {
+///     println!("{} is an {} variable", col.name(), role);
+/// }
+/// ```
 #[derive(Debug, Clone, PartialEq)]
 pub struct Column {
     /// The variable name.
@@ -351,6 +374,25 @@ impl fmt::Display for Column {
 /// XPT v5 only supports two fundamental types: Numeric (8-byte IBM float) and
 /// Character (fixed-width byte string). The variants here represent common
 /// Rust types that can be converted to these XPT types.
+///
+/// # Example
+///
+/// ```
+/// use xportrs::ColumnData;
+///
+/// // Numeric types - None represents missing values
+/// let ages = ColumnData::F64(vec![Some(25.0), Some(30.5), None]);
+/// println!("{}", ages);  // Prints: F64(3)
+///
+/// // Convenience: create from plain vectors (all values present)
+/// let data: ColumnData = vec![1.0, 2.0, 3.0].into();
+/// let data: ColumnData = vec!["Alice", "Bob", "Carol"].into();
+///
+/// // Check type category
+/// if data.is_character() {
+///     println!("Character column with {} values", data.len());
+/// }
+/// ```
 #[derive(Debug, Clone, PartialEq)]
 #[non_exhaustive]
 pub enum ColumnData {
@@ -518,6 +560,35 @@ impl From<Vec<NaiveTime>> for ColumnData {
 ///
 /// These roles are metadata that help classify variables according to CDISC SDTM
 /// terminology. They do not affect XPT binary encoding.
+///
+/// # Roles
+///
+/// - [`VariableRole::Identifier`] - Uniquely identifies observations (e.g., STUDYID, USUBJID)
+/// - [`VariableRole::Topic`] - The focus of the observation (e.g., AEDECOD, LBTESTCD)
+/// - [`VariableRole::Timing`] - When the observation occurred (e.g., AESTDTC, VISITNUM)
+/// - [`VariableRole::Qualifier`] - Additional context (e.g., AESER, AESEV)
+/// - [`VariableRole::Rule`] - Derived or algorithmic values (e.g., EPOCH)
+///
+/// # Example
+///
+/// ```
+/// use xportrs::{Column, ColumnData, VariableRole};
+///
+/// // Assign roles to clinical data variables
+/// let usubjid = Column::with_role(
+///     "USUBJID",
+///     VariableRole::Identifier,
+///     ColumnData::String(vec![Some("01-001".into())]),
+/// );
+///
+/// let aedecod = Column::with_role(
+///     "AEDECOD",
+///     VariableRole::Topic,
+///     ColumnData::String(vec![Some("HEADACHE".into())]),
+/// );
+///
+/// println!("{} role: {}", usubjid.name(), usubjid.role().unwrap());
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]

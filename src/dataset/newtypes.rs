@@ -16,8 +16,11 @@ use std::fmt;
 /// use xportrs::DomainCode;
 ///
 /// let code = DomainCode::new("AE");
-/// assert_eq!(code.as_str(), "AE");
-/// assert_eq!(code.as_str().len(), 2);
+/// println!("Domain: {}", code);  // Prints: Domain: AE
+///
+/// // Works with string types
+/// let code: DomainCode = "DM".into();
+/// let code: DomainCode = String::from("LB").into();
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct DomainCode(String);
@@ -100,7 +103,11 @@ impl<'de> serde::Deserialize<'de> for DomainCode {
 /// use xportrs::Label;
 ///
 /// let label = Label::new("Adverse Events");
-/// assert_eq!(label.as_str(), "Adverse Events");
+/// println!("Label: {}", label);  // Prints: Label: Adverse Events
+///
+/// // Access the inner string
+/// let text: &str = label.as_str();
+/// let owned: String = label.into_inner();
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Label(String);
@@ -180,11 +187,14 @@ impl<'de> serde::Deserialize<'de> for Label {
 /// # Example
 ///
 /// ```
-/// use xportrs::VariableName;
+/// use xportrs::{Column, ColumnData, VariableName};
 ///
+/// // Create a variable name
 /// let name = VariableName::new("USUBJID");
-/// assert_eq!(name.as_str(), "USUBJID");
-/// assert_eq!(name.as_str().len(), 7);
+/// println!("Variable: {}", name);
+///
+/// // Use with Column
+/// let col = Column::new(name, ColumnData::String(vec![Some("01-001".into())]));
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct VariableName(String);

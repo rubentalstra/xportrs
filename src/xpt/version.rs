@@ -5,6 +5,23 @@
 /// The XPT format version.
 ///
 /// Currently, only v5 is fully implemented. V8 is API-ready but not yet implemented.
+///
+/// # Versions
+///
+/// - **V5** - Traditional SAS Transport format with 8-byte names, 40-byte labels
+/// - **V8** - Extended format with 32-byte names, 256-byte labels (not yet implemented)
+///
+/// # Example
+///
+/// ```
+/// use xportrs::XptVersion;
+///
+/// let version = XptVersion::default();
+/// if version.is_v5() {
+///     println!("Using XPT v5 with max {} byte variable names",
+///         version.max_variable_name_len());
+/// }
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]

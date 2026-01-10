@@ -69,6 +69,21 @@ impl Config {
 }
 
 /// Verbosity level for diagnostics and logging.
+///
+/// # Example
+///
+/// ```
+/// use xportrs::Verbosity;
+///
+/// // Warn is the default verbosity level
+/// let level = Verbosity::default();
+/// match level {
+///     Verbosity::None => println!("Silent mode"),
+///     Verbosity::Info => println!("Info messages enabled"),
+///     Verbosity::Warn => println!("Warnings enabled"),
+///     Verbosity::Error => println!("Errors only"),
+/// }
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Verbosity {
@@ -193,6 +208,12 @@ impl ReadOptions {
 ///
 /// XPT files can contain character data in various encodings.
 /// This enum controls how that data is decoded into Rust strings.
+///
+/// # Variants
+///
+/// - [`TextMode::StrictUtf8`] - Errors on invalid UTF-8 sequences
+/// - [`TextMode::LossyUtf8`] - Replaces invalid sequences with U+FFFD (default)
+/// - [`TextMode::Latin1`] - Interprets bytes as ISO-8859-1 code points
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum TextMode {

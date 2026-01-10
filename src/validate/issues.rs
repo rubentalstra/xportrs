@@ -10,6 +10,28 @@ use std::path::PathBuf;
 ///
 /// Each variant represents a specific type of issue with relevant context data.
 /// The issue's code, severity, and message are derived from the variant.
+///
+/// # Example
+///
+/// ```
+/// use xportrs::{Issue, Severity};
+///
+/// // Issues are returned from validation
+/// let issues = vec![
+///     Issue::VariableNameTooLong {
+///         variable: "TOOLONGNAME".into(),
+///         max: 8,
+///         actual: 11,
+///     },
+/// ];
+///
+/// // Filter and display errors
+/// for issue in &issues {
+///     if issue.is_error() {
+///         eprintln!("{}", issue);
+///     }
+/// }
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Issue {
@@ -464,6 +486,25 @@ impl fmt::Display for Issue {
 }
 
 /// The severity level of a validation issue.
+///
+/// Severities are ordered from least to most severe: `Info < Warning < Error`.
+///
+/// # Example
+///
+/// ```
+/// use xportrs::Severity;
+///
+/// // Filter issues by severity
+/// fn print_high_priority(severity: Severity) {
+///     if severity >= Severity::Warning {
+///         println!("[{}] Needs attention", severity);
+///     }
+/// }
+///
+/// print_high_priority(Severity::Error);   // Prints
+/// print_high_priority(Severity::Warning); // Prints
+/// print_high_priority(Severity::Info);    // Silent
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
