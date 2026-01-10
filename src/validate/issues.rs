@@ -11,6 +11,7 @@ use std::path::PathBuf;
 /// Each variant represents a specific type of issue with relevant context data.
 /// The issue's code, severity, and message are derived from the variant.
 #[derive(Debug, Clone)]
+#[non_exhaustive]
 pub enum Issue {
     // =========================================================================
     // XPT v5 Structural Issues
@@ -465,6 +466,7 @@ impl fmt::Display for Issue {
 /// The severity level of a validation issue.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[non_exhaustive]
 pub enum Severity {
     /// Informational message (does not block generation).
     Info,

@@ -12,6 +12,7 @@ use crate::xpt::XptVersion;
 /// This enum covers all error conditions that can arise when working with XPT files,
 /// including I/O errors, format violations, validation failures, and unsupported features.
 #[derive(thiserror::Error, Debug)]
+#[non_exhaustive]
 pub enum XportrsError {
     /// An I/O error occurred while reading or writing.
     #[error("io error: {0}")]

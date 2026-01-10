@@ -185,6 +185,7 @@ impl Column {
 /// Character (fixed-width byte string). The variants here represent common
 /// Rust types that can be converted to these XPT types.
 #[derive(Debug, Clone, PartialEq)]
+#[non_exhaustive]
 pub enum ColumnData {
     /// 64-bit floating-point values.
     ///
@@ -279,6 +280,7 @@ impl ColumnData {
 /// terminology. They do not affect XPT binary encoding.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[non_exhaustive]
 pub enum VariableRole {
     /// Identifier variables (e.g., STUDYID, USUBJID, DOMAIN).
     Identifier,

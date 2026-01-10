@@ -55,6 +55,7 @@ use crate::xpt::XptVersion;
 /// # Ok::<(), xportrs::XportrsError>(())
 /// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[non_exhaustive]
 pub enum Agency {
     /// U.S. Food and Drug Administration.
     ///
