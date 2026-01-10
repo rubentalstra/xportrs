@@ -51,7 +51,8 @@ pub fn load_standard(dir: &Path) -> Result<Standard> {
     let metadata_path = dir.join("metadata.toml");
 
     // Read and parse metadata.toml
-    let content = fs::read_to_string(&metadata_path).map_err(|_| Error::MissingFile(metadata_path))?;
+    let content =
+        fs::read_to_string(&metadata_path).map_err(|_| Error::MissingFile(metadata_path))?;
     let metadata: MetadataToml = toml::from_str(&content)?;
 
     // Load the appropriate standard based on publishing_set

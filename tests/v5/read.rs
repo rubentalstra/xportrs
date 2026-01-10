@@ -70,14 +70,8 @@ fn test_read_suppdm() {
         dataset.column("RDOMAIN").is_some(),
         "SUPPDM should have RDOMAIN"
     );
-    assert!(
-        dataset.column("QNAM").is_some(),
-        "SUPPDM should have QNAM"
-    );
-    assert!(
-        dataset.column("QVAL").is_some(),
-        "SUPPDM should have QVAL"
-    );
+    assert!(dataset.column("QNAM").is_some(), "SUPPDM should have QNAM");
+    assert!(dataset.column("QVAL").is_some(), "SUPPDM should have QVAL");
 }
 
 /// Test that DM variables match SDTM metadata expectations.
@@ -94,7 +88,10 @@ fn test_dm_matches_sdtm_metadata() {
     assert!(!expected_vars.is_empty(), "SDTM should define DM variables");
 
     // Check that required variables are present
-    for var in expected_vars.iter().filter(|v| v.core.as_deref() == Some("Req")) {
+    for var in expected_vars
+        .iter()
+        .filter(|v| v.core.as_deref() == Some("Req"))
+    {
         let col = dataset.column(&var.name);
         assert!(
             col.is_some(),
@@ -105,11 +102,7 @@ fn test_dm_matches_sdtm_metadata() {
         // Verify type matches
         if let Some(col) = col {
             if var.var_type.is_numeric() {
-                assert!(
-                    col.is_numeric(),
-                    "Variable {} should be numeric",
-                    var.name
-                );
+                assert!(col.is_numeric(), "Variable {} should be numeric", var.name);
             } else {
                 assert!(
                     col.is_character(),
@@ -148,10 +141,6 @@ fn test_read_all_xpt_files() {
         );
 
         let dataset = result.unwrap();
-        assert!(
-            dataset.ncols() > 0,
-            "{} should have columns",
-            filename
-        );
+        assert!(dataset.ncols() > 0, "{} should have columns", filename);
     }
 }

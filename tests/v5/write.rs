@@ -56,10 +56,7 @@ fn test_fda_agency_validation() {
     let dataset = Dataset::new(
         "DM",
         vec![
-            Column::new(
-                "STUDYID",
-                ColumnData::String(vec![Some("STUDY001".into())]),
-            ),
+            Column::new("STUDYID", ColumnData::String(vec![Some("STUDY001".into())])),
             Column::new("AGE", ColumnData::F64(vec![Some(45.0)])),
         ],
     )
@@ -90,7 +87,7 @@ fn test_column_length_mismatch() {
     assert!(result.is_err());
 }
 
-/// Test From conversions for ColumnData.
+/// Test From conversions for `ColumnData`.
 #[test]
 fn test_column_data_from_conversions() {
     let dir = tempdir().unwrap();
@@ -179,10 +176,7 @@ fn test_multiple_column_types() {
     let dataset = Dataset::new(
         "AE",
         vec![
-            Column::new(
-                "USUBJID",
-                ColumnData::String(vec![Some("SUBJ001".into())]),
-            ),
+            Column::new("USUBJID", ColumnData::String(vec![Some("SUBJ001".into())])),
             Column::new("AESEQ", ColumnData::F64(vec![Some(1.0)])),
             Column::new("AESTDY", ColumnData::F64(vec![Some(15.0)])),
             Column::new("AETERM", ColumnData::String(vec![Some("Headache".into())])),

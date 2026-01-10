@@ -64,17 +64,22 @@ impl<W: Write> XptWriter<W> {
         let created_str = format_sas_timestamp(created);
         let modified_str = format_sas_timestamp(modified);
 
+        // Record 2: First real header
+        // Per SAS spec: created timestamp at bytes 64-79
         let mut rec2 = [PAD_CHAR; RECORD_LEN];
         rec2[..24].copy_from_slice(b"SAS     SAS     SASLIB  ");
         rec2[24..32].copy_from_slice(b"9.4     "); // SAS version
-        rec2[32..48].copy_from_slice(created_str.as_bytes());
-        rec2[48..64].copy_from_slice(modified_str.as_bytes());
+        // Bytes 32-39: OS name (leave as spaces)
+        // Bytes 40-63: blanks (leave as spaces)
+        rec2[64..80].copy_from_slice(created_str.as_bytes());
 
         self.writer.write_record(&rec2).map_err(Error::Io)?;
 
-        // Record 3: Additional header info (usually empty)
+        // Record 3: Second real header
+        // Per SAS spec: modified timestamp at bytes 0-15
         let mut rec3 = [PAD_CHAR; RECORD_LEN];
         rec3[..16].copy_from_slice(modified_str.as_bytes());
+        // Rest is blanks
 
         self.writer.write_record(&rec3).map_err(Error::Io)?;
 
@@ -91,32 +96,52 @@ impl<W: Write> XptWriter<W> {
 
     /// Writes the member header section.
     fn write_member_header(&mut self, plan: &DatasetSchema) -> Result<()> {
+        let now = Utc::now();
+        let created = self.options.created.unwrap_or(now);
+        let modified = self.options.modified.unwrap_or(now);
+        let created_str = format_sas_timestamp(created);
+        let modified_str = format_sas_timestamp(modified);
+
         // Record 1: Member header marker
         self.writer.write_record(MEMBER_HEADER).map_err(Error::Io)?;
 
-        // Record 2: Member descriptor
-        // Format (must match parse.rs expectations):
-        // [0..8]: SAS identifier
-        // [8..16]: member name
-        // [16..24]: SAS type ("DATA    ")
-        // [24..32]: padding
-        // [32..72]: label (40 bytes)
-        // [72..80]: padding
-        let mut rec = [PAD_CHAR; RECORD_LEN];
-        rec[..8].copy_from_slice(b"SAS     ");
-        rec[8..16].copy_from_slice(pad_string(&plan.domain_code, 8).as_slice());
-        rec[16..24].copy_from_slice(b"DATA    ");
-        if let Some(ref label) = plan.dataset_label {
-            let label_bytes = pad_string(label, 40);
-            rec[32..72].copy_from_slice(&label_bytes);
-        }
-
-        self.writer.write_record(&rec).map_err(Error::Io)?;
-
-        // Record 3: Descriptor header marker
+        // Record 2: DSCRPTR header marker
         self.writer
             .write_record(MEMBER_HEADER_DATA)
             .map_err(Error::Io)?;
+
+        // Record 3: Member descriptor data 1
+        // Format per SAS spec:
+        // [0..8]: "SAS     "
+        // [8..16]: dataset name
+        // [16..24]: "SASDATA "
+        // [24..32]: SAS version
+        // [32..40]: OS name
+        // [40..64]: blanks
+        // [64..80]: created timestamp (16 chars)
+        let mut rec1 = [PAD_CHAR; RECORD_LEN];
+        rec1[..8].copy_from_slice(b"SAS     ");
+        rec1[8..16].copy_from_slice(pad_string(&plan.domain_code, 8).as_slice());
+        rec1[16..24].copy_from_slice(b"SASDATA ");
+        rec1[24..32].copy_from_slice(b"9.4     "); // SAS version
+        // [32..40] OS name - leave as spaces
+        // [40..64] blanks - leave as spaces
+        rec1[64..80].copy_from_slice(created_str.as_bytes());
+        self.writer.write_record(&rec1).map_err(Error::Io)?;
+
+        // Record 4: Member descriptor data 2
+        // Format per SAS spec:
+        // [0..16]: modified timestamp
+        // [16..32]: blanks
+        // [32..72]: dataset label (40 bytes)
+        // [72..80]: dataset type (8 bytes, usually blanks)
+        let mut rec2 = [PAD_CHAR; RECORD_LEN];
+        rec2[..16].copy_from_slice(modified_str.as_bytes());
+        if let Some(ref label) = plan.dataset_label {
+            let label_bytes = pad_string(label, 40);
+            rec2[32..72].copy_from_slice(&label_bytes);
+        }
+        self.writer.write_record(&rec2).map_err(Error::Io)?;
 
         Ok(())
     }
@@ -126,11 +151,13 @@ impl<W: Write> XptWriter<W> {
         let nvars = plan.variables.len();
 
         // NAMESTR header record
+        // Per SAS spec: nvars is a 4-digit field at bytes 54-57
         let mut header = [PAD_CHAR; RECORD_LEN];
         header[..54].copy_from_slice(NAMESTR_HEADER);
-        let nvars_str = format!("{:06}", nvars);
-        header[54..60].copy_from_slice(nvars_str.as_bytes());
-        header[60..80].copy_from_slice(b"00000000000000000000");
+        let nvars_str = format!("{:04}", nvars);
+        header[54..58].copy_from_slice(nvars_str.as_bytes());
+        header[58..78].copy_from_slice(b"00000000000000000000");
+        header[78..80].copy_from_slice(b"  ");
 
         self.writer.write_record(&header).map_err(Error::Io)?;
 

@@ -45,14 +45,15 @@ pub fn parse_header<R: Read + Seek>(reader: &mut R) -> Result<XptInfo> {
         ));
     }
 
-    // Read first real header record (contains SAS identifier and timestamps)
+    // Read first real header record (contains SAS identifier)
+    // Per SAS spec: created timestamp is at bytes 64-79
     reader.read_exact(&mut header_buf).map_err(Error::Io)?;
+    let created = extract_timestamp(&header_buf, 64, 80);
 
-    let created = extract_timestamp(&header_buf, 32, 48);
-    let modified = extract_timestamp(&header_buf, 48, 64);
-
-    // Read second header record (typically contains modified timestamp)
+    // Read second header record
+    // Per SAS spec: modified timestamp is at bytes 0-15
     reader.read_exact(&mut header_buf).map_err(Error::Io)?;
+    let modified = extract_timestamp(&header_buf, 0, 16);
 
     // Parse members
     let mut members = Vec::new();
@@ -90,18 +91,22 @@ pub fn parse_header<R: Read + Seek>(reader: &mut R) -> Result<XptInfo> {
 fn parse_member<R: Read + Seek>(reader: &mut R) -> Result<XptMemberInfo> {
     let mut buf = [0u8; RECORD_LEN];
 
-    // Read member descriptor header
+    // Read and verify DSCRPTR header
     reader.read_exact(&mut buf).map_err(Error::Io)?;
+    if !buf.starts_with(b"HEADER RECORD*******DSCRPTR") {
+        return Err(Error::corrupt("expected DSCRPTR header"));
+    }
 
-    // Extract member name and label
+    // Read member descriptor data record 1 (contains dataset name)
+    reader.read_exact(&mut buf).map_err(Error::Io)?;
     let name = String::from_utf8_lossy(&buf[8..16]).trim().to_string();
+
+    // Read member descriptor data record 2 (contains label)
+    reader.read_exact(&mut buf).map_err(Error::Io)?;
     let label = {
         let l = String::from_utf8_lossy(&buf[32..72]).trim().to_string();
         if l.is_empty() { None } else { Some(l) }
     };
-
-    // Read descriptor header
-    reader.read_exact(&mut buf).map_err(Error::Io)?;
 
     // Read NAMESTR header
     reader.read_exact(&mut buf).map_err(Error::Io)?;
@@ -111,7 +116,8 @@ fn parse_member<R: Read + Seek>(reader: &mut R) -> Result<XptMemberInfo> {
     }
 
     // Parse number of variables from NAMESTR header
-    let nvars_str = String::from_utf8_lossy(&buf[54..60]).trim().to_string();
+    // Per SAS spec: nvars is a 4-digit field at bytes 54-57 (right-aligned with leading zeros)
+    let nvars_str = String::from_utf8_lossy(&buf[54..58]).trim().to_string();
     let nvars: usize = nvars_str
         .parse()
         .map_err(|_| Error::corrupt(format!("invalid variable count: {}", nvars_str)))?;
@@ -185,5 +191,28 @@ mod tests {
         buf[32..48].copy_from_slice(b"15JUN24:14:30:45");
         let ts = extract_timestamp(&buf, 32, 48);
         assert_eq!(ts, Some("15JUN24:14:30:45".to_string()));
+    }
+
+    #[test]
+    fn test_parse_dm_xpt_header() {
+        let path = std::path::Path::new("tests/data/dm.xpt");
+        if !path.exists() {
+            return; // Skip if test file not available
+        }
+
+        let file = std::fs::File::open(path).expect("Failed to open dm.xpt");
+        let mut reader = std::io::BufReader::new(file);
+
+        let info = parse_header(&mut reader).expect("parse_header failed");
+
+        // Verify parsing results
+        assert_eq!(info.members.len(), 1);
+        assert_eq!(info.members[0].name, "DM");
+        assert_eq!(info.members[0].label, Some("Demographics".to_string()));
+        assert_eq!(info.members[0].variables.len(), 26);
+
+        // Verify timestamps were parsed
+        assert!(info.created.is_some());
+        assert!(info.modified.is_some());
     }
 }

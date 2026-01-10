@@ -5,18 +5,18 @@
 //! - SEND-IG (Standard for Exchange of Nonclinical Data)
 //! - ADaM-IG (Analysis Data Model)
 
+mod adam;
 mod error;
 mod loader;
 mod sdtm;
 mod send;
-mod adam;
 mod types;
 
 pub use error::{Error, Result};
 pub use loader::load_standard;
-pub use types::{DatasetDef, Standard, Variable, VarType};
+pub use types::{DatasetDef, Standard, VarType, Variable};
 
 // Re-export standard-specific loaders for direct access
+pub use adam::load_adam;
 pub use sdtm::load_sdtm;
 pub use send::load_send;
-pub use adam::load_adam;

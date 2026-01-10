@@ -3,7 +3,7 @@
 use std::path::Path;
 
 use crate::error::{Error, Result};
-use crate::types::{DatasetDef, Standard, Variable, VarType};
+use crate::types::{DatasetDef, Standard, VarType, Variable};
 
 /// Load SDTM-IG metadata from a directory.
 ///
@@ -77,18 +77,23 @@ fn load_variables(dir: &Path) -> Result<Vec<Variable>> {
         // CSV columns: Version, Variable Order, Class, Dataset Name, Variable Name,
         //              Variable Label, Type, Codelist codes, Codelist values,
         //              Described Value Domains, Value List, Role, CDISC Notes, Core
-        let order: u32 = record
-            .get(1)
-            .unwrap_or("0")
-            .parse()
-            .unwrap_or(0);
+        let order: u32 = record.get(1).unwrap_or("0").parse().unwrap_or(0);
         let dataset = record.get(3).unwrap_or("").to_string();
         let name = record.get(4).unwrap_or("").to_string();
         let label = record.get(5).unwrap_or("").to_string();
         let type_str = record.get(6).unwrap_or("");
-        let role = record.get(11).map(|s| s.to_string()).filter(|s| !s.is_empty());
-        let notes = record.get(12).map(|s| s.to_string()).filter(|s| !s.is_empty());
-        let core = record.get(13).map(|s| s.to_string()).filter(|s| !s.is_empty());
+        let role = record
+            .get(11)
+            .map(|s| s.to_string())
+            .filter(|s| !s.is_empty());
+        let notes = record
+            .get(12)
+            .map(|s| s.to_string())
+            .filter(|s| !s.is_empty());
+        let core = record
+            .get(13)
+            .map(|s| s.to_string())
+            .filter(|s| !s.is_empty());
 
         let var_type = if type_str.eq_ignore_ascii_case("Num") {
             VarType::Num

@@ -3,7 +3,7 @@
 use std::path::Path;
 
 use crate::error::{Error, Result};
-use crate::types::{DatasetDef, Standard, Variable, VarType};
+use crate::types::{DatasetDef, Standard, VarType, Variable};
 
 /// Load ADaM-IG metadata from a directory.
 ///
@@ -87,12 +87,21 @@ fn load_variables(dir: &Path) -> Result<Vec<Variable>> {
         //                   Described Value Domains, Value List Value, Core, CDISC Notes
         let dataset = record.get(1).unwrap_or("").to_string();
         // Variable Set is at index 2 (used as role for ADaM)
-        let variable_set = record.get(2).map(|s| s.to_string()).filter(|s| !s.is_empty());
+        let variable_set = record
+            .get(2)
+            .map(|s| s.to_string())
+            .filter(|s| !s.is_empty());
         let name = record.get(3).unwrap_or("").to_string();
         let label = record.get(4).unwrap_or("").to_string();
         let type_str = record.get(5).unwrap_or("");
-        let core = record.get(10).map(|s| s.to_string()).filter(|s| !s.is_empty());
-        let notes = record.get(11).map(|s| s.to_string()).filter(|s| !s.is_empty());
+        let core = record
+            .get(10)
+            .map(|s| s.to_string())
+            .filter(|s| !s.is_empty());
+        let notes = record
+            .get(11)
+            .map(|s| s.to_string())
+            .filter(|s| !s.is_empty());
 
         let var_type = if type_str.eq_ignore_ascii_case("Num") {
             VarType::Num

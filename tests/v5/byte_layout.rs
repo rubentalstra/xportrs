@@ -50,7 +50,11 @@ fn test_written_header_structure() {
     assert!(buffer.starts_with(b"HEADER RECORD*******LIBRARY HEADER"));
 
     // All records should be 80 bytes
-    assert_eq!(buffer.len() % 80, 0, "File size should be multiple of 80 bytes");
+    assert_eq!(
+        buffer.len() % 80,
+        0,
+        "File size should be multiple of 80 bytes"
+    );
 }
 
 /// Test NAMESTR record size is exactly 140 bytes.
@@ -160,10 +164,7 @@ fn test_ibm_float_encoding_roundtrip() {
                         diff
                     );
                 }
-                _ => panic!(
-                    "Value {} mismatch: {:?} vs {:?}",
-                    i, original, loaded
-                ),
+                _ => panic!("Value {} mismatch: {:?} vs {:?}", i, original, loaded),
             }
         }
     } else {
@@ -180,10 +181,7 @@ fn test_missing_value_encoding() {
     let dataset = Dataset::new(
         "MISS",
         vec![
-            Column::new(
-                "NUM",
-                ColumnData::F64(vec![Some(1.0), None, Some(3.0)]),
-            ),
+            Column::new("NUM", ColumnData::F64(vec![Some(1.0), None, Some(3.0)])),
             Column::new(
                 "CHAR",
                 ColumnData::String(vec![Some("A".into()), None, Some("C".into())]),
@@ -225,8 +223,8 @@ fn test_variable_name_padding() {
     let dataset = Dataset::new(
         "NAME",
         vec![
-            Column::new("A", ColumnData::F64(vec![Some(1.0)])),        // 1 char
-            Column::new("ABCD", ColumnData::F64(vec![Some(2.0)])),    // 4 chars
+            Column::new("A", ColumnData::F64(vec![Some(1.0)])), // 1 char
+            Column::new("ABCD", ColumnData::F64(vec![Some(2.0)])), // 4 chars
             Column::new("ABCDEFGH", ColumnData::F64(vec![Some(3.0)])), // 8 chars (max)
         ],
     )
