@@ -15,6 +15,7 @@ pub use constants::{
     HEADER_RECORD_1, HEADER_RECORD_2, LIBRARY_HEADER, MEMBER_HEADER, MEMBER_HEADER_DATA,
     NAMESTR_HEADER, OBS_HEADER, RECORD_LEN,
 };
-pub use namestr::{NamestrV5, pack_namestr, unpack_namestr};
+pub use namestr::{NamestrV5, unpack_namestr};
+// pack_namestr is used directly via namestr module internally
 pub use record::{RecordReader, RecordWriter};
 pub use timestamp::{format_sas_timestamp, parse_sas_timestamp};

@@ -3,7 +3,7 @@
 //! This module provides functions to estimate the size of XPT v5 files
 //! before writing, useful for file splitting decisions.
 
-use crate::schema::SchemaPlan;
+use crate::schema::DatasetSchema;
 use crate::xpt::v5::constants::{NAMESTR_LEN, RECORD_LEN};
 
 /// Overhead constants for XPT v5 files.
@@ -24,7 +24,7 @@ mod overhead {
 ///
 /// Returns the estimated size in bytes.
 #[must_use]
-pub fn estimate_file_size(plan: &SchemaPlan, nrows: usize) -> usize {
+pub(crate) fn estimate_file_size(plan: &DatasetSchema, nrows: usize) -> usize {
     let mut size = 0;
 
     // Library header
@@ -52,7 +52,7 @@ pub fn estimate_file_size(plan: &SchemaPlan, nrows: usize) -> usize {
 
 /// Estimates the file size in gigabytes.
 #[must_use]
-pub fn estimate_file_size_gb(plan: &SchemaPlan, nrows: usize) -> f64 {
+pub(crate) fn estimate_file_size_gb(plan: &DatasetSchema, nrows: usize) -> f64 {
     let bytes = estimate_file_size(plan, nrows);
     bytes as f64 / (1024.0 * 1024.0 * 1024.0)
 }
@@ -61,7 +61,7 @@ pub fn estimate_file_size_gb(plan: &SchemaPlan, nrows: usize) -> f64 {
 ///
 /// Returns `None` if even zero rows would exceed the limit.
 #[must_use]
-pub fn max_rows_for_size(plan: &SchemaPlan, max_bytes: usize) -> Option<usize> {
+pub(crate) fn max_rows_for_size(plan: &DatasetSchema, max_bytes: usize) -> Option<usize> {
     // Calculate fixed overhead
     let mut fixed_overhead = overhead::LIBRARY_HEADER
         + overhead::MEMBER_HEADER
@@ -95,14 +95,14 @@ pub fn max_rows_for_size(plan: &SchemaPlan, max_bytes: usize) -> Option<usize> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::schema::plan::PlannedVariable;
+    use crate::schema::plan::VariableSpec;
 
     #[test]
     fn test_estimate_file_size() {
-        let mut plan = SchemaPlan::new("AE".into());
+        let mut plan = DatasetSchema::new("AE".into());
         plan.variables = vec![
-            PlannedVariable::numeric("AESEQ"),
-            PlannedVariable::character("USUBJID", 20),
+            VariableSpec::numeric("AESEQ"),
+            VariableSpec::character("USUBJID", 20),
         ];
         plan.recalculate_positions();
 
@@ -115,8 +115,8 @@ mod tests {
 
     #[test]
     fn test_max_rows_for_size() {
-        let mut plan = SchemaPlan::new("AE".into());
-        plan.variables = vec![PlannedVariable::numeric("AESEQ")];
+        let mut plan = DatasetSchema::new("AE".into());
+        plan.variables = vec![VariableSpec::numeric("AESEQ")];
         plan.recalculate_positions();
 
         // 1 MB limit

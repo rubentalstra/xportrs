@@ -11,7 +11,7 @@ use chrono::Utc;
 use crate::config::WriteOptions;
 use crate::dataset::{ColumnData, DomainDataset};
 use crate::error::{Result, XportrsError};
-use crate::schema::SchemaPlan;
+use crate::schema::DatasetSchema;
 use crate::xpt::v5::constants::{
     LIBRARY_HEADER, MEMBER_HEADER, MEMBER_HEADER_DATA, NAMESTR_HEADER, OBS_HEADER, PAD_CHAR,
     RECORD_LEN,
@@ -43,7 +43,7 @@ impl<W: Write> XptWriter<W> {
     /// # Errors
     ///
     /// Returns an error if writing fails.
-    pub fn write(mut self, dataset: &DomainDataset, plan: &SchemaPlan) -> Result<W> {
+    pub(crate) fn write(mut self, dataset: &DomainDataset, plan: &DatasetSchema) -> Result<W> {
         self.write_library_header()?;
         self.write_member(dataset, plan)?;
         self.writer.finish().map_err(XportrsError::Io)
@@ -82,7 +82,7 @@ impl<W: Write> XptWriter<W> {
     }
 
     /// Writes a single member (dataset).
-    fn write_member(&mut self, dataset: &DomainDataset, plan: &SchemaPlan) -> Result<()> {
+    fn write_member(&mut self, dataset: &DomainDataset, plan: &DatasetSchema) -> Result<()> {
         self.write_member_header(plan)?;
         self.write_namestr_section(plan)?;
         self.write_observations(dataset, plan)?;
@@ -90,7 +90,7 @@ impl<W: Write> XptWriter<W> {
     }
 
     /// Writes the member header section.
-    fn write_member_header(&mut self, plan: &SchemaPlan) -> Result<()> {
+    fn write_member_header(&mut self, plan: &DatasetSchema) -> Result<()> {
         // Record 1: Member header marker
         self.writer
             .write_record(MEMBER_HEADER)
@@ -124,7 +124,7 @@ impl<W: Write> XptWriter<W> {
     }
 
     /// Writes the NAMESTR section.
-    fn write_namestr_section(&mut self, plan: &SchemaPlan) -> Result<()> {
+    fn write_namestr_section(&mut self, plan: &DatasetSchema) -> Result<()> {
         let nvars = plan.variables.len();
 
         // NAMESTR header record
@@ -158,7 +158,7 @@ impl<W: Write> XptWriter<W> {
     }
 
     /// Writes observation data.
-    fn write_observations(&mut self, dataset: &DomainDataset, plan: &SchemaPlan) -> Result<()> {
+    fn write_observations(&mut self, dataset: &DomainDataset, plan: &DatasetSchema) -> Result<()> {
         for row_idx in 0..dataset.nrows {
             for var in &plan.variables {
                 let col = dataset.column(&var.name).ok_or_else(|| {
@@ -273,13 +273,13 @@ fn pad_string(s: &str, len: usize) -> Vec<u8> {
 mod tests {
     use super::*;
     use crate::dataset::Column;
-    use crate::schema::plan::PlannedVariable;
+    use crate::schema::plan::VariableSpec;
     use std::io::Cursor;
 
     #[test]
     fn test_write_empty_dataset() {
         let dataset = DomainDataset::new("AE".into(), vec![]).unwrap();
-        let mut plan = SchemaPlan::new("AE".into());
+        let mut plan = DatasetSchema::new("AE".into());
         plan.recalculate_positions();
 
         let output = Vec::new();
@@ -300,8 +300,8 @@ mod tests {
         )
         .unwrap();
 
-        let mut plan = SchemaPlan::new("AE".into());
-        plan.variables = vec![PlannedVariable::numeric("AESEQ")];
+        let mut plan = DatasetSchema::new("AE".into());
+        plan.variables = vec![VariableSpec::numeric("AESEQ")];
         plan.recalculate_positions();
 
         let output = Vec::new();

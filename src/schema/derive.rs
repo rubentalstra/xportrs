@@ -11,7 +11,7 @@ use crate::dataset::{ColumnData, DomainDataset};
 use crate::error::{Result, XportrsError};
 use crate::metadata::{DatasetMetadata, VariableMetadata, XptVarType};
 
-use super::plan::{PlannedVariable, SchemaPlan};
+use super::plan::{VariableSpec, DatasetSchema};
 
 /// Derives a schema plan from a dataset and optional metadata.
 ///
@@ -34,7 +34,7 @@ pub fn derive_schema_plan(
     variable_meta: Option<&[VariableMetadata]>,
     agency: Option<Agency>,
     config: &Config,
-) -> Result<SchemaPlan> {
+) -> Result<DatasetSchema> {
     // 1. Resolve domain identity
     let domain_code = dataset_meta
         .map(|m| m.domain_code.clone())
@@ -52,7 +52,7 @@ pub fn derive_schema_plan(
         .collect();
 
     // 2-5. Build variable map and determine types/lengths
-    let mut planned_vars: Vec<PlannedVariable> = Vec::with_capacity(dataset.columns.len());
+    let mut planned_vars: Vec<VariableSpec> = Vec::with_capacity(dataset.columns.len());
 
     for (idx, col) in dataset.columns.iter().enumerate() {
         let meta = var_meta_map.get(col.name.as_str());
@@ -69,7 +69,7 @@ pub fn derive_schema_plan(
 
         // Create planned variable
         let mut planned =
-            PlannedVariable::new(col.name.clone(), xpt_type, length).with_source_index(idx);
+            VariableSpec::new(col.name.clone(), xpt_type, length).with_source_index(idx);
 
         // Merge metadata
         if let Some(m) = meta {
@@ -121,7 +121,7 @@ pub fn derive_schema_plan(
     }
 
     // 7. Compute byte positions and row_len
-    let mut plan = SchemaPlan::new(domain_code).with_label(dataset_label);
+    let mut plan = DatasetSchema::new(domain_code).with_label(dataset_label);
     plan.variables = planned_vars;
     plan.recalculate_positions();
 

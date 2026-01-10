@@ -7,7 +7,7 @@ use std::path::Path;
 
 use regex::Regex;
 
-use crate::schema::SchemaPlan;
+use crate::schema::DatasetSchema;
 use crate::validate::Issue;
 
 /// A single validation rule within an agency's requirements.
@@ -85,9 +85,9 @@ impl Rule {
     ///
     /// Returns a list of issues found during validation.
     #[must_use]
-    pub fn validate(
+    pub(crate) fn validate(
         &self,
-        plan: &SchemaPlan,
+        plan: &DatasetSchema,
         file_path: Option<&Path>,
         agency_name: &'static str,
     ) -> Vec<Issue> {

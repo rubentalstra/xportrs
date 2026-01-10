@@ -6,6 +6,6 @@ mod size;
 mod split;
 mod writer;
 
-pub use size::{estimate_file_size, estimate_file_size_gb, max_rows_for_size};
+pub(crate) use size::estimate_file_size_gb;
 pub use split::SplitWriter;
 pub use writer::XptWriter;

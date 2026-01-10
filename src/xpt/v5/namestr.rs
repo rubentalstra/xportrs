@@ -8,7 +8,7 @@ use std::io::Cursor;
 
 use crate::error::{Result, XportrsError};
 use crate::metadata::XptVarType;
-use crate::schema::PlannedVariable;
+use crate::schema::VariableSpec;
 
 use super::constants::NAMESTR_LEN;
 
@@ -104,7 +104,7 @@ impl NamestrV5 {
 /// # Errors
 ///
 /// Returns an error if packing fails (should not happen with valid input).
-pub fn pack_namestr(var: &PlannedVariable, var_num: usize) -> Result<[u8; NAMESTR_LEN]> {
+pub(crate) fn pack_namestr(var: &VariableSpec, var_num: usize) -> Result<[u8; NAMESTR_LEN]> {
     let mut buf = [0u8; NAMESTR_LEN];
     let mut cursor = Cursor::new(&mut buf[..]);
 
@@ -261,7 +261,7 @@ mod tests {
 
     #[test]
     fn test_pack_unpack_roundtrip() {
-        let var = PlannedVariable::numeric("AESEQ")
+        let var = VariableSpec::numeric("AESEQ")
             .with_label("Sequence Number")
             .with_format("8.")
             .with_source_index(0);
@@ -277,7 +277,7 @@ mod tests {
 
     #[test]
     fn test_character_variable() {
-        let var = PlannedVariable::character("USUBJID", 20);
+        let var = VariableSpec::character("USUBJID", 20);
 
         let packed = pack_namestr(&var, 1).unwrap();
         let unpacked = unpack_namestr(&packed).unwrap();

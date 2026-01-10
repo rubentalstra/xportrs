@@ -65,7 +65,6 @@
 //! - [`config`]: Configuration options for reading and writing
 //! - [`dataset`]: Core data structures (`DomainDataset`, `Column`, `ColumnData`)
 //! - [`metadata`]: Variable and dataset metadata
-//! - [`schema`]: Schema planning for XPT generation
 //! - [`validate`]: Validation logic and issue reporting
 //! - [`xpt`]: XPT format implementation details
 //!
@@ -94,7 +93,7 @@ pub mod config;
 pub mod dataset;
 mod error;
 pub mod metadata;
-pub mod schema;
+mod schema;
 pub mod validate;
 mod write_plan;
 pub mod xpt;
@@ -116,9 +115,6 @@ pub use error::{Result, XportrsError};
 
 // Metadata types - for advanced usage
 pub use metadata::{DatasetMetadata, VariableMetadata, XptVarType};
-
-// Schema types - for advanced usage
-pub use schema::{PlannedVariable, SchemaPlan};
 
 // Validation types
 pub use validate::{Issue, Severity, Target};

@@ -10,7 +10,7 @@ use crate::config::Config;
 use crate::dataset::DomainDataset;
 use crate::error::{Result, XportrsError};
 use crate::metadata::{DatasetMetadata, VariableMetadata};
-use crate::schema::{SchemaPlan, derive_schema_plan};
+use crate::schema::{DatasetSchema, derive_schema_plan};
 use crate::validate::{Issue, IssueCollection, validate_v5_schema};
 use crate::xpt::XptVersion;
 use crate::xpt::v5::write::{SplitWriter, XptWriter, estimate_file_size_gb};
@@ -188,7 +188,7 @@ impl XptWritePlan {
 #[derive(Debug)]
 pub struct FinalizedWritePlan {
     dataset: DomainDataset,
-    schema: SchemaPlan,
+    schema: DatasetSchema,
     issues: Vec<Issue>,
     config: Config,
 }
@@ -214,7 +214,8 @@ impl FinalizedWritePlan {
 
     /// Returns the finalized schema plan.
     #[must_use]
-    pub fn schema(&self) -> &SchemaPlan {
+    #[allow(dead_code)]
+    pub(crate) fn schema(&self) -> &DatasetSchema {
         &self.schema
     }
 

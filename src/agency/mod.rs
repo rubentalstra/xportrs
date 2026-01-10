@@ -26,7 +26,7 @@ use std::path::Path;
 
 pub use rules::Rule;
 
-use crate::schema::SchemaPlan;
+use crate::schema::DatasetSchema;
 use crate::validate::Issue;
 use crate::xpt::XptVersion;
 
@@ -192,7 +192,7 @@ impl Agency {
     ///
     /// Applies all rules for this agency and returns any issues found.
     #[must_use]
-    pub fn validate(self, plan: &SchemaPlan, file_path: Option<&Path>) -> Vec<Issue> {
+    pub(crate) fn validate(self, plan: &DatasetSchema, file_path: Option<&Path>) -> Vec<Issue> {
         let mut issues = Vec::new();
         let agency_name = self.name();
 
@@ -213,7 +213,7 @@ impl std::fmt::Display for Agency {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::schema::plan::PlannedVariable;
+    use crate::schema::plan::VariableSpec;
     use crate::validate::Severity;
 
     #[test]
@@ -237,10 +237,10 @@ mod tests {
 
     #[test]
     fn test_agency_validation_valid() {
-        let mut plan = SchemaPlan::new("AE".into());
+        let mut plan = DatasetSchema::new("AE".into());
         plan.variables = vec![
-            PlannedVariable::numeric("AESEQ"),
-            PlannedVariable::character("USUBJID", 20),
+            VariableSpec::numeric("AESEQ"),
+            VariableSpec::character("USUBJID", 20),
         ];
         plan.recalculate_positions();
 
@@ -250,8 +250,8 @@ mod tests {
 
     #[test]
     fn test_agency_validation_non_ascii() {
-        let mut plan = SchemaPlan::new("AÉ".into());
-        plan.variables = vec![PlannedVariable::numeric("AESEQ")];
+        let mut plan = DatasetSchema::new("AÉ".into());
+        plan.variables = vec![VariableSpec::numeric("AESEQ")];
         plan.recalculate_positions();
 
         let issues = Agency::FDA.validate(&plan, None);

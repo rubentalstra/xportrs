@@ -7,5 +7,5 @@
 mod checks_v5;
 mod issues;
 
-pub use checks_v5::validate_v5_schema;
+pub(crate) use checks_v5::validate_v5_schema;
 pub use issues::{Issue, IssueCollection, Severity, Target};

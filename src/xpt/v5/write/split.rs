@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 use crate::config::WriteOptions;
 use crate::dataset::{Column, ColumnData, DomainDataset};
 use crate::error::{Result, XportrsError};
-use crate::schema::SchemaPlan;
+use crate::schema::DatasetSchema;
 
 use super::size::max_rows_for_size;
 use super::writer::XptWriter;
@@ -44,7 +44,7 @@ impl SplitWriter {
     /// # Errors
     ///
     /// Returns an error if writing fails.
-    pub fn write(self, dataset: &DomainDataset, plan: &SchemaPlan) -> Result<Vec<PathBuf>> {
+    pub(crate) fn write(self, dataset: &DomainDataset, plan: &DatasetSchema) -> Result<Vec<PathBuf>> {
         let max_rows = max_rows_for_size(plan, self.max_size_bytes);
 
         let max_rows = match max_rows {
