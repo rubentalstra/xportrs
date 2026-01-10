@@ -1,16 +1,16 @@
 //! Write plan for xportrs.
 //!
-//! This module provides the [`XptWritePlan`] and [`FinalizedWritePlan`] types
+//! This module provides the [`XptWriterBuilder`] and [`ValidatedWrite`] types
 //! for planning and executing XPT file writes.
 
 use std::path::{Path, PathBuf};
 
 use crate::agency::Agency;
 use crate::config::Config;
-use crate::dataset::DomainDataset;
-use crate::error::{Result, XportrsError};
+use crate::dataset::Dataset;
+use crate::error::{Error, Result};
 use crate::metadata::{DatasetMetadata, VariableMetadata};
-use crate::schema::{SchemaPlan, derive_schema_plan};
+use crate::schema::{DatasetSchema, derive_schema_plan};
 use crate::validate::{Issue, IssueCollection, validate_v5_schema};
 use crate::xpt::XptVersion;
 use crate::xpt::v5::write::{SplitWriter, XptWriter, estimate_file_size_gb};
@@ -18,14 +18,14 @@ use crate::xpt::v5::write::{SplitWriter, XptWriter, estimate_file_size_gb};
 /// A mutable builder for XPT write operations.
 ///
 /// This struct accumulates configuration and validates the dataset before
-/// writing. Call [`finalize`](Self::finalize) to create a [`FinalizedWritePlan`].
+/// writing. Call [`finalize`](Self::finalize) to create a [`ValidatedWrite`].
 ///
 /// # Example
 ///
 /// ```no_run
-/// use xportrs::{Xpt, Agency, DomainDataset, Column, ColumnData};
+/// use xportrs::{Xpt, Agency, Dataset, Column, ColumnData};
 ///
-/// let dataset = DomainDataset::new(
+/// let dataset = Dataset::new(
 ///     "AE".to_string(),
 ///     vec![Column::new("AESEQ", ColumnData::I64(vec![Some(1)]))],
 /// )?;
@@ -35,11 +35,11 @@ use crate::xpt::v5::write::{SplitWriter, XptWriter, estimate_file_size_gb};
 ///     .agency(Agency::FDA)
 ///     .finalize()?
 ///     .write_path("ae.xpt")?;
-/// # Ok::<(), xportrs::XportrsError>(())
+/// # Ok::<(), xportrs::Error>(())
 /// ```
 #[derive(Debug)]
-pub struct XptWritePlan {
-    dataset: DomainDataset,
+pub struct XptWriterBuilder {
+    dataset: Dataset,
     agency: Option<Agency>,
     config: Config,
     version: XptVersion,
@@ -47,10 +47,10 @@ pub struct XptWritePlan {
     dataset_meta: Option<DatasetMetadata>,
 }
 
-impl XptWritePlan {
+impl XptWriterBuilder {
     /// Creates a new write plan for the given dataset.
     #[must_use]
-    pub fn new(dataset: DomainDataset) -> Self {
+    pub fn new(dataset: Dataset) -> Self {
         Self {
             dataset,
             agency: None,
@@ -69,14 +69,14 @@ impl XptWritePlan {
     /// # Example
     ///
     /// ```no_run
-    /// use xportrs::{Xpt, Agency, DomainDataset};
+    /// use xportrs::{Xpt, Agency, Dataset};
     ///
-    /// # let dataset = DomainDataset::new("AE".into(), vec![]).unwrap();
+    /// # let dataset = Dataset::new("AE", vec![]).unwrap();
     /// Xpt::writer(dataset)
     ///     .agency(Agency::FDA)
     ///     .finalize()?
     ///     .write_path("ae.xpt")?;
-    /// # Ok::<(), xportrs::XportrsError>(())
+    /// # Ok::<(), xportrs::Error>(())
     /// ```
     #[must_use]
     pub fn agency(mut self, agency: Agency) -> Self {
@@ -86,7 +86,8 @@ impl XptWritePlan {
 
     /// Sets the configuration.
     #[must_use]
-    pub fn config(mut self, config: Config) -> Self {
+    #[allow(dead_code)]
+    pub(crate) fn config(mut self, config: Config) -> Self {
         self.config = config;
         self
     }
@@ -103,14 +104,16 @@ impl XptWritePlan {
 
     /// Sets variable metadata.
     #[must_use]
-    pub fn variable_metadata(mut self, meta: Vec<VariableMetadata>) -> Self {
+    #[allow(dead_code)]
+    pub(crate) fn variable_metadata(mut self, meta: Vec<VariableMetadata>) -> Self {
         self.variable_meta = Some(meta);
         self
     }
 
     /// Sets dataset metadata.
     #[must_use]
-    pub fn dataset_metadata(mut self, meta: DatasetMetadata) -> Self {
+    #[allow(dead_code)]
+    pub(crate) fn dataset_metadata(mut self, meta: DatasetMetadata) -> Self {
         self.dataset_meta = Some(meta);
         self
     }
@@ -130,10 +133,11 @@ impl XptWritePlan {
     /// Returns an error if:
     /// - XPT v8 is requested (not yet implemented)
     /// - Strict mode is enabled and validation errors are found
-    pub fn finalize(mut self) -> Result<FinalizedWritePlan> {
+    #[must_use = "this returns a Result that should be handled"]
+    pub fn finalize(mut self) -> Result<ValidatedWrite> {
         // Check version support
         if !self.version.is_implemented() {
-            return Err(XportrsError::UnsupportedVersion {
+            return Err(Error::UnsupportedVersion {
                 version: self.version,
             });
         }
@@ -168,10 +172,10 @@ impl XptWritePlan {
         // Check for errors in strict mode
         if self.config.strict_checks && issues.has_errors() {
             let error_messages: Vec<String> = issues.errors().map(ToString::to_string).collect();
-            return Err(XportrsError::validation_failed(error_messages.join("; ")));
+            return Err(Error::validation_failed(error_messages.join("; ")));
         }
 
-        Ok(FinalizedWritePlan {
+        Ok(ValidatedWrite {
             dataset: self.dataset,
             schema,
             issues,
@@ -185,14 +189,14 @@ impl XptWritePlan {
 /// This struct contains a validated dataset and schema. Use [`write_path`](Self::write_path)
 /// to write the XPT file.
 #[derive(Debug)]
-pub struct FinalizedWritePlan {
-    dataset: DomainDataset,
-    schema: SchemaPlan,
+pub struct ValidatedWrite {
+    dataset: Dataset,
+    schema: DatasetSchema,
     issues: Vec<Issue>,
     config: Config,
 }
 
-impl FinalizedWritePlan {
+impl ValidatedWrite {
     /// Returns any validation issues found during finalization.
     #[must_use]
     pub fn issues(&self) -> &[Issue] {
@@ -213,7 +217,8 @@ impl FinalizedWritePlan {
 
     /// Returns the finalized schema plan.
     #[must_use]
-    pub fn schema(&self) -> &SchemaPlan {
+    #[allow(dead_code)]
+    pub(crate) fn schema(&self) -> &DatasetSchema {
         &self.schema
     }
 
@@ -226,9 +231,9 @@ impl FinalizedWritePlan {
     /// # Example
     ///
     /// ```no_run
-    /// use xportrs::{Xpt, Agency, DomainDataset};
+    /// use xportrs::{Xpt, Agency, Dataset};
     ///
-    /// # let dataset = DomainDataset::new("AE".into(), vec![]).unwrap();
+    /// # let dataset = Dataset::new("AE", vec![]).unwrap();
     /// // With FDA agency, files > 5GB are automatically split
     /// let files = Xpt::writer(dataset)
     ///     .agency(Agency::FDA)
@@ -238,18 +243,19 @@ impl FinalizedWritePlan {
     /// println!("Created {} file(s)", files.len());
     /// // Single file: ["ae.xpt"]
     /// // Split files: ["ae_001.xpt", "ae_002.xpt", ...]
-    /// # Ok::<(), xportrs::XportrsError>(())
+    /// # Ok::<(), xportrs::Error>(())
     /// ```
     ///
     /// # Errors
     ///
     /// Returns an error if writing fails.
+    #[must_use = "this returns a Result that should be handled"]
     pub fn write_path(self, path: impl AsRef<Path>) -> Result<Vec<PathBuf>> {
         let path = path.as_ref();
 
         // Check if file splitting is needed
         if let Some(max_gb) = self.config.write.max_size_gb {
-            let estimated_gb = estimate_file_size_gb(&self.schema, self.dataset.nrows);
+            let estimated_gb = estimate_file_size_gb(&self.schema, self.dataset.nrows());
 
             if estimated_gb > max_gb {
                 // Use SplitWriter for large files
@@ -269,6 +275,7 @@ impl FinalizedWritePlan {
     /// # Errors
     ///
     /// Returns an error if writing fails.
+    #[must_use = "this returns a Result that should be handled"]
     pub fn write_to<W: std::io::Write>(self, writer: W) -> Result<()> {
         let xpt_writer = XptWriter::new(writer, self.config.write);
         xpt_writer.write(&self.dataset, &self.schema)?;
@@ -283,8 +290,8 @@ mod tests {
 
     #[test]
     fn test_write_plan_basic() {
-        let dataset = DomainDataset::new(
-            "AE".into(),
+        let dataset = Dataset::new(
+            "AE",
             vec![Column::new(
                 "AESEQ",
                 ColumnData::F64(vec![Some(1.0), Some(2.0)]),
@@ -292,7 +299,7 @@ mod tests {
         )
         .unwrap();
 
-        let plan = XptWritePlan::new(dataset)
+        let plan = XptWriterBuilder::new(dataset)
             .xpt_version(XptVersion::V5)
             .finalize();
 
@@ -303,22 +310,24 @@ mod tests {
 
     #[test]
     fn test_write_plan_with_agency() {
-        let dataset = DomainDataset::new(
-            "AE".into(),
+        let dataset = Dataset::new(
+            "AE",
             vec![Column::new("AESEQ", ColumnData::F64(vec![Some(1.0)]))],
         )
         .unwrap();
 
-        let plan = XptWritePlan::new(dataset).agency(Agency::FDA).finalize();
+        let plan = XptWriterBuilder::new(dataset)
+            .agency(Agency::FDA)
+            .finalize();
 
         assert!(plan.is_ok());
     }
 
     #[test]
     fn test_write_plan_v8_unsupported() {
-        let dataset = DomainDataset::new("AE".into(), vec![]).unwrap();
+        let dataset = Dataset::new("AE", vec![]).unwrap();
 
-        let plan = XptWritePlan::new(dataset)
+        let plan = XptWriterBuilder::new(dataset)
             .xpt_version(XptVersion::V8)
             .finalize();
 

@@ -15,7 +15,8 @@ categories = ["encoding", "parser-implementations", "science"]
 default = []
 serde = ["dep:serde", "chrono/serde"]
 tracing = ["dep:tracing"]
-full = ["serde", "tracing"]
+polars = ["dep:polars"]
+full = ["serde", "tracing", "polars"]
 
 [dependencies]
 # Required - Error handling (industry standard for libraries)
@@ -36,8 +37,12 @@ serde = { version = "1.0", features = ["derive"], optional = true }
 # Optional - Structured logging
 tracing = { version = "0.1.44", optional = true }
 
+# Optional - Polars DataFrame integration
+polars = { version = "0.51", optional = true, default-features = false, features = ["lazy"] }
+
 [dev-dependencies]
 tempfile = "3"
+cdisc-metadata = { path = "crates/cdisc-metadata" }
 
 [lints.rust]
 # Safety - forbid unsafe code (non-negotiable per architecture)

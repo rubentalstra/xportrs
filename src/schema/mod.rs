@@ -4,7 +4,7 @@
 //! and metadata. The schema plan defines the exact byte layout for XPT files.
 
 mod derive;
-pub mod plan;
+pub(crate) mod plan;
 
-pub use derive::derive_schema_plan;
-pub use plan::{PlannedVariable, SchemaPlan};
+pub(crate) use derive::derive_schema_plan;
+pub(crate) use plan::{DatasetSchema, VariableSpec};

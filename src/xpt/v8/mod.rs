@@ -10,7 +10,11 @@
 //!
 //! See `README.md` in this module for more details.
 
-use crate::error::{Result, XportrsError};
+// Allow dead code for placeholder implementation - these functions
+// are part of the planned v8 API but not yet used.
+#![allow(dead_code)]
+
+use crate::error::{Error, Result};
 use crate::xpt::XptVersion;
 
 /// Checks if V8 operations are supported.
@@ -25,10 +29,10 @@ pub const fn is_supported() -> bool {
 ///
 /// # Errors
 ///
-/// Always returns [`XportrsError::UnsupportedVersion`].
+/// Always returns [`Error::UnsupportedVersion`].
 #[must_use]
-pub fn unsupported_error() -> XportrsError {
-    XportrsError::UnsupportedVersion {
+pub fn unsupported_error() -> Error {
+    Error::UnsupportedVersion {
         version: XptVersion::V8,
     }
 }
@@ -37,7 +41,7 @@ pub fn unsupported_error() -> XportrsError {
 ///
 /// # Errors
 ///
-/// Always returns [`XportrsError::UnsupportedVersion`] as V8 is not yet implemented.
+/// Always returns [`Error::UnsupportedVersion`] as V8 is not yet implemented.
 pub fn read_v8() -> Result<()> {
     Err(unsupported_error())
 }
@@ -46,7 +50,7 @@ pub fn read_v8() -> Result<()> {
 ///
 /// # Errors
 ///
-/// Always returns [`XportrsError::UnsupportedVersion`] as V8 is not yet implemented.
+/// Always returns [`Error::UnsupportedVersion`] as V8 is not yet implemented.
 pub fn write_v8() -> Result<()> {
     Err(unsupported_error())
 }

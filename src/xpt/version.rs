@@ -7,6 +7,7 @@
 /// Currently, only v5 is fully implemented. V8 is API-ready but not yet implemented.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[non_exhaustive]
 pub enum XptVersion {
     /// XPT Version 5 (SAS Transport format).
     ///

@@ -5,10 +5,10 @@
 /// Metadata describing a dataset.
 ///
 /// This struct provides optional metadata that can override or supplement
-/// the information in a [`DomainDataset`](crate::DomainDataset).
-#[derive(Debug, Clone, Default)]
+/// the information in a [`Dataset`](crate::Dataset).
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct DatasetMetadata {
+pub(crate) struct DatasetMetadata {
     /// The domain code (e.g., "AE", "DM", "LB").
     pub domain_code: String,
 
@@ -18,10 +18,11 @@ pub struct DatasetMetadata {
     pub dataset_label: Option<String>,
 }
 
+#[allow(dead_code)]
 impl DatasetMetadata {
     /// Creates new dataset metadata with the given domain code.
     #[must_use]
-    pub fn new(domain_code: impl Into<String>) -> Self {
+    pub(crate) fn new(domain_code: impl Into<String>) -> Self {
         Self {
             domain_code: domain_code.into(),
             dataset_label: None,
@@ -30,7 +31,7 @@ impl DatasetMetadata {
 
     /// Sets the dataset label.
     #[must_use]
-    pub fn with_label(mut self, label: impl Into<String>) -> Self {
+    pub(crate) fn with_label(mut self, label: impl Into<String>) -> Self {
         self.dataset_label = Some(label.into());
         self
     }

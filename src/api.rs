@@ -9,31 +9,21 @@
 //! use xportrs::Xpt;
 //!
 //! let dataset = Xpt::read("ae.xpt")?;
-//! println!("Rows: {}", dataset.nrows);
-//! # Ok::<(), xportrs::XportrsError>(())
-//! ```
-//!
-//! ## Read with options
-//! ```no_run
-//! use xportrs::{Xpt, ReadOptions, TextMode};
-//!
-//! let dataset = Xpt::reader("ae.xpt")?
-//!     .options(ReadOptions::new().with_text_mode(TextMode::Latin1))
-//!     .read()?;
-//! # Ok::<(), xportrs::XportrsError>(())
+//! println!("Rows: {}", dataset.nrows());
+//! # Ok::<(), xportrs::Error>(())
 //! ```
 //!
 //! ## Write a dataset
 //! ```no_run
-//! use xportrs::{Xpt, DomainDataset, Column, ColumnData};
+//! use xportrs::{Xpt, Dataset, Column, ColumnData};
 //!
-//! let dataset = DomainDataset::new(
+//! let dataset = Dataset::new(
 //!     "AE".to_string(),
 //!     vec![Column::new("AESEQ", ColumnData::I64(vec![Some(1)]))],
 //! )?;
 //!
 //! Xpt::writer(dataset).finalize()?.write_path("ae.xpt")?;
-//! # Ok::<(), xportrs::XportrsError>(())
+//! # Ok::<(), xportrs::Error>(())
 //! ```
 
 use std::fs::File;
@@ -41,10 +31,10 @@ use std::io::BufReader;
 use std::path::Path;
 
 use crate::config::ReadOptions;
-use crate::dataset::DomainDataset;
-use crate::error::{Result, XportrsError};
-use crate::write_plan::XptWritePlan;
-use crate::xpt::v5::read::{XptFile, XptReader as V5Reader};
+use crate::dataset::Dataset;
+use crate::error::{Error, Result};
+use crate::write_plan::XptWriterBuilder;
+use crate::xpt::v5::read::{XptInfo, XptReader as V5Reader};
 
 /// Unified entry point for XPT file operations.
 ///
@@ -57,7 +47,7 @@ use crate::xpt::v5::read::{XptFile, XptReader as V5Reader};
 /// ```no_run
 /// # use xportrs::Xpt;
 /// let dataset = Xpt::read("ae.xpt")?;
-/// # Ok::<(), xportrs::XportrsError>(())
+/// # Ok::<(), xportrs::Error>(())
 /// ```
 ///
 /// For more control, use [`Xpt::reader`] to get a builder:
@@ -68,19 +58,19 @@ use crate::xpt::v5::read::{XptFile, XptReader as V5Reader};
 ///
 /// // Read all members
 /// let datasets = Xpt::reader("study.xpt")?.read_all()?;
-/// # Ok::<(), xportrs::XportrsError>(())
+/// # Ok::<(), xportrs::Error>(())
 /// ```
 ///
 /// # Writing
 ///
 /// Use [`Xpt::writer`] to create a write plan:
 /// ```no_run
-/// # use xportrs::{Xpt, DomainDataset};
-/// # let dataset = DomainDataset::new("AE".into(), vec![]).unwrap();
+/// # use xportrs::{Xpt, Dataset};
+/// # let dataset = Dataset::new("AE", vec![]).unwrap();
 /// Xpt::writer(dataset)
 ///     .finalize()?
 ///     .write_path("ae.xpt")?;
-/// # Ok::<(), xportrs::XportrsError>(())
+/// # Ok::<(), xportrs::Error>(())
 /// ```
 pub struct Xpt;
 
@@ -103,11 +93,12 @@ impl Xpt {
     /// use xportrs::Xpt;
     ///
     /// let dataset = Xpt::read("ae.xpt")?;
-    /// println!("Domain: {}", dataset.domain_code);
-    /// println!("Rows: {}", dataset.nrows);
-    /// # Ok::<(), xportrs::XportrsError>(())
+    /// println!("Domain: {}", dataset.domain_code());
+    /// println!("Rows: {}", dataset.nrows());
+    /// # Ok::<(), xportrs::Error>(())
     /// ```
-    pub fn read(path: impl AsRef<Path>) -> Result<DomainDataset> {
+    #[must_use = "this returns a Result that should be handled"]
+    pub fn read(path: impl AsRef<Path>) -> Result<Dataset> {
         Self::reader(path)?.read()
     }
 
@@ -126,22 +117,21 @@ impl Xpt {
     /// # Example
     ///
     /// ```no_run
-    /// use xportrs::{Xpt, ReadOptions};
+    /// use xportrs::Xpt;
     ///
-    /// // Read with custom options
-    /// let dataset = Xpt::reader("ae.xpt")?
-    ///     .options(ReadOptions::default())
-    ///     .read()?;
+    /// // Read the first dataset
+    /// let dataset = Xpt::reader("ae.xpt")?.read()?;
     ///
     /// // Read a specific member
     /// let dm = Xpt::reader("study.xpt")?.read_member("DM")?;
     ///
     /// // Read all members
     /// let all = Xpt::reader("study.xpt")?.read_all()?;
-    /// # Ok::<(), xportrs::XportrsError>(())
+    /// # Ok::<(), xportrs::Error>(())
     /// ```
+    #[must_use = "this returns a Result that should be handled"]
     pub fn reader(path: impl AsRef<Path>) -> Result<XptReaderBuilder> {
-        let file = File::open(path.as_ref()).map_err(XportrsError::Io)?;
+        let file = File::open(path.as_ref()).map_err(Error::Io)?;
         let reader = V5Reader::new(BufReader::new(file))?;
         Ok(XptReaderBuilder {
             reader,
@@ -151,16 +141,16 @@ impl Xpt {
 
     /// Creates a write plan builder for the given dataset.
     ///
-    /// This returns an [`XptWritePlan`] that you can configure before writing.
-    /// Call [`finalize()`](XptWritePlan::finalize) to validate and then
-    /// [`write_path()`](crate::FinalizedWritePlan::write_path) to write.
+    /// This returns an [`XptWriterBuilder`] that you can configure before writing.
+    /// Call [`finalize()`](XptWriterBuilder::finalize) to validate and then
+    /// [`write_path()`](crate::ValidatedWrite::write_path) to write.
     ///
     /// # Example
     ///
     /// ```no_run
-    /// use xportrs::{Xpt, DomainDataset, Column, ColumnData};
+    /// use xportrs::{Xpt, Dataset, Column, ColumnData};
     ///
-    /// let dataset = DomainDataset::new(
+    /// let dataset = Dataset::new(
     ///     "AE".to_string(),
     ///     vec![
     ///         Column::new("USUBJID", ColumnData::String(vec![Some("01-001".into())])),
@@ -171,11 +161,11 @@ impl Xpt {
     /// Xpt::writer(dataset)
     ///     .finalize()?
     ///     .write_path("ae.xpt")?;
-    /// # Ok::<(), xportrs::XportrsError>(())
+    /// # Ok::<(), xportrs::Error>(())
     /// ```
     #[must_use]
-    pub fn writer(dataset: DomainDataset) -> XptWritePlan {
-        XptWritePlan::new(dataset)
+    pub fn writer(dataset: Dataset) -> XptWriterBuilder {
+        XptWriterBuilder::new(dataset)
     }
 
     /// Inspects an XPT file without reading all data.
@@ -196,10 +186,11 @@ impl Xpt {
     /// for name in info.member_names() {
     ///     println!("Member: {}", name);
     /// }
-    /// # Ok::<(), xportrs::XportrsError>(())
+    /// # Ok::<(), xportrs::Error>(())
     /// ```
-    pub fn inspect(path: impl AsRef<Path>) -> Result<XptFile> {
-        let file = File::open(path.as_ref()).map_err(XportrsError::Io)?;
+    #[must_use = "this returns a Result that should be handled"]
+    pub fn inspect(path: impl AsRef<Path>) -> Result<XptInfo> {
+        let file = File::open(path.as_ref()).map_err(Error::Io)?;
         let reader = V5Reader::new(BufReader::new(file))?;
         Ok(reader.file_info().clone())
     }
@@ -223,22 +214,10 @@ impl std::fmt::Debug for XptReaderBuilder {
 }
 
 impl XptReaderBuilder {
-    /// Sets custom read options.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use xportrs::{Xpt, ReadOptions, TextMode};
-    ///
-    /// let dataset = Xpt::reader("ae.xpt")?
-    ///     .options(ReadOptions::new()
-    ///         .with_text_mode(TextMode::Latin1)
-    ///         .with_preserve_blanks(false))
-    ///     .read()?;
-    /// # Ok::<(), xportrs::XportrsError>(())
-    /// ```
+    /// Sets custom read options (internal use).
     #[must_use]
-    pub fn options(mut self, options: ReadOptions) -> Self {
+    #[allow(dead_code)]
+    pub(crate) fn options(mut self, options: ReadOptions) -> Self {
         self.options = options;
         self
     }
@@ -255,10 +234,10 @@ impl XptReaderBuilder {
     /// for name in info.member_names() {
     ///     println!("Member: {}", name);
     /// }
-    /// # Ok::<(), xportrs::XportrsError>(())
+    /// # Ok::<(), xportrs::Error>(())
     /// ```
     #[must_use]
-    pub fn info(&self) -> &XptFile {
+    pub fn info(&self) -> &XptInfo {
         self.reader.file_info()
     }
 
@@ -274,15 +253,16 @@ impl XptReaderBuilder {
     /// use xportrs::Xpt;
     ///
     /// let dataset = Xpt::reader("ae.xpt")?.read()?;
-    /// # Ok::<(), xportrs::XportrsError>(())
+    /// # Ok::<(), xportrs::Error>(())
     /// ```
-    pub fn read(mut self) -> Result<DomainDataset> {
+    #[must_use = "this returns a Result that should be handled"]
+    pub fn read(mut self) -> Result<Dataset> {
         let first_member = self
             .reader
             .file_info()
             .members
             .first()
-            .ok_or_else(|| XportrsError::corrupt("XPT file contains no members"))?
+            .ok_or_else(|| Error::corrupt("XPT file contains no members"))?
             .name
             .clone();
 
@@ -304,9 +284,10 @@ impl XptReaderBuilder {
     ///
     /// let dm = Xpt::reader("study.xpt")?.read_member("DM")?;
     /// let ae = Xpt::reader("study.xpt")?.read_member("AE")?;
-    /// # Ok::<(), xportrs::XportrsError>(())
+    /// # Ok::<(), xportrs::Error>(())
     /// ```
-    pub fn read_member(mut self, name: &str) -> Result<DomainDataset> {
+    #[must_use = "this returns a Result that should be handled"]
+    pub fn read_member(mut self, name: &str) -> Result<Dataset> {
         self.reader.read_member(name, &self.options)
     }
 
@@ -323,11 +304,12 @@ impl XptReaderBuilder {
     ///
     /// let datasets = Xpt::reader("study.xpt")?.read_all()?;
     /// for ds in &datasets {
-    ///     println!("{}: {} rows", ds.domain_code, ds.nrows);
+    ///     println!("{}: {} rows", ds.domain_code(), ds.nrows());
     /// }
-    /// # Ok::<(), xportrs::XportrsError>(())
+    /// # Ok::<(), xportrs::Error>(())
     /// ```
-    pub fn read_all(mut self) -> Result<Vec<DomainDataset>> {
+    #[must_use = "this returns a Result that should be handled"]
+    pub fn read_all(mut self) -> Result<Vec<Dataset>> {
         self.reader.read_all(&self.options)
     }
 }

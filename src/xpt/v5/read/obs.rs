@@ -5,8 +5,8 @@
 use std::io::Read;
 
 use crate::config::ReadOptions;
-use crate::error::{Result, XportrsError};
-use crate::xpt::v5::constants::RECORD_LEN;
+use crate::error::{Error, Result};
+use crate::xpt::v5::constants::{PAD_CHAR, RECORD_LEN};
 use crate::xpt::v5::encoding::{decode_ibm_float, decode_text};
 use crate::xpt::v5::namestr::NamestrV5;
 
@@ -30,7 +30,11 @@ impl<'a, R: Read> ObservationReader<'a, R> {
     /// # Errors
     ///
     /// Returns an error if the reader cannot be initialized.
-    pub fn new(reader: &'a mut R, variables: &[NamestrV5], options: &ReadOptions) -> Result<Self> {
+    pub(crate) fn new(
+        reader: &'a mut R,
+        variables: &[NamestrV5],
+        options: &ReadOptions,
+    ) -> Result<Self> {
         let row_len: usize = variables.iter().map(NamestrV5::length).sum();
 
         Ok(Self {
@@ -63,6 +67,14 @@ impl<'a, R: Read> ObservationReader<'a, R> {
             None => return Ok(None),
         };
 
+        // Check if the entire row is padding (all spaces)
+        // This indicates we've reached the end of actual observation data
+        // XPT files pad to 80-byte record boundaries with spaces (0x20)
+        if row_data.iter().all(|&b| b == PAD_CHAR) {
+            self.at_eof = true;
+            return Ok(None);
+        }
+
         // Decode each variable
         let mut values = Vec::with_capacity(self.variables.len());
 
@@ -71,7 +83,7 @@ impl<'a, R: Read> ObservationReader<'a, R> {
             let end = start + var.length();
 
             if end > row_data.len() {
-                return Err(XportrsError::corrupt(format!(
+                return Err(Error::corrupt(format!(
                     "observation data truncated: expected {} bytes, got {}",
                     end,
                     row_data.len()
@@ -154,7 +166,7 @@ impl<'a, R: Read> ObservationReader<'a, R> {
                 self.at_eof = true;
                 Ok(false)
             }
-            Err(e) => Err(XportrsError::Io(e)),
+            Err(e) => Err(Error::Io(e)),
         }
     }
 }
@@ -180,8 +192,8 @@ mod tests {
             niform: String::new(),
             nifl: 0,
             nifd: 0,
-            npos: position,
-            rest: [0; 48],
+            npos: position as i32,
+            rest: [0; 52],
         }
     }
 

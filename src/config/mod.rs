@@ -5,4 +5,5 @@
 
 mod types;
 
-pub use types::{Config, ReadOptions, TextMode, Verbosity, WriteOptions};
+pub(crate) use types::{Config, ReadOptions, WriteOptions};
+pub use types::{TextMode, Verbosity};

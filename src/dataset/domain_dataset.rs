@@ -1,11 +1,13 @@
 //! Domain dataset representation.
 //!
-//! This module provides the [`DomainDataset`] struct which represents a CDISC
+//! This module provides the [`Dataset`] struct which represents a CDISC
 //! domain dataset (table) in a columnar format.
 
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 
-use crate::error::{Result, XportrsError};
+use crate::error::{Error, Result};
+
+use super::newtypes::{DomainCode, Label};
 
 /// A CDISC domain dataset in columnar format.
 ///
@@ -20,10 +22,10 @@ use crate::error::{Result, XportrsError};
 /// # Example
 ///
 /// ```
-/// use xportrs::{DomainDataset, Column, ColumnData};
+/// use xportrs::{Dataset, Column, ColumnData, DomainCode};
 ///
-/// let dataset = DomainDataset::new(
-///     "AE".to_string(),
+/// let dataset = Dataset::new(
+///     DomainCode::new("AE"),
 ///     vec![
 ///         Column::new("USUBJID", ColumnData::String(vec![Some("01-001".into())])),
 ///         Column::new("AESER", ColumnData::String(vec![Some("Y".into())])),
@@ -31,38 +33,39 @@ use crate::error::{Result, XportrsError};
 /// ).expect("valid dataset");
 /// ```
 #[derive(Debug, Clone, PartialEq)]
-pub struct DomainDataset {
+pub struct Dataset {
     /// The domain code (e.g., "AE", "DM", "LB").
     ///
     /// This is typically 2 characters but can be up to 8 bytes in XPT v5.
-    pub domain_code: String,
+    domain_code: DomainCode,
 
     /// An optional label describing the dataset.
     ///
     /// Limited to 40 bytes in XPT v5.
-    pub dataset_label: Option<String>,
+    dataset_label: Option<Label>,
 
     /// The columns (variables) in the dataset.
-    pub columns: Vec<Column>,
+    columns: Vec<Column>,
 
     /// The number of rows (observations) in the dataset.
-    pub nrows: usize,
+    nrows: usize,
 }
 
-impl DomainDataset {
+impl Dataset {
     /// Creates a new domain dataset.
     ///
     /// # Errors
     ///
     /// Returns an error if any column has a different length than the others.
-    pub fn new(domain_code: String, columns: Vec<Column>) -> Result<Self> {
+    #[must_use = "this returns a Result that should be handled"]
+    pub fn new(domain_code: impl Into<DomainCode>, columns: Vec<Column>) -> Result<Self> {
         let nrows = columns.first().map_or(0, Column::len);
 
         // Validate all columns have the same length
         for col in &columns {
             if col.len() != nrows {
-                return Err(XportrsError::ColumnLengthMismatch {
-                    column_name: col.name.clone(),
+                return Err(Error::ColumnLengthMismatch {
+                    column_name: col.name().to_string(),
                     actual: col.len(),
                     expected: nrows,
                 });
@@ -70,7 +73,7 @@ impl DomainDataset {
         }
 
         Ok(Self {
-            domain_code,
+            domain_code: domain_code.into(),
             dataset_label: None,
             columns,
             nrows,
@@ -83,12 +86,12 @@ impl DomainDataset {
     ///
     /// Returns an error if any column has a different length than the others.
     pub fn with_label(
-        domain_code: String,
-        dataset_label: Option<String>,
+        domain_code: impl Into<DomainCode>,
+        dataset_label: Option<impl Into<Label>>,
         columns: Vec<Column>,
     ) -> Result<Self> {
         let mut dataset = Self::new(domain_code, columns)?;
-        dataset.dataset_label = dataset_label;
+        dataset.dataset_label = dataset_label.map(Into::into);
         Ok(dataset)
     }
 
@@ -104,15 +107,39 @@ impl DomainDataset {
         self.nrows == 0
     }
 
+    /// Returns the domain code.
+    #[must_use]
+    pub fn domain_code(&self) -> &str {
+        &self.domain_code
+    }
+
+    /// Returns the dataset label, if any.
+    #[must_use]
+    pub fn dataset_label(&self) -> Option<&str> {
+        self.dataset_label.as_deref()
+    }
+
+    /// Returns a reference to the columns.
+    #[must_use]
+    pub fn columns(&self) -> &[Column] {
+        &self.columns
+    }
+
+    /// Returns the number of rows (observations) in the dataset.
+    #[must_use]
+    pub fn nrows(&self) -> usize {
+        self.nrows
+    }
+
     /// Returns an iterator over the column names.
     pub fn column_names(&self) -> impl Iterator<Item = &str> {
-        self.columns.iter().map(|c| c.name.as_str())
+        self.columns.iter().map(Column::name)
     }
 
     /// Finds a column by name.
     #[must_use]
     pub fn column(&self, name: &str) -> Option<&Column> {
-        self.columns.iter().find(|c| c.name == name)
+        self.columns.iter().find(|c| c.name() == name)
     }
 }
 
@@ -124,13 +151,13 @@ pub struct Column {
     /// The variable name.
     ///
     /// Limited to 8 bytes in XPT v5.
-    pub name: String,
+    name: String,
 
     /// The CDISC variable role, if applicable.
-    pub role: Option<VariableRole>,
+    role: Option<VariableRole>,
 
     /// The column data.
-    pub data: ColumnData,
+    data: ColumnData,
 }
 
 impl Column {
@@ -166,6 +193,24 @@ impl Column {
         self.data.is_empty()
     }
 
+    /// Returns the column name.
+    #[must_use]
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    /// Returns the column role, if any.
+    #[must_use]
+    pub fn role(&self) -> Option<VariableRole> {
+        self.role
+    }
+
+    /// Returns a reference to the column data.
+    #[must_use]
+    pub fn data(&self) -> &ColumnData {
+        &self.data
+    }
+
     /// Returns `true` if the column contains numeric data (for XPT purposes).
     #[must_use]
     pub fn is_numeric(&self) -> bool {
@@ -185,6 +230,7 @@ impl Column {
 /// Character (fixed-width byte string). The variants here represent common
 /// Rust types that can be converted to these XPT types.
 #[derive(Debug, Clone, PartialEq)]
+#[non_exhaustive]
 pub enum ColumnData {
     /// 64-bit floating-point values.
     ///
@@ -273,12 +319,70 @@ impl ColumnData {
     }
 }
 
+// Convenience From implementations for ColumnData.
+// These allow creating columns without wrapping values in Option.
+
+impl From<Vec<f64>> for ColumnData {
+    fn from(values: Vec<f64>) -> Self {
+        Self::F64(values.into_iter().map(Some).collect())
+    }
+}
+
+impl From<Vec<i64>> for ColumnData {
+    fn from(values: Vec<i64>) -> Self {
+        Self::I64(values.into_iter().map(Some).collect())
+    }
+}
+
+impl From<Vec<i32>> for ColumnData {
+    fn from(values: Vec<i32>) -> Self {
+        Self::I64(values.into_iter().map(|v| Some(i64::from(v))).collect())
+    }
+}
+
+impl From<Vec<bool>> for ColumnData {
+    fn from(values: Vec<bool>) -> Self {
+        Self::Bool(values.into_iter().map(Some).collect())
+    }
+}
+
+impl From<Vec<String>> for ColumnData {
+    fn from(values: Vec<String>) -> Self {
+        Self::String(values.into_iter().map(Some).collect())
+    }
+}
+
+impl From<Vec<&str>> for ColumnData {
+    fn from(values: Vec<&str>) -> Self {
+        Self::String(values.into_iter().map(|s| Some(s.to_string())).collect())
+    }
+}
+
+impl From<Vec<NaiveDate>> for ColumnData {
+    fn from(values: Vec<NaiveDate>) -> Self {
+        Self::Date(values.into_iter().map(Some).collect())
+    }
+}
+
+impl From<Vec<NaiveDateTime>> for ColumnData {
+    fn from(values: Vec<NaiveDateTime>) -> Self {
+        Self::DateTime(values.into_iter().map(Some).collect())
+    }
+}
+
+impl From<Vec<NaiveTime>> for ColumnData {
+    fn from(values: Vec<NaiveTime>) -> Self {
+        Self::Time(values.into_iter().map(Some).collect())
+    }
+}
+
 /// CDISC variable roles.
 ///
 /// These roles are metadata that help classify variables according to CDISC SDTM
 /// terminology. They do not affect XPT binary encoding.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[non_exhaustive]
 pub enum VariableRole {
     /// Identifier variables (e.g., STUDYID, USUBJID, DOMAIN).
     Identifier,
@@ -325,8 +429,8 @@ mod tests {
                 ColumnData::String(vec![Some("x".into()), Some("y".into())]),
             ),
         ];
-        let ds = DomainDataset::new("AE".into(), cols).unwrap();
-        assert_eq!(ds.nrows, 2);
+        let ds = Dataset::new("AE", cols).unwrap();
+        assert_eq!(ds.nrows(), 2);
         assert_eq!(ds.ncols(), 2);
     }
 
@@ -339,7 +443,7 @@ mod tests {
                 ColumnData::String(vec![Some("x".into()), Some("y".into())]),
             ),
         ];
-        let result = DomainDataset::new("AE".into(), cols);
+        let result = Dataset::new("AE", cols);
         assert!(result.is_err());
     }
 
@@ -353,5 +457,38 @@ mod tests {
         assert!(ColumnData::Time(vec![]).is_numeric());
         assert!(ColumnData::String(vec![]).is_character());
         assert!(ColumnData::Bytes(vec![]).is_character());
+    }
+
+    #[test]
+    fn test_column_data_from_conversions() {
+        // Test From<Vec<f64>>
+        let data: ColumnData = vec![1.0, 2.0, 3.0].into();
+        assert_eq!(data.len(), 3);
+        assert!(data.is_numeric());
+
+        // Test From<Vec<i64>>
+        let data: ColumnData = vec![1i64, 2, 3].into();
+        assert_eq!(data.len(), 3);
+        assert!(data.is_numeric());
+
+        // Test From<Vec<i32>>
+        let data: ColumnData = vec![1i32, 2, 3].into();
+        assert_eq!(data.len(), 3);
+        assert!(data.is_numeric());
+
+        // Test From<Vec<bool>>
+        let data: ColumnData = vec![true, false, true].into();
+        assert_eq!(data.len(), 3);
+        assert!(data.is_numeric());
+
+        // Test From<Vec<String>>
+        let data: ColumnData = vec!["a".to_string(), "b".to_string()].into();
+        assert_eq!(data.len(), 2);
+        assert!(data.is_character());
+
+        // Test From<Vec<&str>>
+        let data: ColumnData = vec!["a", "b", "c"].into();
+        assert_eq!(data.len(), 3);
+        assert!(data.is_character());
     }
 }

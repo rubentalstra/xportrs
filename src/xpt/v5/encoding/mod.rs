@@ -3,6 +3,9 @@
 //! This module provides encoding/decoding for numeric values (IBM float)
 //! and text values in XPT v5 format.
 
+// Allow unused imports - these are part of complete XPT v5 API but not all are used yet
+#![allow(unused_imports)]
+
 mod ibm_float;
 mod text;
 

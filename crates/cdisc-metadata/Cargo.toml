@@ -1,0 +1,21 @@
+[package]
+name = "cdisc-metadata"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.92"
+license = "MIT"
+description = "CDISC metadata parser for SDTM, SEND, and ADaM standards"
+publish = false
+
+[dependencies]
+# CSV parsing
+csv = "1.4"
+
+# TOML parsing for metadata.toml
+toml = "0.9.8"
+
+# Serialization for metadata structures
+serde = { version = "1.0", features = ["derive"] }
+
+# Error handling
+thiserror = "2.0"

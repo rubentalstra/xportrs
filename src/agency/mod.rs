@@ -7,15 +7,15 @@
 //! # Usage
 //!
 //! ```no_run
-//! use xportrs::{Xpt, Agency, DomainDataset};
+//! use xportrs::{Xpt, Agency, Dataset};
 //!
-//! # let dataset = DomainDataset::new("AE".into(), vec![]).unwrap();
+//! # let dataset = Dataset::new("AE", vec![]).unwrap();
 //! // Write with FDA validation
 //! Xpt::writer(dataset)
 //!     .agency(Agency::FDA)
 //!     .finalize()?
 //!     .write_path("ae.xpt")?;
-//! # Ok::<(), xportrs::XportrsError>(())
+//! # Ok::<(), xportrs::Error>(())
 //! ```
 //!
 //! When no agency is specified, only structural XPT v5 validation is applied.
@@ -26,7 +26,7 @@ use std::path::Path;
 
 pub use rules::Rule;
 
-use crate::schema::SchemaPlan;
+use crate::schema::DatasetSchema;
 use crate::validate::Issue;
 use crate::xpt::XptVersion;
 
@@ -45,16 +45,17 @@ use crate::xpt::XptVersion;
 /// # Example
 ///
 /// ```no_run
-/// use xportrs::{Xpt, Agency, DomainDataset};
+/// use xportrs::{Xpt, Agency, Dataset};
 ///
-/// # let dataset = DomainDataset::new("AE".into(), vec![]).unwrap();
+/// # let dataset = Dataset::new("AE", vec![]).unwrap();
 /// Xpt::writer(dataset)
 ///     .agency(Agency::FDA)
 ///     .finalize()?
 ///     .write_path("ae.xpt")?;
-/// # Ok::<(), xportrs::XportrsError>(())
+/// # Ok::<(), xportrs::Error>(())
 /// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[non_exhaustive]
 pub enum Agency {
     /// U.S. Food and Drug Administration.
     ///
@@ -191,7 +192,7 @@ impl Agency {
     ///
     /// Applies all rules for this agency and returns any issues found.
     #[must_use]
-    pub fn validate(self, plan: &SchemaPlan, file_path: Option<&Path>) -> Vec<Issue> {
+    pub(crate) fn validate(self, plan: &DatasetSchema, file_path: Option<&Path>) -> Vec<Issue> {
         let mut issues = Vec::new();
         let agency_name = self.name();
 
@@ -212,7 +213,7 @@ impl std::fmt::Display for Agency {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::schema::plan::PlannedVariable;
+    use crate::schema::plan::VariableSpec;
     use crate::validate::Severity;
 
     #[test]
@@ -236,10 +237,10 @@ mod tests {
 
     #[test]
     fn test_agency_validation_valid() {
-        let mut plan = SchemaPlan::new("AE".into());
+        let mut plan = DatasetSchema::new("AE");
         plan.variables = vec![
-            PlannedVariable::numeric("AESEQ"),
-            PlannedVariable::character("USUBJID", 20),
+            VariableSpec::numeric("AESEQ"),
+            VariableSpec::character("USUBJID", 20),
         ];
         plan.recalculate_positions();
 
@@ -249,8 +250,8 @@ mod tests {
 
     #[test]
     fn test_agency_validation_non_ascii() {
-        let mut plan = SchemaPlan::new("AÉ".into());
-        plan.variables = vec![PlannedVariable::numeric("AESEQ")];
+        let mut plan = DatasetSchema::new("AÉ");
+        plan.variables = vec![VariableSpec::numeric("AESEQ")];
         plan.recalculate_positions();
 
         let issues = Agency::FDA.validate(&plan, None);

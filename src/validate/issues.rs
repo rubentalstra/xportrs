@@ -10,7 +10,8 @@ use std::path::PathBuf;
 ///
 /// Each variant represents a specific type of issue with relevant context data.
 /// The issue's code, severity, and message are derived from the variant.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum Issue {
     // =========================================================================
     // XPT v5 Structural Issues
@@ -207,7 +208,7 @@ impl Issue {
 
     /// Returns the target of this issue (dataset, variable, or none).
     #[must_use]
-    pub fn target(&self) -> Option<Target> {
+    pub(crate) fn target(&self) -> Option<Target> {
         match self {
             // Dataset targets
             Self::DatasetNameTooLong { dataset, .. }
@@ -465,6 +466,7 @@ impl fmt::Display for Issue {
 /// The severity level of a validation issue.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[non_exhaustive]
 pub enum Severity {
     /// Informational message (does not block generation).
     Info,
@@ -485,8 +487,9 @@ impl fmt::Display for Severity {
 }
 
 /// The target of a validation issue.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[allow(dead_code)]
 pub enum Target {
     /// A dataset by name.
     Dataset(String),
@@ -507,6 +510,7 @@ impl fmt::Display for Target {
 }
 
 /// Extension trait for working with collections of issues.
+#[allow(dead_code)]
 pub trait IssueCollection {
     /// Returns `true` if there are any errors.
     fn has_errors(&self) -> bool;

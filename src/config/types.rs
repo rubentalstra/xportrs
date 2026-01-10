@@ -8,8 +8,8 @@ use chrono::{DateTime, Utc};
 ///
 /// This struct controls the behavior of reading and writing operations,
 /// including strictness levels and verbosity.
-#[derive(Debug, Clone)]
-pub struct Config {
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) struct Config {
     /// Whether to use strict checks (errors abort writes).
     pub strict_checks: bool,
 
@@ -38,30 +38,31 @@ impl Default for Config {
     }
 }
 
+#[allow(dead_code)]
 impl Config {
     /// Creates a new configuration with default settings.
     #[must_use]
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self::default()
     }
 
     /// Sets strict checks mode.
     #[must_use]
-    pub fn with_strict_checks(mut self, strict: bool) -> Self {
+    pub(crate) fn with_strict_checks(mut self, strict: bool) -> Self {
         self.strict_checks = strict;
         self
     }
 
     /// Sets auto-fix mode.
     #[must_use]
-    pub fn with_auto_fix(mut self, auto_fix: bool) -> Self {
+    pub(crate) fn with_auto_fix(mut self, auto_fix: bool) -> Self {
         self.auto_fix = auto_fix;
         self
     }
 
     /// Sets the verbosity level.
     #[must_use]
-    pub fn with_verbosity(mut self, verbosity: Verbosity) -> Self {
+    pub(crate) fn with_verbosity(mut self, verbosity: Verbosity) -> Self {
         self.verbosity = verbosity;
         self
     }
@@ -83,8 +84,8 @@ pub enum Verbosity {
 }
 
 /// Options for writing XPT files.
-#[derive(Debug, Clone, Default)]
-pub struct WriteOptions {
+#[derive(Debug, Clone, Default, PartialEq)]
+pub(crate) struct WriteOptions {
     /// Maximum file size in GB before splitting.
     ///
     /// If set, large datasets will be split into multiple files.
@@ -101,38 +102,39 @@ pub struct WriteOptions {
     pub modified: Option<DateTime<Utc>>,
 }
 
+#[allow(dead_code)]
 impl WriteOptions {
     /// Creates new write options with default settings.
     #[must_use]
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self::default()
     }
 
     /// Sets the maximum file size for splitting.
     #[must_use]
-    pub fn with_max_size_gb(mut self, max_size: f64) -> Self {
+    pub(crate) fn with_max_size_gb(mut self, max_size: f64) -> Self {
         self.max_size_gb = Some(max_size);
         self
     }
 
     /// Sets the creation timestamp.
     #[must_use]
-    pub fn with_created(mut self, created: DateTime<Utc>) -> Self {
+    pub(crate) fn with_created(mut self, created: DateTime<Utc>) -> Self {
         self.created = Some(created);
         self
     }
 
     /// Sets the modification timestamp.
     #[must_use]
-    pub fn with_modified(mut self, modified: DateTime<Utc>) -> Self {
+    pub(crate) fn with_modified(mut self, modified: DateTime<Utc>) -> Self {
         self.modified = Some(modified);
         self
     }
 }
 
 /// Options for reading XPT files.
-#[derive(Debug, Clone)]
-pub struct ReadOptions {
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct ReadOptions {
     /// Text decoding mode for character variables.
     pub text_mode: TextMode,
 
@@ -157,30 +159,31 @@ impl Default for ReadOptions {
     }
 }
 
+#[allow(dead_code)]
 impl ReadOptions {
     /// Creates new read options with default settings.
     #[must_use]
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self::default()
     }
 
     /// Sets the text decoding mode.
     #[must_use]
-    pub fn with_text_mode(mut self, mode: TextMode) -> Self {
+    pub(crate) fn with_text_mode(mut self, mode: TextMode) -> Self {
         self.text_mode = mode;
         self
     }
 
     /// Sets a row limit.
     #[must_use]
-    pub fn with_row_limit(mut self, limit: usize) -> Self {
+    pub(crate) fn with_row_limit(mut self, limit: usize) -> Self {
         self.row_limit = Some(limit);
         self
     }
 
     /// Sets whether to preserve trailing blanks.
     #[must_use]
-    pub fn with_preserve_blanks(mut self, preserve: bool) -> Self {
+    pub(crate) fn with_preserve_blanks(mut self, preserve: bool) -> Self {
         self.preserve_blanks = preserve;
         self
     }

@@ -4,5 +4,7 @@
 //! datasets in memory. The design is columnar and DataFrame-agnostic.
 
 mod domain_dataset;
+mod newtypes;
 
-pub use domain_dataset::{Column, ColumnData, DomainDataset, VariableRole};
+pub use domain_dataset::{Column, ColumnData, Dataset, VariableRole};
+pub use newtypes::{DomainCode, Label};

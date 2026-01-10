@@ -1,6 +1,6 @@
 //! Error types for xportrs.
 //!
-//! This module defines the [`XportrsError`] enum which represents all possible
+//! This module defines the [`Error`] enum which represents all possible
 //! errors that can occur during XPT file reading, writing, and validation.
 
 use std::path::PathBuf;
@@ -12,7 +12,8 @@ use crate::xpt::XptVersion;
 /// This enum covers all error conditions that can arise when working with XPT files,
 /// including I/O errors, format violations, validation failures, and unsupported features.
 #[derive(thiserror::Error, Debug)]
-pub enum XportrsError {
+#[non_exhaustive]
+pub enum Error {
     /// An I/O error occurred while reading or writing.
     #[error("io error: {0}")]
     Io(#[from] std::io::Error),
@@ -87,10 +88,18 @@ pub enum XportrsError {
         /// A description of the encoding error.
         message: String,
     },
+
+    /// A Polars conversion error occurred.
+    #[cfg(feature = "polars")]
+    #[error("polars error: {message}")]
+    Polars {
+        /// A description of the Polars error.
+        message: String,
+    },
 }
 
-impl XportrsError {
-    /// Creates a new [`XportrsError::Corrupt`] error.
+impl Error {
+    /// Creates a new [`Error::Corrupt`] error.
     #[must_use]
     pub fn corrupt(message: impl Into<String>) -> Self {
         Self::Corrupt {
@@ -98,7 +107,7 @@ impl XportrsError {
         }
     }
 
-    /// Creates a new [`XportrsError::InvalidSchema`] error.
+    /// Creates a new [`Error::InvalidSchema`] error.
     #[must_use]
     pub fn invalid_schema(message: impl Into<String>) -> Self {
         Self::InvalidSchema {
@@ -106,7 +115,7 @@ impl XportrsError {
         }
     }
 
-    /// Creates a new [`XportrsError::ValidationFailed`] error.
+    /// Creates a new [`Error::ValidationFailed`] error.
     #[must_use]
     pub fn validation_failed(message: impl Into<String>) -> Self {
         Self::ValidationFailed {
@@ -114,7 +123,7 @@ impl XportrsError {
         }
     }
 
-    /// Creates a new [`XportrsError::Metadata`] error.
+    /// Creates a new [`Error::Metadata`] error.
     #[must_use]
     pub fn metadata(message: impl Into<String>) -> Self {
         Self::Metadata {
@@ -122,7 +131,7 @@ impl XportrsError {
         }
     }
 
-    /// Creates a new [`XportrsError::Encoding`] error.
+    /// Creates a new [`Error::Encoding`] error.
     #[must_use]
     pub fn encoding(message: impl Into<String>) -> Self {
         Self::Encoding {
@@ -131,5 +140,5 @@ impl XportrsError {
     }
 }
 
-/// A type alias for `Result<T, XportrsError>`.
-pub type Result<T> = std::result::Result<T, XportrsError>;
+/// A type alias for `Result<T, Error>`.
+pub type Result<T> = std::result::Result<T, Error>;

@@ -2,7 +2,7 @@
 //!
 //! This module provides validation checks specific to XPT v5 format requirements.
 
-use crate::schema::SchemaPlan;
+use crate::schema::DatasetSchema;
 
 use super::issues::Issue;
 
@@ -26,7 +26,7 @@ pub mod constraints {
 ///
 /// Returns a list of issues found during validation.
 #[must_use]
-pub fn validate_v5_schema(plan: &SchemaPlan) -> Vec<Issue> {
+pub(crate) fn validate_v5_schema(plan: &DatasetSchema) -> Vec<Issue> {
     let mut issues = Vec::new();
 
     // Check dataset name length
@@ -112,14 +112,14 @@ pub fn validate_v5_schema(plan: &SchemaPlan) -> Vec<Issue> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::schema::plan::PlannedVariable;
+    use crate::schema::plan::VariableSpec;
 
     #[test]
     fn test_valid_schema() {
-        let mut plan = SchemaPlan::new("AE".into());
+        let mut plan = DatasetSchema::new("AE");
         plan.variables = vec![
-            PlannedVariable::numeric("AESEQ"),
-            PlannedVariable::character("USUBJID", 20),
+            VariableSpec::numeric("AESEQ"),
+            VariableSpec::character("USUBJID", 20),
         ];
         plan.recalculate_positions();
 
@@ -129,8 +129,8 @@ mod tests {
 
     #[test]
     fn test_name_too_long() {
-        let mut plan = SchemaPlan::new("TOOLONGNAME".into());
-        plan.variables = vec![PlannedVariable::numeric("AESEQ")];
+        let mut plan = DatasetSchema::new("TOOLONGNAME");
+        plan.variables = vec![VariableSpec::numeric("AESEQ")];
         plan.recalculate_positions();
 
         let issues = validate_v5_schema(&plan);
@@ -140,8 +140,8 @@ mod tests {
 
     #[test]
     fn test_numeric_wrong_length() {
-        let mut plan = SchemaPlan::new("AE".into());
-        plan.variables = vec![PlannedVariable::new(
+        let mut plan = DatasetSchema::new("AE");
+        plan.variables = vec![VariableSpec::new(
             "AESEQ".into(),
             crate::metadata::XptVarType::Numeric,
             4, // Wrong!
