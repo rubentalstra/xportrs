@@ -16,22 +16,33 @@
 //!
 //! ## Converting `Dataset` to `DataFrame`
 //!
-//! ```ignore
-//! use xportrs::{Xpt, polars::IntoDataFrame};
+//! ```
+//! use xportrs::{Dataset, dataset::{Column, ColumnData}, polars::IntoDataFrame};
 //!
-//! let dataset = Xpt::read("ae.xpt")?;
-//! let df = dataset.into_dataframe()?;
-//! println!("{}", df);
+//! let dataset = Dataset::new(
+//!     "AE",
+//!     vec![
+//!         Column::new("USUBJID", ColumnData::String(vec![Some("01-001".into())])),
+//!         Column::new("AESEQ", ColumnData::I64(vec![Some(1)])),
+//!     ],
+//! ).unwrap();
+//!
+//! let df = dataset.into_dataframe().unwrap();
+//! assert_eq!(df.width(), 2);
 //! ```
 //!
 //! ## Converting `DataFrame` to `Dataset`
 //!
-//! ```ignore
+//! ```
 //! use xportrs::{Dataset, polars::FromDataFrame};
 //! use polars::prelude::*;
 //!
-//! let df: DataFrame = /* ... */;
-//! let dataset = Dataset::from_dataframe("AE", df)?;
+//! let s1 = Series::new("USUBJID".into(), &["01-001", "01-002"]);
+//! let s2 = Series::new("AESEQ".into(), &[1i64, 2i64]);
+//! let df = DataFrame::new(vec![s1.into(), s2.into()]).unwrap();
+//!
+//! let dataset = Dataset::from_dataframe("AE", df).unwrap();
+//! assert_eq!(dataset.ncols(), 2);
 //! ```
 
 use chrono::Timelike;
