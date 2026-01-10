@@ -150,12 +150,18 @@ fn parse_member<R: Read + Seek>(reader: &mut R) -> Result<XptMemberInfo> {
     // Record the offset to observation data
     let obs_offset = reader.stream_position().map_err(Error::Io)?;
 
+    // Note: obs_count is set to 0 here because the actual observation count
+    // is determined during reading by detecting padding rows (all 0x20 bytes).
+    // XPT v5 doesn't store an explicit observation count, and files are padded
+    // to 80-byte record boundaries with spaces.
+    let obs_count = 0;
+
     Ok(XptMemberInfo {
         name,
         label,
         variables,
         obs_offset,
-        obs_count: 0, // Will be determined during reading
+        obs_count,
         row_len,
     })
 }

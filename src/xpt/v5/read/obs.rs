@@ -6,7 +6,7 @@ use std::io::Read;
 
 use crate::config::ReadOptions;
 use crate::error::{Error, Result};
-use crate::xpt::v5::constants::RECORD_LEN;
+use crate::xpt::v5::constants::{PAD_CHAR, RECORD_LEN};
 use crate::xpt::v5::encoding::{decode_ibm_float, decode_text};
 use crate::xpt::v5::namestr::NamestrV5;
 
@@ -66,6 +66,14 @@ impl<'a, R: Read> ObservationReader<'a, R> {
             Some(data) => data,
             None => return Ok(None),
         };
+
+        // Check if the entire row is padding (all spaces)
+        // This indicates we've reached the end of actual observation data
+        // XPT files pad to 80-byte record boundaries with spaces (0x20)
+        if row_data.iter().all(|&b| b == PAD_CHAR) {
+            self.at_eof = true;
+            return Ok(None);
+        }
 
         // Decode each variable
         let mut values = Vec::with_capacity(self.variables.len());
