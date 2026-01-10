@@ -29,9 +29,9 @@ pub(crate) struct DatasetSchema {
 impl DatasetSchema {
     /// Creates a new schema plan.
     #[must_use]
-    pub fn new(domain_code: String) -> Self {
+    pub fn new(domain_code: impl Into<String>) -> Self {
         Self {
-            domain_code,
+            domain_code: domain_code.into(),
             dataset_label: None,
             variables: Vec::new(),
             row_len: 0,
@@ -178,7 +178,7 @@ mod tests {
 
     #[test]
     fn test_schema_plan_positions() {
-        let mut plan = DatasetSchema::new("AE".into());
+        let mut plan = DatasetSchema::new("AE");
         plan.variables = vec![
             VariableSpec::numeric("AESEQ"),
             VariableSpec::character("USUBJID", 20),

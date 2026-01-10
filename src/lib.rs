@@ -22,21 +22,21 @@
 //!
 //! // Simple: read first dataset
 //! let dataset = Xpt::read("ae.xpt")?;
-//! println!("Domain: {}", dataset.domain_code);
-//! println!("Rows: {}", dataset.nrows);
+//! println!("Domain: {}", dataset.domain_code());
+//! println!("Rows: {}", dataset.nrows());
 //!
 //! // With options or specific member
 //! let dm = Xpt::reader("study.xpt")?.read_member("DM")?;
-//! # Ok::<(), xportrs::XportrsError>(())
+//! # Ok::<(), xportrs::Error>(())
 //! ```
 //!
 //! ### Writing an XPT file
 //!
 //! ```no_run
-//! use xportrs::{Xpt, Agency, DomainDataset, Column, ColumnData};
+//! use xportrs::{Xpt, Agency, Dataset, Column, ColumnData};
 //!
-//! let dataset = DomainDataset::new(
-//!     "AE".to_string(),
+//! let dataset = Dataset::new(
+//!     "AE",  // Domain code (accepts &str, String, or DomainCode)
 //!     vec![
 //!         Column::new("USUBJID", ColumnData::String(vec![
 //!             Some("01-001".into()),
@@ -56,14 +56,14 @@
 //!     .agency(Agency::FDA)
 //!     .finalize()?
 //!     .write_path("ae_fda.xpt")?;
-//! # Ok::<(), xportrs::XportrsError>(())
+//! # Ok::<(), xportrs::Error>(())
 //! ```
 //!
 //! ## Modules
 //!
 //! - [`agency`]: Regulatory agency definitions (FDA, PMDA, NMPA)
 //! - [`config`]: Configuration options for reading and writing
-//! - [`dataset`]: Core data structures (`DomainDataset`, `Column`, `ColumnData`)
+//! - [`dataset`]: Core data structures (`Dataset`, `Column`, `ColumnData`)
 //! - [`metadata`]: Variable and dataset metadata
 //! - [`validate`]: Validation logic and issue reporting
 //! - [`xpt`]: XPT format implementation details
@@ -108,25 +108,25 @@ pub use agency::Agency;
 pub use config::{TextMode, Verbosity};
 
 // Dataset types - needed to construct data
-pub use dataset::{Column, ColumnData, DomainDataset, VariableRole};
+pub use dataset::{Column, ColumnData, Dataset, DomainCode, Label, VariableRole};
 
 // Error types
-pub use error::{Result, XportrsError};
+pub use error::{Error, Result};
 
 // Metadata types - for advanced usage
 pub use metadata::XptVarType;
 
 // Validation types
-pub use validate::{Issue, Severity, Target};
+pub use validate::{Issue, Severity};
 
 // Write plan types
-pub use write_plan::{FinalizedWritePlan, XptWritePlan};
+pub use write_plan::{ValidatedWrite, XptWriterBuilder};
 
 // XPT version enum
 pub use xpt::XptVersion;
 
 // XPT file info (for Xpt::inspect)
-pub use xpt::v5::read::XptFile;
+pub use xpt::v5::read::XptInfo;
 
 /// Temporal conversion utilities.
 ///

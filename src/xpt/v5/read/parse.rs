@@ -4,13 +4,13 @@
 
 use std::io::{Read, Seek};
 
-use crate::error::{Result, XportrsError};
+use crate::error::{Result, Error};
 use crate::xpt::v5::constants::{
     LIBRARY_HEADER, MEMBER_HEADER, NAMESTR_HEADER, NAMESTR_LEN, OBS_HEADER, RECORD_LEN,
 };
 use crate::xpt::v5::namestr::{NamestrV5, unpack_namestr};
 
-use super::reader::XptFile;
+use super::reader::XptInfo;
 
 /// Information about a member (dataset) in the XPT file.
 #[derive(Debug, Clone)]
@@ -34,15 +34,15 @@ pub struct XptMemberInfo {
 /// # Errors
 ///
 /// Returns an error if the file is not a valid XPT v5 file.
-pub fn parse_header<R: Read + Seek>(reader: &mut R) -> Result<XptFile> {
+pub fn parse_header<R: Read + Seek>(reader: &mut R) -> Result<XptInfo> {
     // Read and validate library header
     let mut header_buf = [0u8; RECORD_LEN];
     reader
         .read_exact(&mut header_buf)
-        .map_err(XportrsError::Io)?;
+        .map_err(Error::Io)?;
 
     if &header_buf != LIBRARY_HEADER {
-        return Err(XportrsError::corrupt(
+        return Err(Error::corrupt(
             "invalid library header - not an XPT v5 file",
         ));
     }
@@ -50,7 +50,7 @@ pub fn parse_header<R: Read + Seek>(reader: &mut R) -> Result<XptFile> {
     // Read first real header record (contains SAS identifier and timestamps)
     reader
         .read_exact(&mut header_buf)
-        .map_err(XportrsError::Io)?;
+        .map_err(Error::Io)?;
 
     let created = extract_timestamp(&header_buf, 32, 48);
     let modified = extract_timestamp(&header_buf, 48, 64);
@@ -58,7 +58,7 @@ pub fn parse_header<R: Read + Seek>(reader: &mut R) -> Result<XptFile> {
     // Read second header record (typically contains modified timestamp)
     reader
         .read_exact(&mut header_buf)
-        .map_err(XportrsError::Io)?;
+        .map_err(Error::Io)?;
 
     // Parse members
     let mut members = Vec::new();
@@ -68,7 +68,7 @@ pub fn parse_header<R: Read + Seek>(reader: &mut R) -> Result<XptFile> {
         match reader.read_exact(&mut header_buf) {
             Ok(()) => {}
             Err(e) if e.kind() == std::io::ErrorKind::UnexpectedEof => break,
-            Err(e) => return Err(XportrsError::Io(e)),
+            Err(e) => return Err(Error::Io(e)),
         }
 
         // Check if this is a member header
@@ -84,7 +84,7 @@ pub fn parse_header<R: Read + Seek>(reader: &mut R) -> Result<XptFile> {
         }
     }
 
-    Ok(XptFile {
+    Ok(XptInfo {
         members,
         library_label: None,
         created,
@@ -97,7 +97,7 @@ fn parse_member<R: Read + Seek>(reader: &mut R) -> Result<XptMemberInfo> {
     let mut buf = [0u8; RECORD_LEN];
 
     // Read member descriptor header
-    reader.read_exact(&mut buf).map_err(XportrsError::Io)?;
+    reader.read_exact(&mut buf).map_err(Error::Io)?;
 
     // Extract member name and label
     let name = String::from_utf8_lossy(&buf[8..16]).trim().to_string();
@@ -107,20 +107,20 @@ fn parse_member<R: Read + Seek>(reader: &mut R) -> Result<XptMemberInfo> {
     };
 
     // Read descriptor header
-    reader.read_exact(&mut buf).map_err(XportrsError::Io)?;
+    reader.read_exact(&mut buf).map_err(Error::Io)?;
 
     // Read NAMESTR header
-    reader.read_exact(&mut buf).map_err(XportrsError::Io)?;
+    reader.read_exact(&mut buf).map_err(Error::Io)?;
 
     if !buf.starts_with(&NAMESTR_HEADER[..]) {
-        return Err(XportrsError::corrupt("expected NAMESTR header"));
+        return Err(Error::corrupt("expected NAMESTR header"));
     }
 
     // Parse number of variables from NAMESTR header
     let nvars_str = String::from_utf8_lossy(&buf[54..60]).trim().to_string();
     let nvars: usize = nvars_str
         .parse()
-        .map_err(|_| XportrsError::corrupt(format!("invalid variable count: {}", nvars_str)))?;
+        .map_err(|_| Error::corrupt(format!("invalid variable count: {}", nvars_str)))?;
 
     // Read NAMESTR records
     let mut variables = Vec::with_capacity(nvars);
@@ -130,13 +130,13 @@ fn parse_member<R: Read + Seek>(reader: &mut R) -> Result<XptMemberInfo> {
     let mut namestr_data = vec![0u8; namestr_records * RECORD_LEN];
     reader
         .read_exact(&mut namestr_data)
-        .map_err(XportrsError::Io)?;
+        .map_err(Error::Io)?;
 
     for i in 0..nvars {
         let start = i * NAMESTR_LEN;
         let end = start + NAMESTR_LEN;
         if end > namestr_data.len() {
-            return Err(XportrsError::corrupt("NAMESTR data truncated"));
+            return Err(Error::corrupt("NAMESTR data truncated"));
         }
 
         let mut namestr_buf = [0u8; NAMESTR_LEN];
@@ -149,14 +149,14 @@ fn parse_member<R: Read + Seek>(reader: &mut R) -> Result<XptMemberInfo> {
     let row_len: usize = variables.iter().map(NamestrV5::length).sum();
 
     // Read OBS header
-    reader.read_exact(&mut buf).map_err(XportrsError::Io)?;
+    reader.read_exact(&mut buf).map_err(Error::Io)?;
 
     if !buf.starts_with(&OBS_HEADER[..54]) {
-        return Err(XportrsError::corrupt("expected OBS header"));
+        return Err(Error::corrupt("expected OBS header"));
     }
 
     // Record the offset to observation data
-    let obs_offset = reader.stream_position().map_err(XportrsError::Io)?;
+    let obs_offset = reader.stream_position().map_err(Error::Io)?;
 
     Ok(XptMemberInfo {
         name,

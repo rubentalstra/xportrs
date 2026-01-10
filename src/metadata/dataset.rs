@@ -5,7 +5,7 @@
 /// Metadata describing a dataset.
 ///
 /// This struct provides optional metadata that can override or supplement
-/// the information in a [`DomainDataset`](crate::DomainDataset).
+/// the information in a [`Dataset`](crate::Dataset).
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub(crate) struct DatasetMetadata {

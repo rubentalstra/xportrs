@@ -5,7 +5,7 @@
 use std::io::Read;
 
 use crate::config::ReadOptions;
-use crate::error::{Result, XportrsError};
+use crate::error::{Result, Error};
 use crate::xpt::v5::constants::RECORD_LEN;
 use crate::xpt::v5::encoding::{decode_ibm_float, decode_text};
 use crate::xpt::v5::namestr::NamestrV5;
@@ -71,7 +71,7 @@ impl<'a, R: Read> ObservationReader<'a, R> {
             let end = start + var.length();
 
             if end > row_data.len() {
-                return Err(XportrsError::corrupt(format!(
+                return Err(Error::corrupt(format!(
                     "observation data truncated: expected {} bytes, got {}",
                     end,
                     row_data.len()
@@ -154,7 +154,7 @@ impl<'a, R: Read> ObservationReader<'a, R> {
                 self.at_eof = true;
                 Ok(false)
             }
-            Err(e) => Err(XportrsError::Io(e)),
+            Err(e) => Err(Error::Io(e)),
         }
     }
 }

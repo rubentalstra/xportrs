@@ -116,7 +116,7 @@ mod tests {
 
     #[test]
     fn test_valid_schema() {
-        let mut plan = DatasetSchema::new("AE".into());
+        let mut plan = DatasetSchema::new("AE");
         plan.variables = vec![
             VariableSpec::numeric("AESEQ"),
             VariableSpec::character("USUBJID", 20),
@@ -129,7 +129,7 @@ mod tests {
 
     #[test]
     fn test_name_too_long() {
-        let mut plan = DatasetSchema::new("TOOLONGNAME".into());
+        let mut plan = DatasetSchema::new("TOOLONGNAME");
         plan.variables = vec![VariableSpec::numeric("AESEQ")];
         plan.recalculate_positions();
 
@@ -140,7 +140,7 @@ mod tests {
 
     #[test]
     fn test_numeric_wrong_length() {
-        let mut plan = DatasetSchema::new("AE".into());
+        let mut plan = DatasetSchema::new("AE");
         plan.variables = vec![VariableSpec::new(
             "AESEQ".into(),
             crate::metadata::XptVarType::Numeric,

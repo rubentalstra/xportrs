@@ -8,4 +8,6 @@ mod checks_v5;
 mod issues;
 
 pub(crate) use checks_v5::validate_v5_schema;
-pub use issues::{Issue, IssueCollection, Severity, Target};
+pub use issues::{Issue, Severity};
+#[allow(unused_imports)]
+pub(crate) use issues::{IssueCollection, Target};

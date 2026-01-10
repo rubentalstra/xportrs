@@ -44,8 +44,8 @@ use xportrs::Xpt;
 
 // Simple: read the first dataset
 let dataset = Xpt::read("ae.xpt") ?;
-println!("Domain: {}", dataset.domain_code);
-println!("Rows: {}", dataset.nrows);
+println!("Domain: {}", dataset.domain_code());
+println!("Rows: {}", dataset.nrows());
 
 // Read a specific member from a multi-dataset file
 let dm = Xpt::reader("study.xpt") ?.read_member("DM") ?;
@@ -63,25 +63,25 @@ println ! ("Member: {}", name);
 ### Writing XPT Files
 
 ```rust
-use xportrs::{Xpt, DomainDataset, Column, ColumnData};
+use xportrs::{Xpt, Dataset, Column, ColumnData};
 
 // Create a dataset
-let dataset = DomainDataset::new(
-"AE".to_string(),
-vec![
-    Column::new("USUBJID", ColumnData::String(vec![
-        Some("01-001".into()),
-        Some("01-002".into()),
-    ])),
-    Column::new("AESEQ", ColumnData::I64(vec![Some(1), Some(1)])),
-    Column::new("AESTDY", ColumnData::F64(vec![Some(15.0), Some(22.0)])),
-],
-) ?;
+let dataset = Dataset::new(
+    "AE".to_string(),
+    vec![
+        Column::new("USUBJID", ColumnData::String(vec![
+            Some("01-001".into()),
+            Some("01-002".into()),
+        ])),
+        Column::new("AESEQ", ColumnData::I64(vec![Some(1), Some(1)])),
+        Column::new("AESTDY", ColumnData::F64(vec![Some(15.0), Some(22.0)])),
+    ],
+)?;
 
 // Write with structural validation only
 Xpt::writer(dataset)
-.finalize() ?
-.write_path("ae.xpt") ?;
+    .finalize()?
+    .write_path("ae.xpt")?;
 ```
 
 ## Agency Compliance
@@ -90,9 +90,9 @@ When submitting clinical trial data to regulatory agencies, use the
 `agency()` method to enable agency-specific validation rules:
 
 ```rust
-use xportrs::{Xpt, Agency, DomainDataset};
+use xportrs::{Xpt, Agency, Dataset};
 
-let dataset = DomainDataset::new("AE".into(), vec![/* ... */]) ?;
+let dataset = Dataset::new("AE", vec![/* ... */]) ?;
 
 // FDA submission - applies all FDA validation rules
 let files = Xpt::writer(dataset)
@@ -128,10 +128,10 @@ When an agency is specified, the following validations are applied:
 Large XPT files are automatically split when an agency is specified:
 
 ```rust
-use xportrs::{Xpt, Agency, DomainDataset};
+use xportrs::{Xpt, Agency, Dataset};
 
 // Large dataset with millions of rows
-let large_dataset = DomainDataset::new("LB".into(), /* ... */) ?;
+let large_dataset = Dataset::new("LB", /* ... */) ?;
 
 // Files > 5GB are automatically split into numbered parts
 let files = Xpt::writer(large_dataset)
@@ -141,49 +141,6 @@ let files = Xpt::writer(large_dataset)
 
 // Result: ["lb_001.xpt", "lb_002.xpt", ...] if split
 // Result: ["lb.xpt"] if no split needed
-```
-
-You can also manually configure the size limit:
-
-```rust
-use xportrs::{Xpt, Config, DomainDataset};
-
-let mut config = Config::default ();
-config.write.max_size_gb = Some(2.0); // Split at 2GB
-
-let files = Xpt::writer(dataset)
-.config(config)
-.finalize() ?
-.write_path("ae.xpt") ?;
-```
-
-## Configuration Options
-
-### Read Options
-
-```rust
-use xportrs::{Xpt, ReadOptions, TextMode};
-
-let dataset = Xpt::reader("ae.xpt") ?
-.options(ReadOptions::new()
-.with_text_mode(TextMode::Latin1)  // or Utf8 (default), Strict
-.with_preserve_blanks(true))       // Keep trailing spaces
-.read() ?;
-```
-
-### Write Options
-
-```rust
-use xportrs::{Xpt, Config, DomainDataset};
-
-let mut config = Config::default ();
-config.strict_checks = true;           // Fail on validation errors
-config.write.max_size_gb = Some(5.0);  // Enable file splitting
-
-Xpt::writer(dataset)
-.config(config)
-.finalize() ?
-.write_path("ae.xpt") ?;
 ```
 
 ## Data Types
@@ -203,7 +160,7 @@ All types support `Option<T>` for missing values (SAS missing = `.`).
 The library provides detailed validation feedback:
 
 ```rust
-use xportrs::{Xpt, Agency, DomainDataset};
+use xportrs::{Xpt, Agency, Dataset};
 
 let plan = Xpt::writer(dataset)
 .agency(Agency::FDA)

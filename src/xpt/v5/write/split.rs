@@ -6,8 +6,8 @@
 use std::path::{Path, PathBuf};
 
 use crate::config::WriteOptions;
-use crate::dataset::{Column, ColumnData, DomainDataset};
-use crate::error::{Result, XportrsError};
+use crate::dataset::{Column, ColumnData, Dataset};
+use crate::error::{Result, Error};
 use crate::schema::DatasetSchema;
 
 use super::size::max_rows_for_size;
@@ -44,19 +44,19 @@ impl SplitWriter {
     /// # Errors
     ///
     /// Returns an error if writing fails.
-    pub(crate) fn write(self, dataset: &DomainDataset, plan: &DatasetSchema) -> Result<Vec<PathBuf>> {
+    pub(crate) fn write(self, dataset: &Dataset, plan: &DatasetSchema) -> Result<Vec<PathBuf>> {
         let max_rows = max_rows_for_size(plan, self.max_size_bytes);
 
         let max_rows = match max_rows {
             Some(r) if r > 0 => r,
             _ => {
-                return Err(XportrsError::invalid_schema(
+                return Err(Error::invalid_schema(
                     "dataset schema is too large for the specified file size limit",
                 ));
             }
         };
 
-        if dataset.nrows <= max_rows {
+        if dataset.nrows() <= max_rows {
             // No splitting needed
             let writer = XptWriter::create(&self.base_path, self.options)?;
             writer.write(dataset, plan)?;
@@ -68,8 +68,8 @@ impl SplitWriter {
         let mut start_row = 0;
         let mut file_num = 1;
 
-        while start_row < dataset.nrows {
-            let end_row = (start_row + max_rows).min(dataset.nrows);
+        while start_row < dataset.nrows() {
+            let end_row = (start_row + max_rows).min(dataset.nrows());
 
             // Create subset dataset
             let subset = slice_dataset(dataset, start_row, end_row)?;
@@ -108,23 +108,23 @@ impl SplitWriter {
 }
 
 /// Creates a slice of a dataset (row subset).
-fn slice_dataset(dataset: &DomainDataset, start: usize, end: usize) -> Result<DomainDataset> {
+fn slice_dataset(dataset: &Dataset, start: usize, end: usize) -> Result<Dataset> {
     let columns: Vec<Column> = dataset
-        .columns
+        .columns()
         .iter()
         .map(|col| {
-            let data = slice_column_data(&col.data, start, end);
-            Column {
-                name: col.name.clone(),
-                role: col.role,
-                data,
+            let data = slice_column_data(col.data(), start, end);
+            if let Some(role) = col.role() {
+                Column::with_role(col.name(), role, data)
+            } else {
+                Column::new(col.name(), data)
             }
         })
         .collect();
 
-    DomainDataset::with_label(
-        dataset.domain_code.clone(),
-        dataset.dataset_label.clone(),
+    Dataset::with_label(
+        dataset.domain_code().to_string(),
+        dataset.dataset_label().map(String::from),
         columns,
     )
 }

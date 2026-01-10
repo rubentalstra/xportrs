@@ -9,8 +9,8 @@ use std::path::Path;
 use chrono::Utc;
 
 use crate::config::WriteOptions;
-use crate::dataset::{ColumnData, DomainDataset};
-use crate::error::{Result, XportrsError};
+use crate::dataset::{ColumnData, Dataset};
+use crate::error::{Result, Error};
 use crate::schema::DatasetSchema;
 use crate::xpt::v5::constants::{
     LIBRARY_HEADER, MEMBER_HEADER, MEMBER_HEADER_DATA, NAMESTR_HEADER, OBS_HEADER, PAD_CHAR,
@@ -43,10 +43,10 @@ impl<W: Write> XptWriter<W> {
     /// # Errors
     ///
     /// Returns an error if writing fails.
-    pub(crate) fn write(mut self, dataset: &DomainDataset, plan: &DatasetSchema) -> Result<W> {
+    pub(crate) fn write(mut self, dataset: &Dataset, plan: &DatasetSchema) -> Result<W> {
         self.write_library_header()?;
         self.write_member(dataset, plan)?;
-        self.writer.finish().map_err(XportrsError::Io)
+        self.writer.finish().map_err(Error::Io)
     }
 
     /// Writes the library header section.
@@ -54,7 +54,7 @@ impl<W: Write> XptWriter<W> {
         // Record 1: Library header marker
         self.writer
             .write_record(LIBRARY_HEADER)
-            .map_err(XportrsError::Io)?;
+            .map_err(Error::Io)?;
 
         // Record 2: SAS identifier and timestamps
         let now = Utc::now();
@@ -70,19 +70,19 @@ impl<W: Write> XptWriter<W> {
         rec2[32..48].copy_from_slice(created_str.as_bytes());
         rec2[48..64].copy_from_slice(modified_str.as_bytes());
 
-        self.writer.write_record(&rec2).map_err(XportrsError::Io)?;
+        self.writer.write_record(&rec2).map_err(Error::Io)?;
 
         // Record 3: Additional header info (usually empty)
         let mut rec3 = [PAD_CHAR; RECORD_LEN];
         rec3[..16].copy_from_slice(modified_str.as_bytes());
 
-        self.writer.write_record(&rec3).map_err(XportrsError::Io)?;
+        self.writer.write_record(&rec3).map_err(Error::Io)?;
 
         Ok(())
     }
 
     /// Writes a single member (dataset).
-    fn write_member(&mut self, dataset: &DomainDataset, plan: &DatasetSchema) -> Result<()> {
+    fn write_member(&mut self, dataset: &Dataset, plan: &DatasetSchema) -> Result<()> {
         self.write_member_header(plan)?;
         self.write_namestr_section(plan)?;
         self.write_observations(dataset, plan)?;
@@ -94,7 +94,7 @@ impl<W: Write> XptWriter<W> {
         // Record 1: Member header marker
         self.writer
             .write_record(MEMBER_HEADER)
-            .map_err(XportrsError::Io)?;
+            .map_err(Error::Io)?;
 
         // Record 2: Member descriptor
         // Format (must match parse.rs expectations):
@@ -113,12 +113,12 @@ impl<W: Write> XptWriter<W> {
             rec[32..72].copy_from_slice(&label_bytes);
         }
 
-        self.writer.write_record(&rec).map_err(XportrsError::Io)?;
+        self.writer.write_record(&rec).map_err(Error::Io)?;
 
         // Record 3: Descriptor header marker
         self.writer
             .write_record(MEMBER_HEADER_DATA)
-            .map_err(XportrsError::Io)?;
+            .map_err(Error::Io)?;
 
         Ok(())
     }
@@ -136,52 +136,52 @@ impl<W: Write> XptWriter<W> {
 
         self.writer
             .write_record(&header)
-            .map_err(XportrsError::Io)?;
+            .map_err(Error::Io)?;
 
         // Write NAMESTR records for each variable
         for (i, var) in plan.variables.iter().enumerate() {
             let namestr = pack_namestr(var, i)?;
             self.writer
                 .write_bytes(&namestr)
-                .map_err(XportrsError::Io)?;
+                .map_err(Error::Io)?;
         }
 
         // Pad to record boundary
-        self.writer.pad_and_flush().map_err(XportrsError::Io)?;
+        self.writer.pad_and_flush().map_err(Error::Io)?;
 
         // OBS header record
         self.writer
             .write_record(OBS_HEADER)
-            .map_err(XportrsError::Io)?;
+            .map_err(Error::Io)?;
 
         Ok(())
     }
 
     /// Writes observation data.
-    fn write_observations(&mut self, dataset: &DomainDataset, plan: &DatasetSchema) -> Result<()> {
-        for row_idx in 0..dataset.nrows {
+    fn write_observations(&mut self, dataset: &Dataset, plan: &DatasetSchema) -> Result<()> {
+        for row_idx in 0..dataset.nrows() {
             for var in &plan.variables {
                 let col = dataset.column(&var.name).ok_or_else(|| {
-                    XportrsError::invalid_schema(format!(
+                    Error::invalid_schema(format!(
                         "column '{}' not found in dataset",
                         var.name
                     ))
                 })?;
 
                 if var.xpt_type.is_numeric() {
-                    let value = get_numeric_value(&col.data, row_idx)?;
+                    let value = get_numeric_value(col.data(), row_idx)?;
                     let bytes = encode_ibm_float(value);
-                    self.writer.write_bytes(&bytes).map_err(XportrsError::Io)?;
+                    self.writer.write_bytes(&bytes).map_err(Error::Io)?;
                 } else {
-                    let value = get_character_value(&col.data, row_idx)?;
+                    let value = get_character_value(col.data(), row_idx)?;
                     let bytes = pad_string(&value.unwrap_or_default(), var.length);
-                    self.writer.write_bytes(&bytes).map_err(XportrsError::Io)?;
+                    self.writer.write_bytes(&bytes).map_err(Error::Io)?;
                 }
             }
         }
 
         // Pad final record
-        self.writer.pad_and_flush().map_err(XportrsError::Io)?;
+        self.writer.pad_and_flush().map_err(Error::Io)?;
 
         Ok(())
     }
@@ -194,7 +194,7 @@ impl XptWriter<BufWriter<File>> {
     ///
     /// Returns an error if the file cannot be created.
     pub(crate) fn create(path: impl AsRef<Path>, options: WriteOptions) -> Result<Self> {
-        let file = File::create(path.as_ref()).map_err(XportrsError::Io)?;
+        let file = File::create(path.as_ref()).map_err(Error::Io)?;
         Ok(Self::new(BufWriter::new(file), options))
     }
 }
@@ -224,7 +224,7 @@ fn get_numeric_value(data: &ColumnData, row: usize) -> Result<Option<f64>> {
             .copied()
             .flatten()
             .map(|t| sas_seconds_since_midnight(t) as f64)),
-        _ => Err(XportrsError::invalid_schema(
+        _ => Err(Error::invalid_schema(
             "expected numeric column data type",
         )),
     }
@@ -255,7 +255,7 @@ fn get_character_value(data: &ColumnData, row: usize) -> Result<Option<String>> 
             .copied()
             .flatten()
             .map(|t| t.format("%H:%M:%S").to_string())),
-        _ => Err(XportrsError::invalid_schema(
+        _ => Err(Error::invalid_schema(
             "expected character column data type",
         )),
     }
@@ -278,8 +278,8 @@ mod tests {
 
     #[test]
     fn test_write_empty_dataset() {
-        let dataset = DomainDataset::new("AE".into(), vec![]).unwrap();
-        let mut plan = DatasetSchema::new("AE".into());
+        let dataset = Dataset::new("AE", vec![]).unwrap();
+        let mut plan = DatasetSchema::new("AE");
         plan.recalculate_positions();
 
         let output = Vec::new();
@@ -291,8 +291,8 @@ mod tests {
 
     #[test]
     fn test_write_simple_dataset() {
-        let dataset = DomainDataset::new(
-            "AE".into(),
+        let dataset = Dataset::new(
+            "AE",
             vec![Column::new(
                 "AESEQ",
                 ColumnData::F64(vec![Some(1.0), Some(2.0)]),
@@ -300,7 +300,7 @@ mod tests {
         )
         .unwrap();
 
-        let mut plan = DatasetSchema::new("AE".into());
+        let mut plan = DatasetSchema::new("AE");
         plan.variables = vec![VariableSpec::numeric("AESEQ")];
         plan.recalculate_positions();
 

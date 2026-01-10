@@ -7,8 +7,8 @@ use std::io::{BufReader, Read, Seek, SeekFrom};
 use std::path::Path;
 
 use crate::config::ReadOptions;
-use crate::dataset::{Column, ColumnData, DomainDataset};
-use crate::error::{Result, XportrsError};
+use crate::dataset::{Column, ColumnData, Dataset};
+use crate::error::{Result, Error};
 
 use super::obs::ObservationReader;
 use super::parse::{XptMemberInfo, parse_header};
@@ -17,7 +17,7 @@ use super::parse::{XptMemberInfo, parse_header};
 ///
 /// This struct provides metadata about the file without reading all data.
 #[derive(Debug, Clone)]
-pub struct XptFile {
+pub struct XptInfo {
     /// The members (datasets) in the file.
     pub members: Vec<XptMemberInfo>,
     /// The library label (if present).
@@ -28,7 +28,7 @@ pub struct XptFile {
     pub modified: Option<String>,
 }
 
-impl XptFile {
+impl XptInfo {
     /// Returns the member names.
     pub fn member_names(&self) -> impl Iterator<Item = &str> {
         self.members.iter().map(|m| m.name.as_str())
@@ -48,7 +48,7 @@ impl XptFile {
 /// This struct handles reading and parsing XPT v5 format files.
 pub struct XptReader<R: Read + Seek> {
     reader: BufReader<R>,
-    file_info: XptFile,
+    file_info: XptInfo,
 }
 
 impl<R: Read + Seek> XptReader<R> {
@@ -69,7 +69,7 @@ impl<R: Read + Seek> XptReader<R> {
 
     /// Returns file information.
     #[must_use]
-    pub fn file_info(&self) -> &XptFile {
+    pub fn file_info(&self) -> &XptInfo {
         &self.file_info
     }
 
@@ -78,11 +78,11 @@ impl<R: Read + Seek> XptReader<R> {
     /// # Errors
     ///
     /// Returns an error if the member is not found or cannot be read.
-    pub(crate) fn read_member(&mut self, name: &str, options: &ReadOptions) -> Result<DomainDataset> {
+    pub(crate) fn read_member(&mut self, name: &str, options: &ReadOptions) -> Result<Dataset> {
         let member = self
             .file_info
             .find_member(name)
-            .ok_or_else(|| XportrsError::MemberNotFound {
+            .ok_or_else(|| Error::MemberNotFound {
                 domain_code: name.to_string(),
             })?
             .clone();
@@ -95,7 +95,7 @@ impl<R: Read + Seek> XptReader<R> {
     /// # Errors
     ///
     /// Returns an error if any member cannot be read.
-    pub(crate) fn read_all(&mut self, options: &ReadOptions) -> Result<Vec<DomainDataset>> {
+    pub(crate) fn read_all(&mut self, options: &ReadOptions) -> Result<Vec<Dataset>> {
         let members: Vec<_> = self.file_info.members.clone();
         let mut datasets = Vec::with_capacity(members.len());
 
@@ -112,11 +112,11 @@ impl<R: Read + Seek> XptReader<R> {
         &mut self,
         member: &XptMemberInfo,
         options: &ReadOptions,
-    ) -> Result<DomainDataset> {
+    ) -> Result<Dataset> {
         // Seek to the observation data
         self.reader
             .seek(SeekFrom::Start(member.obs_offset))
-            .map_err(XportrsError::Io)?;
+            .map_err(Error::Io)?;
 
         // Create observation reader
         let mut obs_reader = ObservationReader::new(&mut self.reader, &member.variables, options)?;
@@ -147,7 +147,7 @@ impl<R: Read + Seek> XptReader<R> {
                             (ColumnData::F64(vec), ObsValue::Numeric(v)) => vec.push(v),
                             (ColumnData::String(vec), ObsValue::Character(v)) => vec.push(v),
                             _ => {
-                                return Err(XportrsError::corrupt(
+                                return Err(Error::corrupt(
                                     "type mismatch in observation data",
                                 ));
                             }
@@ -164,14 +164,10 @@ impl<R: Read + Seek> XptReader<R> {
             .variables
             .iter()
             .zip(columns)
-            .map(|(var, data)| Column {
-                name: var.nname.clone(),
-                role: None,
-                data,
-            })
+            .map(|(var, data)| Column::new(&var.nname, data))
             .collect();
 
-        DomainDataset::with_label(member.name.clone(), member.label.clone(), cols)
+        Dataset::with_label(member.name.clone(), member.label.clone(), cols)
     }
 }
 
@@ -182,7 +178,7 @@ impl XptReader<BufReader<File>> {
     ///
     /// Returns an error if the file cannot be opened or parsed.
     pub fn open(path: impl AsRef<Path>) -> Result<Self> {
-        let file = File::open(path.as_ref()).map_err(XportrsError::Io)?;
+        let file = File::open(path.as_ref()).map_err(Error::Io)?;
         Self::new(BufReader::new(file))
     }
 }
@@ -202,7 +198,7 @@ mod tests {
 
     #[test]
     fn test_xpt_file_find_member() {
-        let file = XptFile {
+        let file = XptInfo {
             members: vec![XptMemberInfo {
                 name: "AE".into(),
                 label: Some("Adverse Events".into()),

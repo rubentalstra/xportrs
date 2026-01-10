@@ -99,7 +99,7 @@ mod tests {
 
     #[test]
     fn test_estimate_file_size() {
-        let mut plan = DatasetSchema::new("AE".into());
+        let mut plan = DatasetSchema::new("AE");
         plan.variables = vec![
             VariableSpec::numeric("AESEQ"),
             VariableSpec::character("USUBJID", 20),
@@ -115,7 +115,7 @@ mod tests {
 
     #[test]
     fn test_max_rows_for_size() {
-        let mut plan = DatasetSchema::new("AE".into());
+        let mut plan = DatasetSchema::new("AE");
         plan.variables = vec![VariableSpec::numeric("AESEQ")];
         plan.recalculate_positions();
 

@@ -7,8 +7,8 @@ use std::collections::HashMap;
 
 use crate::agency::Agency;
 use crate::config::Config;
-use crate::dataset::{ColumnData, DomainDataset};
-use crate::error::{Result, XportrsError};
+use crate::dataset::{ColumnData, Dataset};
+use crate::error::{Result, Error};
 use crate::metadata::{DatasetMetadata, VariableMetadata, XptVarType};
 
 use super::plan::{VariableSpec, DatasetSchema};
@@ -29,7 +29,7 @@ use super::plan::{VariableSpec, DatasetSchema};
 ///
 /// Returns an error if the schema cannot be derived (e.g., invalid metadata).
 pub fn derive_schema_plan(
-    dataset: &DomainDataset,
+    dataset: &Dataset,
     dataset_meta: Option<&DatasetMetadata>,
     variable_meta: Option<&[VariableMetadata]>,
     agency: Option<Agency>,
@@ -38,11 +38,11 @@ pub fn derive_schema_plan(
     // 1. Resolve domain identity
     let domain_code = dataset_meta
         .map(|m| m.domain_code.clone())
-        .unwrap_or_else(|| dataset.domain_code.clone());
+        .unwrap_or_else(|| dataset.domain_code().to_string());
 
     let dataset_label = dataset_meta
         .and_then(|m| m.dataset_label.clone())
-        .or_else(|| dataset.dataset_label.clone());
+        .or_else(|| dataset.dataset_label().map(String::from));
 
     // Build metadata lookup
     let var_meta_map: HashMap<&str, &VariableMetadata> = variable_meta
@@ -52,24 +52,24 @@ pub fn derive_schema_plan(
         .collect();
 
     // 2-5. Build variable map and determine types/lengths
-    let mut planned_vars: Vec<VariableSpec> = Vec::with_capacity(dataset.columns.len());
+    let mut planned_vars: Vec<VariableSpec> = Vec::with_capacity(dataset.columns().len());
 
-    for (idx, col) in dataset.columns.iter().enumerate() {
-        let meta = var_meta_map.get(col.name.as_str());
+    for (idx, col) in dataset.columns().iter().enumerate() {
+        let meta = var_meta_map.get(col.name());
 
         // 3. Determine XPT type
         let xpt_type = if let Some(m) = meta {
-            m.xpt_type.unwrap_or_else(|| infer_xpt_type(&col.data))
+            m.xpt_type.unwrap_or_else(|| infer_xpt_type(col.data()))
         } else {
-            infer_xpt_type(&col.data)
+            infer_xpt_type(col.data())
         };
 
         // 4. Determine length
-        let length = determine_length(&col.data, xpt_type, meta.and_then(|m| m.length), config)?;
+        let length = determine_length(col.data(), xpt_type, meta.and_then(|m| m.length), config)?;
 
         // Create planned variable
         let mut planned =
-            VariableSpec::new(col.name.clone(), xpt_type, length).with_source_index(idx);
+            VariableSpec::new(col.name().to_string(), xpt_type, length).with_source_index(idx);
 
         // Merge metadata
         if let Some(m) = meta {
@@ -86,7 +86,7 @@ pub fn derive_schema_plan(
 
         // Use column role if not in metadata
         if planned.role.is_none() {
-            planned.role = col.role;
+            planned.role = col.role();
         }
 
         planned_vars.push(planned);
@@ -164,7 +164,7 @@ fn determine_length(
                 if config.strict_checks {
                     let max_observed = compute_max_string_length(data);
                     if max_observed > len {
-                        return Err(XportrsError::invalid_schema(format!(
+                        return Err(Error::invalid_schema(format!(
                             "character value exceeds specified length: max observed {} > specified {}",
                             max_observed, len
                         )));
@@ -217,12 +217,12 @@ fn truncate_to_bytes(s: &str, max_bytes: usize) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::dataset::{Column, ColumnData, DomainDataset};
+    use crate::dataset::{Column, ColumnData, Dataset};
 
     #[test]
     fn test_derive_schema_plan() {
-        let dataset = DomainDataset::new(
-            "AE".into(),
+        let dataset = Dataset::new(
+            "AE",
             vec![
                 Column::new("USUBJID", ColumnData::String(vec![Some("01-001".into())])),
                 Column::new("AESEQ", ColumnData::I64(vec![Some(1)])),
