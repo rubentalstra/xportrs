@@ -35,7 +35,9 @@ fn main() -> xportrs::Result<()> {
     println!("Validating for FDA submission...\n");
 
     // Build with FDA agency validation
-    let validated = Xpt::writer(dataset).agency(Agency::FDA).finalize()?;
+    let mut builder = Xpt::writer(dataset);
+    builder.agency(Agency::FDA);
+    let validated = builder.finalize()?;
 
     // Check for validation issues
     let issues = validated.issues();

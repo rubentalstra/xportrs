@@ -5,7 +5,7 @@
 /// The XPT format version.
 ///
 /// Currently, only v5 is fully implemented. V8 is API-ready but not yet implemented.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub enum XptVersion {

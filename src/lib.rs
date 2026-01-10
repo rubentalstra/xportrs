@@ -39,15 +39,12 @@
 //! )?;
 //!
 //! // Write with structural validation only
-//! Xpt::writer(dataset.clone())
-//!     .finalize()?
-//!     .write_path("ae.xpt")?;
+//! Xpt::writer(dataset.clone()).finalize()?.write_path("ae.xpt")?;
 //!
 //! // Write with FDA agency compliance validation
-//! Xpt::writer(dataset)
-//!     .agency(Agency::FDA)
-//!     .finalize()?
-//!     .write_path("ae_fda.xpt")?;
+//! let mut builder = Xpt::writer(dataset);
+//! builder.agency(Agency::FDA);
+//! builder.finalize()?.write_path("ae_fda.xpt")?;
 //! # Ok::<(), xportrs::Error>(())
 //! ```
 //!
@@ -131,7 +128,10 @@ pub use agency::Agency;
 pub use config::{TextMode, Verbosity};
 
 // Dataset types - needed to construct data
-pub use dataset::{Column, ColumnData, Dataset, DomainCode, Label, VariableRole};
+pub use dataset::{
+    Column, ColumnData, ColumnNames, Dataset, DomainCode, IntoIter, Iter, IterMut, Label,
+    VariableName, VariableRole,
+};
 
 // Error types
 pub use error::{Error, Result};

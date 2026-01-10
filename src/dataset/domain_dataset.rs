@@ -3,11 +3,15 @@
 //! This module provides the [`Dataset`] struct which represents a CDISC
 //! domain dataset (table) in a columnar format.
 
+use std::fmt;
+use std::ops::Index;
+
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 
 use crate::error::{Error, Result};
 
-use super::newtypes::{DomainCode, Label};
+use super::iter::{ColumnNames, IntoIter, Iter, IterMut};
+use super::newtypes::{DomainCode, Label, VariableName};
 
 /// A CDISC domain dataset in columnar format.
 ///
@@ -107,16 +111,16 @@ impl Dataset {
         self.nrows == 0
     }
 
-    /// Returns the domain code.
+    /// Returns the domain code as a string slice.
     #[must_use]
     pub fn domain_code(&self) -> &str {
-        &self.domain_code
+        self.domain_code.as_str()
     }
 
     /// Returns the dataset label, if any.
     #[must_use]
     pub fn dataset_label(&self) -> Option<&str> {
-        self.dataset_label.as_deref()
+        self.dataset_label.as_ref().map(Label::as_str)
     }
 
     /// Returns a reference to the columns.
@@ -131,15 +135,117 @@ impl Dataset {
         self.nrows
     }
 
+    /// Returns an iterator over references to the columns.
+    #[must_use]
+    pub fn iter(&self) -> Iter<'_> {
+        Iter::new(&self.columns)
+    }
+
+    /// Returns a mutable iterator over the columns.
+    #[must_use]
+    pub fn iter_mut(&mut self) -> IterMut<'_> {
+        IterMut::new(&mut self.columns)
+    }
+
     /// Returns an iterator over the column names.
-    pub fn column_names(&self) -> impl Iterator<Item = &str> {
-        self.columns.iter().map(Column::name)
+    #[must_use]
+    pub fn column_names(&self) -> ColumnNames<'_> {
+        ColumnNames::new(&self.columns)
     }
 
     /// Finds a column by name.
     #[must_use]
     pub fn column(&self, name: &str) -> Option<&Column> {
         self.columns.iter().find(|c| c.name() == name)
+    }
+}
+
+impl IntoIterator for Dataset {
+    type Item = Column;
+    type IntoIter = IntoIter;
+
+    fn into_iter(self) -> Self::IntoIter {
+        IntoIter::new(self.columns)
+    }
+}
+
+impl<'a> IntoIterator for &'a Dataset {
+    type Item = &'a Column;
+    type IntoIter = Iter<'a>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
+impl<'a> IntoIterator for &'a mut Dataset {
+    type Item = &'a mut Column;
+    type IntoIter = IterMut<'a>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter_mut()
+    }
+}
+
+impl Index<usize> for Dataset {
+    type Output = Column;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.columns[index]
+    }
+}
+
+impl Index<&str> for Dataset {
+    type Output = Column;
+
+    /// Indexes the dataset by column name.
+    ///
+    /// # Panics
+    ///
+    /// Panics if no column with the given name exists.
+    fn index(&self, name: &str) -> &Self::Output {
+        self.columns
+            .iter()
+            .find(|c| c.name() == name)
+            .unwrap_or_else(|| panic!("no column named '{}'", name))
+    }
+}
+
+impl Extend<Column> for Dataset {
+    /// Extends the dataset with columns from an iterator.
+    ///
+    /// # Panics
+    ///
+    /// Panics if any column has a different length than the existing dataset.
+    /// If the dataset is empty (nrows == 0), the first column's length becomes
+    /// the new nrows.
+    fn extend<T: IntoIterator<Item = Column>>(&mut self, iter: T) {
+        for col in iter {
+            if self.nrows == 0 && self.columns.is_empty() {
+                // Empty dataset - take length from first column
+                self.nrows = col.len();
+            } else if col.len() != self.nrows {
+                panic!(
+                    "column '{}' has length {} but dataset has {} rows",
+                    col.name(),
+                    col.len(),
+                    self.nrows
+                );
+            }
+            self.columns.push(col);
+        }
+    }
+}
+
+impl fmt::Display for Dataset {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{} [{} rows × {} cols]",
+            self.domain_code.as_str(),
+            self.nrows,
+            self.columns.len()
+        )
     }
 }
 
@@ -151,7 +257,7 @@ pub struct Column {
     /// The variable name.
     ///
     /// Limited to 8 bytes in XPT v5.
-    name: String,
+    name: VariableName,
 
     /// The CDISC variable role, if applicable.
     role: Option<VariableRole>,
@@ -163,7 +269,7 @@ pub struct Column {
 impl Column {
     /// Creates a new column with the given name and data.
     #[must_use]
-    pub fn new(name: impl Into<String>, data: ColumnData) -> Self {
+    pub fn new(name: impl Into<VariableName>, data: ColumnData) -> Self {
         Self {
             name: name.into(),
             role: None,
@@ -173,7 +279,7 @@ impl Column {
 
     /// Creates a new column with the given name, role, and data.
     #[must_use]
-    pub fn with_role(name: impl Into<String>, role: VariableRole, data: ColumnData) -> Self {
+    pub fn with_role(name: impl Into<VariableName>, role: VariableRole, data: ColumnData) -> Self {
         Self {
             name: name.into(),
             role: Some(role),
@@ -196,7 +302,7 @@ impl Column {
     /// Returns the column name.
     #[must_use]
     pub fn name(&self) -> &str {
-        &self.name
+        self.name.as_str()
     }
 
     /// Returns the column role, if any.
@@ -221,6 +327,22 @@ impl Column {
     #[must_use]
     pub fn is_character(&self) -> bool {
         self.data.is_character()
+    }
+}
+
+impl fmt::Display for Column {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let type_name = match &self.data {
+            ColumnData::F64(_) => "F64",
+            ColumnData::I64(_) => "I64",
+            ColumnData::Bool(_) => "Bool",
+            ColumnData::String(_) => "String",
+            ColumnData::Bytes(_) => "Bytes",
+            ColumnData::Date(_) => "Date",
+            ColumnData::DateTime(_) => "DateTime",
+            ColumnData::Time(_) => "Time",
+        };
+        write!(f, "{} ({})", self.name.as_str(), type_name)
     }
 }
 
@@ -316,6 +438,22 @@ impl ColumnData {
     #[must_use]
     pub fn is_character(&self) -> bool {
         matches!(self, Self::String(_) | Self::Bytes(_))
+    }
+}
+
+impl fmt::Display for ColumnData {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let (type_name, len) = match self {
+            Self::F64(v) => ("F64", v.len()),
+            Self::I64(v) => ("I64", v.len()),
+            Self::Bool(v) => ("Bool", v.len()),
+            Self::String(v) => ("String", v.len()),
+            Self::Bytes(v) => ("Bytes", v.len()),
+            Self::Date(v) => ("Date", v.len()),
+            Self::DateTime(v) => ("DateTime", v.len()),
+            Self::Time(v) => ("Time", v.len()),
+        };
+        write!(f, "{}({})", type_name, len)
     }
 }
 

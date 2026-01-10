@@ -11,10 +11,9 @@
 //!
 //! # let dataset = Dataset::new("AE", vec![]).unwrap();
 //! // Write with FDA validation
-//! Xpt::writer(dataset)
-//!     .agency(Agency::FDA)
-//!     .finalize()?
-//!     .write_path("ae.xpt")?;
+//! let mut builder = Xpt::writer(dataset);
+//! builder.agency(Agency::FDA);
+//! builder.finalize()?.write_path("ae.xpt")?;
 //! # Ok::<(), xportrs::Error>(())
 //! ```
 //!
@@ -48,10 +47,9 @@ use crate::xpt::XptVersion;
 /// use xportrs::{Xpt, Agency, Dataset};
 ///
 /// # let dataset = Dataset::new("AE", vec![]).unwrap();
-/// Xpt::writer(dataset)
-///     .agency(Agency::FDA)
-///     .finalize()?
-///     .write_path("ae.xpt")?;
+/// let mut builder = Xpt::writer(dataset);
+/// builder.agency(Agency::FDA);
+/// builder.finalize()?.write_path("ae.xpt")?;
 /// # Ok::<(), xportrs::Error>(())
 /// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

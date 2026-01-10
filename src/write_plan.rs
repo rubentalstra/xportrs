@@ -31,10 +31,9 @@ use crate::xpt::v5::write::{SplitWriter, XptWriter, estimate_file_size_gb};
 /// )?;
 ///
 /// // With agency validation
-/// Xpt::writer(dataset)
-///     .agency(Agency::FDA)
-///     .finalize()?
-///     .write_path("ae.xpt")?;
+/// let mut builder = Xpt::writer(dataset);
+/// builder.agency(Agency::FDA);
+/// builder.finalize()?.write_path("ae.xpt")?;
 /// # Ok::<(), xportrs::Error>(())
 /// ```
 #[derive(Debug)]
@@ -72,22 +71,19 @@ impl XptWriterBuilder {
     /// use xportrs::{Xpt, Agency, Dataset};
     ///
     /// # let dataset = Dataset::new("AE", vec![]).unwrap();
-    /// Xpt::writer(dataset)
-    ///     .agency(Agency::FDA)
-    ///     .finalize()?
-    ///     .write_path("ae.xpt")?;
+    /// let mut builder = Xpt::writer(dataset);
+    /// builder.agency(Agency::FDA);
+    /// builder.finalize()?.write_path("ae.xpt")?;
     /// # Ok::<(), xportrs::Error>(())
     /// ```
-    #[must_use]
-    pub fn agency(mut self, agency: Agency) -> Self {
+    pub fn agency(&mut self, agency: Agency) -> &mut Self {
         self.agency = Some(agency);
         self
     }
 
     /// Sets the configuration.
-    #[must_use]
     #[allow(dead_code)]
-    pub(crate) fn config(mut self, config: Config) -> Self {
+    pub(crate) fn config(&mut self, config: Config) -> &mut Self {
         self.config = config;
         self
     }
@@ -96,24 +92,21 @@ impl XptWriterBuilder {
     ///
     /// Note: Currently only XPT v5 is supported. XPT v8 will return
     /// an error during finalization.
-    #[must_use]
-    pub fn xpt_version(mut self, version: XptVersion) -> Self {
+    pub fn xpt_version(&mut self, version: XptVersion) -> &mut Self {
         self.version = version;
         self
     }
 
     /// Sets variable metadata.
-    #[must_use]
     #[allow(dead_code)]
-    pub(crate) fn variable_metadata(mut self, meta: Vec<VariableMetadata>) -> Self {
+    pub(crate) fn variable_metadata(&mut self, meta: Vec<VariableMetadata>) -> &mut Self {
         self.variable_meta = Some(meta);
         self
     }
 
     /// Sets dataset metadata.
-    #[must_use]
     #[allow(dead_code)]
-    pub(crate) fn dataset_metadata(mut self, meta: DatasetMetadata) -> Self {
+    pub(crate) fn dataset_metadata(&mut self, meta: DatasetMetadata) -> &mut Self {
         self.dataset_meta = Some(meta);
         self
     }
@@ -235,10 +228,9 @@ impl ValidatedWrite {
     ///
     /// # let dataset = Dataset::new("AE", vec![]).unwrap();
     /// // With FDA agency, files > 5GB are automatically split
-    /// let files = Xpt::writer(dataset)
-    ///     .agency(Agency::FDA)
-    ///     .finalize()?
-    ///     .write_path("ae.xpt")?;
+    /// let mut builder = Xpt::writer(dataset);
+    /// builder.agency(Agency::FDA);
+    /// let files = builder.finalize()?.write_path("ae.xpt")?;
     ///
     /// println!("Created {} file(s)", files.len());
     /// // Single file: ["ae.xpt"]
@@ -299,9 +291,9 @@ mod tests {
         )
         .unwrap();
 
-        let plan = XptWriterBuilder::new(dataset)
-            .xpt_version(XptVersion::V5)
-            .finalize();
+        let mut builder = XptWriterBuilder::new(dataset);
+        builder.xpt_version(XptVersion::V5);
+        let plan = builder.finalize();
 
         assert!(plan.is_ok());
         let finalized = plan.unwrap();
@@ -316,9 +308,9 @@ mod tests {
         )
         .unwrap();
 
-        let plan = XptWriterBuilder::new(dataset)
-            .agency(Agency::FDA)
-            .finalize();
+        let mut builder = XptWriterBuilder::new(dataset);
+        builder.agency(Agency::FDA);
+        let plan = builder.finalize();
 
         assert!(plan.is_ok());
     }
@@ -327,9 +319,9 @@ mod tests {
     fn test_write_plan_v8_unsupported() {
         let dataset = Dataset::new("AE", vec![]).unwrap();
 
-        let plan = XptWriterBuilder::new(dataset)
-            .xpt_version(XptVersion::V8)
-            .finalize();
+        let mut builder = XptWriterBuilder::new(dataset);
+        builder.xpt_version(XptVersion::V8);
+        let plan = builder.finalize();
 
         assert!(plan.is_err());
     }

@@ -215,9 +215,8 @@ impl std::fmt::Debug for XptReaderBuilder {
 
 impl XptReaderBuilder {
     /// Sets custom read options (internal use).
-    #[must_use]
     #[allow(dead_code)]
-    pub(crate) fn options(mut self, options: ReadOptions) -> Self {
+    pub(crate) fn options(&mut self, options: ReadOptions) -> &mut Self {
         self.options = options;
         self
     }
