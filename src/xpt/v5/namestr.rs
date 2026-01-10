@@ -47,9 +47,11 @@ pub struct NamestrV5 {
     /// Informat decimals.
     pub nifd: i16,
     /// Position in observation (0-based).
-    pub npos: i64,
+    /// Per SAS spec: 4-byte integer at offset 84-87.
+    pub npos: i32,
     /// Remaining unused bytes.
-    pub rest: [u8; 48],
+    /// Per SAS spec: 52 bytes at offset 88-139.
+    pub rest: [u8; 52],
 }
 
 impl Default for NamestrV5 {
@@ -70,7 +72,7 @@ impl Default for NamestrV5 {
             nifl: 0,
             nifd: 0,
             npos: 0,
-            rest: [0; 48],
+            rest: [0; 52],
         }
     }
 }
@@ -171,13 +173,13 @@ pub(crate) fn pack_namestr(var: &VariableSpec, var_num: usize) -> Result<[u8; NA
     cursor.write_i16::<BigEndian>(0).map_err(Error::Io)?; // nifl
     cursor.write_i16::<BigEndian>(0).map_err(Error::Io)?; // nifd
 
-    // npos: position (8 bytes, big-endian)
+    // npos: position (4 bytes, big-endian) - per SAS spec at offset 84-87
     cursor.set_position(84);
     cursor
-        .write_i64::<BigEndian>(var.position as i64)
+        .write_i32::<BigEndian>(var.position as i32)
         .map_err(Error::Io)?;
 
-    // rest: 48 bytes unused (already zeroed)
+    // rest: 52 bytes unused at offset 88-139 (already zeroed)
 
     Ok(buf)
 }
@@ -219,11 +221,13 @@ pub fn unpack_namestr(data: &[u8; NAMESTR_LEN]) -> Result<NamestrV5> {
     let nifl = cursor.read_i16::<BigEndian>().map_err(Error::Io)?;
     let nifd = cursor.read_i16::<BigEndian>().map_err(Error::Io)?;
 
+    // npos: 4-byte integer at offset 84-87 (per SAS spec)
     cursor.set_position(84);
-    let npos = cursor.read_i64::<BigEndian>().map_err(Error::Io)?;
+    let npos = cursor.read_i32::<BigEndian>().map_err(Error::Io)?;
 
-    let mut rest = [0u8; 48];
-    rest.copy_from_slice(&data[92..140]);
+    // rest: 52 bytes at offset 88-139
+    let mut rest = [0u8; 52];
+    rest.copy_from_slice(&data[88..140]);
 
     Ok(NamestrV5 {
         ntype,

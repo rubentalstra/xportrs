@@ -1,4 +1,4 @@
-# xportrs
+# xportrs <img src="logo.png" align="right" alt="" width="120" />
 
 [![Crates.io](https://img.shields.io/crates/v/xportrs.svg)](https://crates.io/crates/xportrs)
 [![Documentation](https://docs.rs/xportrs/badge.svg)](https://docs.rs/xportrs)
@@ -67,21 +67,21 @@ use xportrs::{Xpt, Dataset, Column, ColumnData};
 
 // Create a dataset
 let dataset = Dataset::new(
-    "AE".to_string(),
-    vec![
-        Column::new("USUBJID", ColumnData::String(vec![
-            Some("01-001".into()),
-            Some("01-002".into()),
-        ])),
-        Column::new("AESEQ", ColumnData::I64(vec![Some(1), Some(1)])),
-        Column::new("AESTDY", ColumnData::F64(vec![Some(15.0), Some(22.0)])),
-    ],
-)?;
+"AE".to_string(),
+vec![
+    Column::new("USUBJID", ColumnData::String(vec![
+        Some("01-001".into()),
+        Some("01-002".into()),
+    ])),
+    Column::new("AESEQ", ColumnData::I64(vec![Some(1), Some(1)])),
+    Column::new("AESTDY", ColumnData::F64(vec![Some(15.0), Some(22.0)])),
+],
+) ?;
 
 // Write with structural validation only
 Xpt::writer(dataset)
-    .finalize()?
-    .write_path("ae.xpt")?;
+.finalize() ?
+.write_path("ae.xpt") ?;
 ```
 
 ## Agency Compliance

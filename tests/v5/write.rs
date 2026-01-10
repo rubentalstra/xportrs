@@ -1,9 +1,14 @@
-//! Integration tests for xportrs.
-//!
-//! These tests verify the full read/write cycle and various edge cases.
+//! Tests for writing XPT v5 files.
+
+use std::path::PathBuf;
 
 use tempfile::tempdir;
 use xportrs::{Agency, Column, ColumnData, Dataset, Xpt};
+
+/// Get the path to test data directory.
+fn test_data_dir() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/data")
+}
 
 /// Test basic write and read roundtrip.
 #[test]
@@ -38,9 +43,7 @@ fn test_write_read_roundtrip() {
 
     assert_eq!(loaded.domain_code(), "AE");
     assert_eq!(loaded.ncols(), 2);
-    // Verify we can access columns
     assert!(!loaded.columns().is_empty());
-    // Check first column has expected length
     assert_eq!(loaded.columns()[0].len(), original_nrows);
 }
 
@@ -87,7 +90,7 @@ fn test_column_length_mismatch() {
     assert!(result.is_err());
 }
 
-/// Test From conversions for `ColumnData`.
+/// Test From conversions for ColumnData.
 #[test]
 fn test_column_data_from_conversions() {
     let dir = tempdir().unwrap();
@@ -113,33 +116,7 @@ fn test_column_data_from_conversions() {
         .unwrap();
 
     let loaded = Xpt::read(&path).unwrap();
-    // Check column lengths match original
     assert_eq!(loaded.columns()[0].len(), original_nrows);
-}
-
-/// Test inspect functionality.
-#[test]
-fn test_inspect_file() {
-    let dir = tempdir().unwrap();
-    let path = dir.path().join("ex.xpt");
-
-    let dataset = Dataset::new(
-        "EX",
-        vec![Column::new("EXSEQ", ColumnData::F64(vec![Some(1.0)]))],
-    )
-    .unwrap();
-
-    Xpt::writer(dataset)
-        .finalize()
-        .unwrap()
-        .write_path(&path)
-        .unwrap();
-
-    let info = Xpt::inspect(&path).unwrap();
-
-    assert_eq!(info.members.len(), 1);
-    let names: Vec<_> = info.member_names().collect();
-    assert!(names.contains(&"EX"));
 }
 
 /// Test write to in-memory buffer.
@@ -190,7 +167,6 @@ fn test_missing_values() {
         .unwrap();
 
     let loaded = Xpt::read(&path).unwrap();
-    // Check column length matches original
     assert_eq!(loaded.columns()[0].len(), original_nrows);
 }
 
@@ -224,7 +200,6 @@ fn test_multiple_column_types() {
 
     let loaded = Xpt::read(&path).unwrap();
     assert_eq!(loaded.ncols(), 4);
-    // Check column length matches original
     assert_eq!(loaded.columns()[0].len(), original_nrows);
 }
 
@@ -252,5 +227,49 @@ fn test_all_agencies() {
 
         // Verify file was created
         assert!(path.exists());
+    }
+}
+
+/// Test round-trip preserves data from real XPT files.
+#[test]
+fn test_roundtrip_real_files() {
+    let dir = tempdir().unwrap();
+
+    for filename in ["dm.xpt", "relrec.xpt", "suppdm.xpt"] {
+        let original_path = test_data_dir().join(filename);
+        let output_path = dir.path().join(format!("roundtrip_{}", filename));
+
+        // Read original
+        let original = Xpt::read(&original_path).expect("Failed to read original");
+
+        // Write copy
+        Xpt::writer(original.clone())
+            .finalize()
+            .unwrap()
+            .write_path(&output_path)
+            .unwrap();
+
+        // Read back
+        let reloaded = Xpt::read(&output_path).expect("Failed to read roundtrip");
+
+        // Verify structure preserved
+        assert_eq!(
+            original.domain_code(),
+            reloaded.domain_code(),
+            "{} domain code mismatch",
+            filename
+        );
+        assert_eq!(
+            original.ncols(),
+            reloaded.ncols(),
+            "{} column count mismatch",
+            filename
+        );
+        assert_eq!(
+            original.nrows(),
+            reloaded.nrows(),
+            "{} row count mismatch",
+            filename
+        );
     }
 }

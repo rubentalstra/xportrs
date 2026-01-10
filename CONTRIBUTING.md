@@ -1,6 +1,7 @@
-# Contributing to xportrs
+# Contributing to `xportrs`
 
-Thank you for your interest in contributing to xportrs! This document provides guidelines and information for contributors.
+Thank you for your interest in contributing to
+`xportrs`! This document provides guidelines and information for contributors.
 
 ## Development Setup
 
@@ -160,10 +161,10 @@ src/
 When reporting bugs, please include:
 
 - Rust version (`rustc --version`)
-- xportrs version
+- `xportrs` version
 - Minimal reproduction case
 - Expected vs actual behavior
 
 ## License
 
-By contributing to xportrs, you agree that your contributions will be licensed under the MIT License.
+By contributing to `xportrs`, you agree that your contributions will be licensed under the MIT License.

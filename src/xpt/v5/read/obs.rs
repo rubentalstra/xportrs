@@ -192,8 +192,8 @@ mod tests {
             niform: String::new(),
             nifl: 0,
             nifd: 0,
-            npos: position,
-            rest: [0; 48],
+            npos: position as i32,
+            rest: [0; 52],
         }
     }
 

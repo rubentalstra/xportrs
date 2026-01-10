@@ -42,6 +42,7 @@ polars = { version = "0.51", optional = true, default-features = false, features
 
 [dev-dependencies]
 tempfile = "3"
+cdisc-metadata = { path = "crates/cdisc-metadata" }
 
 [lints.rust]
 # Safety - forbid unsafe code (non-negotiable per architecture)
