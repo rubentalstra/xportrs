@@ -1,4 +1,4 @@
-# xportrs <img src=".github/logo.svg" align="right" alt="" width="150" />
+# xportrs <img src=".github/logo.svg" align="right" alt="" width="120" />
 
 [![Crates.io](https://img.shields.io/crates/v/xportrs.svg)](https://crates.io/crates/xportrs)
 [![Documentation](https://docs.rs/xportrs/badge.svg)](https://docs.rs/xportrs)
