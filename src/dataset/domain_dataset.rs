@@ -16,12 +16,12 @@ use super::newtypes::{DomainCode, Label, VariableName};
 /// A CDISC domain dataset in columnar format.
 ///
 /// This is the primary data structure for representing tables in xportrs.
-/// It uses CDISC SDTM vocabulary where applicable.
+/// Contains a [`DomainCode`], optional [`Label`], and a collection of [`Column`] items.
 ///
 /// # Invariants
 ///
-/// - All columns must have exactly `nrows` elements.
-/// - Domain code should follow CDISC naming conventions (typically 2-8 characters).
+/// - All [`Column`] items must have exactly `nrows` elements.
+/// - [`DomainCode`] should follow CDISC naming conventions (typically 2-8 characters).
 ///
 /// # Example
 ///
@@ -60,7 +60,7 @@ impl Dataset {
     ///
     /// # Errors
     ///
-    /// Returns an error if any column has a different length than the others.
+    /// Returns [`Error::ColumnLengthMismatch`] if any [`Column`] has a different length than the others.
     #[must_use = "this returns a Result that should be handled"]
     pub fn new(domain_code: impl Into<DomainCode>, columns: Vec<Column>) -> Result<Self> {
         let nrows = columns.first().map_or(0, Column::len);
@@ -88,7 +88,7 @@ impl Dataset {
     ///
     /// # Errors
     ///
-    /// Returns an error if any column has a different length than the others.
+    /// Returns [`Error::ColumnLengthMismatch`] if any [`Column`] has a different length than the others.
     pub fn with_label(
         domain_code: impl Into<DomainCode>,
         dataset_label: Option<impl Into<Label>>,
@@ -135,25 +135,25 @@ impl Dataset {
         self.nrows
     }
 
-    /// Returns an iterator over references to the columns.
+    /// Returns an [`Iter`] over references to the columns.
     #[must_use]
     pub fn iter(&self) -> Iter<'_> {
         Iter::new(&self.columns)
     }
 
-    /// Returns a mutable iterator over the columns.
+    /// Returns an [`IterMut`] over the columns.
     #[must_use]
     pub fn iter_mut(&mut self) -> IterMut<'_> {
         IterMut::new(&mut self.columns)
     }
 
-    /// Returns an iterator over the column names.
+    /// Returns a [`ColumnNames`] iterator over the column names.
     #[must_use]
     pub fn column_names(&self) -> ColumnNames<'_> {
         ColumnNames::new(&self.columns)
     }
 
-    /// Finds a column by name.
+    /// Finds a [`Column`] by name.
     #[must_use]
     pub fn column(&self, name: &str) -> Option<&Column> {
         self.columns.iter().find(|c| c.name() == name)
@@ -251,7 +251,7 @@ impl fmt::Display for Dataset {
 
 /// A single column (variable) in a domain dataset.
 ///
-/// Each column has a name, optional role, and typed data.
+/// Each column has a [`VariableName`], optional [`VariableRole`], and typed [`ColumnData`].
 ///
 /// # Example
 ///
@@ -282,10 +282,10 @@ pub struct Column {
     /// Limited to 8 bytes in XPT v5.
     name: VariableName,
 
-    /// The CDISC variable role, if applicable.
+    /// The CDISC [`VariableRole`], if applicable.
     role: Option<VariableRole>,
 
-    /// The column data.
+    /// The [`ColumnData`] containing the typed values.
     data: ColumnData,
 }
 
@@ -328,13 +328,13 @@ impl Column {
         self.name.as_str()
     }
 
-    /// Returns the column role, if any.
+    /// Returns the [`VariableRole`], if any.
     #[must_use]
     pub fn role(&self) -> Option<VariableRole> {
         self.role
     }
 
-    /// Returns a reference to the column data.
+    /// Returns a reference to the [`ColumnData`].
     #[must_use]
     pub fn data(&self) -> &ColumnData {
         &self.data

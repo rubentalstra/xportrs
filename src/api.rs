@@ -39,7 +39,7 @@ use crate::xpt::v5::read::{XptInfo, XptReader as V5Reader};
 /// Unified entry point for XPT file operations.
 ///
 /// This struct provides static methods for reading and writing XPT files.
-/// It's the main interface for the library.
+/// It's the main interface for the library, returning [`Dataset`] objects.
 ///
 /// # Reading
 ///
@@ -170,8 +170,8 @@ impl Xpt {
 
     /// Inspects an XPT file without reading all data.
     ///
-    /// This is useful for checking what's in an XPT file without loading
-    /// all observations into memory.
+    /// Returns an [`XptInfo`] containing file metadata. This is useful for
+    /// checking what's in an XPT file without loading all observations into memory.
     ///
     /// # Errors
     ///
@@ -240,11 +240,11 @@ impl XptReaderBuilder {
         self.reader.file_info()
     }
 
-    /// Reads the first dataset from the file.
+    /// Reads the first [`Dataset`] from the file.
     ///
     /// # Errors
     ///
-    /// Returns an error if reading fails or the file has no members.
+    /// Returns an [`Error`] if reading fails or the file has no members.
     ///
     /// # Example
     ///
@@ -268,13 +268,13 @@ impl XptReaderBuilder {
         self.reader.read_member(&first_member, &self.options)
     }
 
-    /// Reads a specific member by name.
+    /// Reads a specific [`Dataset`] member by name.
     ///
     /// The name matching is case-insensitive.
     ///
     /// # Errors
     ///
-    /// Returns an error if reading fails or the member is not found.
+    /// Returns an [`Error`] if reading fails or the member is not found.
     ///
     /// # Example
     ///
@@ -290,11 +290,11 @@ impl XptReaderBuilder {
         self.reader.read_member(name, &self.options)
     }
 
-    /// Reads all members from the file.
+    /// Reads all [`Dataset`] members from the file.
     ///
     /// # Errors
     ///
-    /// Returns an error if reading fails.
+    /// Returns an [`Error`] if reading fails.
     ///
     /// # Example
     ///
@@ -311,9 +311,4 @@ impl XptReaderBuilder {
     pub fn read_all(mut self) -> Result<Vec<Dataset>> {
         self.reader.read_all(&self.options)
     }
-}
-
-#[cfg(test)]
-mod tests {
-    // Integration tests would go here, but they require actual XPT files
 }

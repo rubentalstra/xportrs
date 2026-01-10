@@ -67,9 +67,9 @@
 //!
 //! ## Validation & Compliance
 //!
-//! - [`Agency`] - FDA, PMDA, NMPA regulatory requirements
+//! - [`Agency`] - Regulatory agencies ([`Agency::FDA`], [`Agency::PMDA`], [`Agency::NMPA`])
 //! - [`Issue`] - Validation problems with severity and context
-//! - [`Severity`] - Error (blocking) or Warning (informational)
+//! - [`Severity`] - [`Severity::Error`] (blocking) or [`Severity::Warning`] (informational)
 //!
 //! When an agency is specified, the following rules are enforced:
 //!
@@ -93,9 +93,9 @@
 //!
 //! This crate uses CDISC SDTM vocabulary:
 //!
-//! - **Domain dataset**: A table identified by a domain code (e.g., "AE", "DM", "LB")
-//! - **Observation**: One row/record in the dataset
-//! - **Variable**: One column; may have a role (Identifier/Topic/Timing/Qualifier/Rule)
+//! - **Domain dataset**: A table identified by a [`DomainCode`] (e.g., "AE", "DM", "LB")
+//! - **Observation**: One row/record in the [`Dataset`]
+//! - **Variable**: One [`Column`]; may have a [`VariableRole`]
 
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]

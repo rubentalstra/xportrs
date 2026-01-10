@@ -1,6 +1,6 @@
-//! Iterator types for Dataset.
+//! Iterator types for [`Dataset`](super::Dataset).
 //!
-//! This module provides named iterator types that comply with C-ITER-TY.
+//! This module provides named iterator types for iterating over [`Column`] items.
 
 use super::Column;
 

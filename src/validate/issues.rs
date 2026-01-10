@@ -9,7 +9,7 @@ use std::path::PathBuf;
 /// A validation issue found during XPT generation or reading.
 ///
 /// Each variant represents a specific type of issue with relevant context data.
-/// The issue's code, severity, and message are derived from the variant.
+/// The issue's code, [`Severity`], and message are derived from the variant.
 ///
 /// # Example
 ///
@@ -217,7 +217,7 @@ pub enum Issue {
 }
 
 impl Issue {
-    /// Returns the severity of this issue.
+    /// Returns the [`Severity`] of this issue.
     #[must_use]
     pub const fn severity(&self) -> Severity {
         match self {
@@ -273,13 +273,13 @@ impl Issue {
         }
     }
 
-    /// Returns `true` if this is an error.
+    /// Returns `true` if this is a [`Severity::Error`].
     #[must_use]
     pub const fn is_error(&self) -> bool {
         matches!(self.severity(), Severity::Error)
     }
 
-    /// Returns `true` if this is a warning.
+    /// Returns `true` if this is a [`Severity::Warning`].
     #[must_use]
     pub const fn is_warning(&self) -> bool {
         matches!(self.severity(), Severity::Warning)
@@ -485,9 +485,9 @@ impl fmt::Display for Issue {
     }
 }
 
-/// The severity level of a validation issue.
+/// The severity level of a validation [`Issue`].
 ///
-/// Severities are ordered from least to most severe: `Info < Warning < Error`.
+/// Severities are ordered from least to most severe: [`Severity::Info`] < [`Severity::Warning`] < [`Severity::Error`].
 ///
 /// # Example
 ///
@@ -550,19 +550,19 @@ impl fmt::Display for Target {
     }
 }
 
-/// Extension trait for working with collections of issues.
+/// Extension trait for working with collections of [`Issue`] items.
 #[allow(dead_code)]
 pub trait IssueCollection {
-    /// Returns `true` if there are any errors.
+    /// Returns `true` if there are any [`Severity::Error`] issues.
     fn has_errors(&self) -> bool;
 
-    /// Returns `true` if there are any warnings.
+    /// Returns `true` if there are any [`Severity::Warning`] issues.
     fn has_warnings(&self) -> bool;
 
-    /// Returns an iterator over error issues.
+    /// Returns an iterator over [`Severity::Error`] issues.
     fn errors(&self) -> impl Iterator<Item = &Issue>;
 
-    /// Returns an iterator over warning issues.
+    /// Returns an iterator over [`Severity::Warning`] issues.
     fn warnings(&self) -> impl Iterator<Item = &Issue>;
 }
 

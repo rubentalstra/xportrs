@@ -4,12 +4,12 @@
 
 /// The XPT format version.
 ///
-/// Currently, only v5 is fully implemented. V8 is API-ready but not yet implemented.
+/// Currently, only [`XptVersion::V5`] is fully implemented. [`XptVersion::V8`] is API-ready but not yet implemented.
 ///
 /// # Versions
 ///
-/// - **V5** - Traditional SAS Transport format with 8-byte names, 40-byte labels
-/// - **V8** - Extended format with 32-byte names, 256-byte labels (not yet implemented)
+/// - [`XptVersion::V5`] - Traditional SAS Transport format with 8-byte names, 40-byte labels
+/// - [`XptVersion::V8`] - Extended format with 32-byte names, 256-byte labels (not yet implemented)
 ///
 /// # Example
 ///
@@ -45,13 +45,13 @@ pub enum XptVersion {
 }
 
 impl XptVersion {
-    /// Returns `true` if this is version 5.
+    /// Returns `true` if this is [`XptVersion::V5`].
     #[must_use]
     pub const fn is_v5(&self) -> bool {
         matches!(self, Self::V5)
     }
 
-    /// Returns `true` if this is version 8.
+    /// Returns `true` if this is [`XptVersion::V8`].
     #[must_use]
     pub const fn is_v8(&self) -> bool {
         matches!(self, Self::V8)

@@ -1,7 +1,7 @@
 //! Write plan for xportrs.
 //!
 //! This module provides the [`XptWriterBuilder`] and [`ValidatedWrite`] types
-//! for planning and executing XPT file writes.
+//! for planning and executing XPT file writes from a [`Dataset`].
 
 use std::path::{Path, PathBuf};
 
@@ -114,17 +114,17 @@ impl XptWriterBuilder {
     /// Finalizes the write plan, performing validation.
     ///
     /// This validates:
-    /// 1. XPT v5 structural requirements (always)
-    /// 2. Agency-specific requirements (if an agency is set)
+    /// 1. [`XptVersion::V5`] structural requirements (always)
+    /// 2. [`Agency`]-specific requirements (if an agency is set)
     ///
-    /// When an agency is specified and no `max_size_gb` is configured,
+    /// When an [`Agency`] is specified and no `max_size_gb` is configured,
     /// the agency's recommended maximum file size is automatically applied,
     /// enabling automatic file splitting for large datasets.
     ///
     /// # Errors
     ///
-    /// Returns an error if:
-    /// - XPT v8 is requested (not yet implemented)
+    /// Returns an [`Error`] if:
+    /// - [`XptVersion::V8`] is requested (not yet implemented)
     /// - Strict mode is enabled and validation errors are found
     #[must_use = "this returns a Result that should be handled"]
     pub fn finalize(mut self) -> Result<ValidatedWrite> {
@@ -179,8 +179,8 @@ impl XptWriterBuilder {
 
 /// An immutable, validated write plan ready for execution.
 ///
-/// This struct contains a validated dataset and schema. Use [`write_path`](Self::write_path)
-/// to write the XPT file.
+/// This struct contains a validated [`Dataset`] and schema. Use [`write_path()`](Self::write_path)
+/// to write the XPT file. Check [`issues()`](Self::issues) for any [`Issue`] items found during validation.
 #[derive(Debug)]
 pub struct ValidatedWrite {
     dataset: Dataset,
@@ -190,19 +190,19 @@ pub struct ValidatedWrite {
 }
 
 impl ValidatedWrite {
-    /// Returns any validation issues found during finalization.
+    /// Returns any [`Issue`] items found during finalization.
     #[must_use]
     pub fn issues(&self) -> &[Issue] {
         &self.issues
     }
 
-    /// Returns `true` if there are any error-level issues.
+    /// Returns `true` if there are any [`Severity::Error`] issues.
     #[must_use]
     pub fn has_errors(&self) -> bool {
         self.issues.has_errors()
     }
 
-    /// Returns `true` if there are any warning-level issues.
+    /// Returns `true` if there are any [`Severity::Warning`] issues.
     #[must_use]
     pub fn has_warnings(&self) -> bool {
         self.issues.has_warnings()
@@ -218,7 +218,7 @@ impl ValidatedWrite {
     /// Writes the XPT file to the specified path.
     ///
     /// Returns a list of file paths created. If the file was split due to size
-    /// limits (configured via `max_size_gb` or automatically when an agency is
+    /// limits (configured via `max_size_gb` or automatically when an [`Agency`] is
     /// specified), multiple paths are returned (e.g., `ae_001.xpt`, `ae_002.xpt`).
     ///
     /// # Example
@@ -227,7 +227,7 @@ impl ValidatedWrite {
     /// use xportrs::{Xpt, Agency, Dataset};
     ///
     /// # let dataset = Dataset::new("AE", vec![]).unwrap();
-    /// // With FDA agency, files > 5GB are automatically split
+    /// // With [`Agency::FDA`], files > 5GB are automatically split
     /// let mut builder = Xpt::writer(dataset);
     /// builder.agency(Agency::FDA);
     /// let files = builder.finalize()?.write_path("ae.xpt")?;
@@ -240,7 +240,7 @@ impl ValidatedWrite {
     ///
     /// # Errors
     ///
-    /// Returns an error if writing fails.
+    /// Returns an [`Error`] if writing fails.
     #[must_use = "this returns a Result that should be handled"]
     pub fn write_path(self, path: impl AsRef<Path>) -> Result<Vec<PathBuf>> {
         let path = path.as_ref();
@@ -262,11 +262,11 @@ impl ValidatedWrite {
         Ok(vec![path.to_path_buf()])
     }
 
-    /// Writes the XPT file to a writer.
+    /// Writes the XPT file to a [`std::io::Write`] implementor.
     ///
     /// # Errors
     ///
-    /// Returns an error if writing fails.
+    /// Returns an [`Error`] if writing fails.
     #[must_use = "this returns a Result that should be handled"]
     pub fn write_to<W: std::io::Write>(self, writer: W) -> Result<()> {
         let xpt_writer = XptWriter::new(writer, self.config.write);

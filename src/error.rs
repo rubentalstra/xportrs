@@ -18,10 +18,10 @@ pub enum Error {
     #[error("io error: {0}")]
     Io(#[from] std::io::Error),
 
-    /// The requested XPT version is not supported.
+    /// The requested [`XptVersion`] is not supported.
     #[error("unsupported XPT version: {version:?}")]
     UnsupportedVersion {
-        /// The unsupported version that was requested.
+        /// The unsupported [`XptVersion`] that was requested.
         version: XptVersion,
     },
 
@@ -140,5 +140,5 @@ impl Error {
     }
 }
 
-/// A type alias for `Result<T, Error>`.
+/// A type alias for `Result<T, `[`Error`]`>`.
 pub type Result<T> = std::result::Result<T, Error>;
