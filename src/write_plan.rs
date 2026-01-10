@@ -130,6 +130,7 @@ impl XptWritePlan {
     /// Returns an error if:
     /// - XPT v8 is requested (not yet implemented)
     /// - Strict mode is enabled and validation errors are found
+    #[must_use = "this returns a Result that should be handled"]
     pub fn finalize(mut self) -> Result<FinalizedWritePlan> {
         // Check version support
         if !self.version.is_implemented() {
@@ -244,6 +245,7 @@ impl FinalizedWritePlan {
     /// # Errors
     ///
     /// Returns an error if writing fails.
+    #[must_use = "this returns a Result that should be handled"]
     pub fn write_path(self, path: impl AsRef<Path>) -> Result<Vec<PathBuf>> {
         let path = path.as_ref();
 
@@ -269,6 +271,7 @@ impl FinalizedWritePlan {
     /// # Errors
     ///
     /// Returns an error if writing fails.
+    #[must_use = "this returns a Result that should be handled"]
     pub fn write_to<W: std::io::Write>(self, writer: W) -> Result<()> {
         let xpt_writer = XptWriter::new(writer, self.config.write);
         xpt_writer.write(&self.dataset, &self.schema)?;

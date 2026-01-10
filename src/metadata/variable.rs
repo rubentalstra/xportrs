@@ -8,7 +8,7 @@ use crate::dataset::VariableRole;
 ///
 /// This struct provides optional metadata that guides XPT file generation.
 /// When provided, it takes precedence over inferred values from the data.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct VariableMetadata {
     /// The domain code this variable belongs to.

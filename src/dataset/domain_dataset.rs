@@ -55,6 +55,7 @@ impl DomainDataset {
     /// # Errors
     ///
     /// Returns an error if any column has a different length than the others.
+    #[must_use = "this returns a Result that should be handled"]
     pub fn new(domain_code: String, columns: Vec<Column>) -> Result<Self> {
         let nrows = columns.first().map_or(0, Column::len);
 

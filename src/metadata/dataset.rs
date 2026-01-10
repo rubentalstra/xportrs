@@ -6,7 +6,7 @@
 ///
 /// This struct provides optional metadata that can override or supplement
 /// the information in a [`DomainDataset`](crate::DomainDataset).
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct DatasetMetadata {
     /// The domain code (e.g., "AE", "DM", "LB").

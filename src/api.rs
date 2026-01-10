@@ -107,6 +107,7 @@ impl Xpt {
     /// println!("Rows: {}", dataset.nrows);
     /// # Ok::<(), xportrs::XportrsError>(())
     /// ```
+    #[must_use = "this returns a Result that should be handled"]
     pub fn read(path: impl AsRef<Path>) -> Result<DomainDataset> {
         Self::reader(path)?.read()
     }
@@ -140,6 +141,7 @@ impl Xpt {
     /// let all = Xpt::reader("study.xpt")?.read_all()?;
     /// # Ok::<(), xportrs::XportrsError>(())
     /// ```
+    #[must_use = "this returns a Result that should be handled"]
     pub fn reader(path: impl AsRef<Path>) -> Result<XptReaderBuilder> {
         let file = File::open(path.as_ref()).map_err(XportrsError::Io)?;
         let reader = V5Reader::new(BufReader::new(file))?;
@@ -198,6 +200,7 @@ impl Xpt {
     /// }
     /// # Ok::<(), xportrs::XportrsError>(())
     /// ```
+    #[must_use = "this returns a Result that should be handled"]
     pub fn inspect(path: impl AsRef<Path>) -> Result<XptFile> {
         let file = File::open(path.as_ref()).map_err(XportrsError::Io)?;
         let reader = V5Reader::new(BufReader::new(file))?;
@@ -276,6 +279,7 @@ impl XptReaderBuilder {
     /// let dataset = Xpt::reader("ae.xpt")?.read()?;
     /// # Ok::<(), xportrs::XportrsError>(())
     /// ```
+    #[must_use = "this returns a Result that should be handled"]
     pub fn read(mut self) -> Result<DomainDataset> {
         let first_member = self
             .reader
@@ -306,6 +310,7 @@ impl XptReaderBuilder {
     /// let ae = Xpt::reader("study.xpt")?.read_member("AE")?;
     /// # Ok::<(), xportrs::XportrsError>(())
     /// ```
+    #[must_use = "this returns a Result that should be handled"]
     pub fn read_member(mut self, name: &str) -> Result<DomainDataset> {
         self.reader.read_member(name, &self.options)
     }
@@ -327,6 +332,7 @@ impl XptReaderBuilder {
     /// }
     /// # Ok::<(), xportrs::XportrsError>(())
     /// ```
+    #[must_use = "this returns a Result that should be handled"]
     pub fn read_all(mut self) -> Result<Vec<DomainDataset>> {
         self.reader.read_all(&self.options)
     }

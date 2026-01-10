@@ -10,7 +10,7 @@ use std::path::PathBuf;
 ///
 /// Each variant represents a specific type of issue with relevant context data.
 /// The issue's code, severity, and message are derived from the variant.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Issue {
     // =========================================================================
@@ -487,7 +487,7 @@ impl fmt::Display for Severity {
 }
 
 /// The target of a validation issue.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Target {
     /// A dataset by name.

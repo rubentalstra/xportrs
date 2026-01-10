@@ -8,7 +8,7 @@ use chrono::{DateTime, Utc};
 ///
 /// This struct controls the behavior of reading and writing operations,
 /// including strictness levels and verbosity.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Config {
     /// Whether to use strict checks (errors abort writes).
     pub strict_checks: bool,
@@ -83,7 +83,7 @@ pub enum Verbosity {
 }
 
 /// Options for writing XPT files.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, PartialEq)]
 pub struct WriteOptions {
     /// Maximum file size in GB before splitting.
     ///
@@ -131,7 +131,7 @@ impl WriteOptions {
 }
 
 /// Options for reading XPT files.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ReadOptions {
     /// Text decoding mode for character variables.
     pub text_mode: TextMode,
