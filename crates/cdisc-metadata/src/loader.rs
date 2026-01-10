@@ -78,24 +78,11 @@ pub fn load_standard(dir: &Path) -> Result<Standard> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::path::PathBuf;
-
-    fn tests_data_dir() -> PathBuf {
-        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .parent()
-            .unwrap()
-            .parent()
-            .unwrap()
-            .join("tests/data")
-    }
+    use crate::standard_path;
 
     #[test]
     fn test_load_sdtm_standard() {
-        let dir = tests_data_dir().join("sdtm/ig/v3.4");
-        if !dir.exists() {
-            return;
-        }
-
+        let dir = standard_path("sdtm", "v3.4");
         let standard = load_standard(&dir).unwrap();
         assert_eq!(standard.name, "SDTM-IG");
         assert_eq!(standard.version, "3.4");
@@ -104,11 +91,7 @@ mod tests {
 
     #[test]
     fn test_load_send_standard() {
-        let dir = tests_data_dir().join("send/ig/v3.1.1");
-        if !dir.exists() {
-            return;
-        }
-
+        let dir = standard_path("send", "v3.1.1");
         let standard = load_standard(&dir).unwrap();
         assert_eq!(standard.name, "SEND-IG");
         assert_eq!(standard.version, "3.1.1");
@@ -117,11 +100,7 @@ mod tests {
 
     #[test]
     fn test_load_adam_standard() {
-        let dir = tests_data_dir().join("adam/ig/v1.3");
-        if !dir.exists() {
-            return;
-        }
-
+        let dir = standard_path("adam", "v1.3");
         let standard = load_standard(&dir).unwrap();
         assert_eq!(standard.name, "ADaM-IG");
         assert_eq!(standard.version, "1.3");

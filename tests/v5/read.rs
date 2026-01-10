@@ -2,7 +2,7 @@
 
 use std::path::PathBuf;
 
-use cdisc_metadata::load_standard;
+use cdisc_metadata::sdtm_ig_v3_4;
 use xportrs::Xpt;
 
 /// Get the path to test data directory.
@@ -78,10 +78,9 @@ fn test_read_suppdm() {
 #[test]
 fn test_dm_matches_sdtm_metadata() {
     let xpt_path = test_data_dir().join("dm.xpt");
-    let metadata_dir = test_data_dir().join("sdtm/ig/v3.4");
 
     let dataset = Xpt::read(&xpt_path).expect("Failed to read dm.xpt");
-    let standard = load_standard(&metadata_dir).expect("Failed to load SDTM metadata");
+    let standard = sdtm_ig_v3_4().expect("Failed to load SDTM-IG v3.4");
 
     // Get expected DM variables from metadata
     let expected_vars = standard.variables_for_dataset("DM");
