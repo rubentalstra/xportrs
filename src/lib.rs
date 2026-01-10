@@ -1,17 +1,9 @@
 //! # xportrs
 //!
-//! Pure Rust SAS XPORT (XPT) reader and writer for CDISC domain datasets.
+//! Pure Rust SAS XPORT (XPT) reader and writer for CDISC clinical trial data submissions.
 //!
 //! `xportrs` provides a safe, DataFrame-agnostic implementation of XPT v5 I/O
-//! and compliance tooling for clinical trial data submissions.
-//!
-//! ## Features
-//!
-//! - **Pure Rust**: No unsafe code (`#![forbid(unsafe_code)]`)
-//! - **DataFrame-agnostic**: Works with any in-memory table representation
-//! - **Agency compliance**: Built-in validation for FDA, NMPA, and PMDA
-//! - **XPT v5**: Full read and write support
-//! - **XPT v8**: API-ready (not yet implemented)
+//! with built-in regulatory compliance validation for FDA, PMDA, and NMPA submissions.
 //!
 //! ## Quick Start
 //!
@@ -20,12 +12,12 @@
 //! ```no_run
 //! use xportrs::Xpt;
 //!
-//! // Simple: read first dataset
+//! // Read the first dataset from a file
 //! let dataset = Xpt::read("ae.xpt")?;
 //! println!("Domain: {}", dataset.domain_code());
 //! println!("Rows: {}", dataset.nrows());
 //!
-//! // With options or specific member
+//! // Read a specific member from a multi-dataset file
 //! let dm = Xpt::reader("study.xpt")?.read_member("DM")?;
 //! # Ok::<(), xportrs::Error>(())
 //! ```
@@ -46,12 +38,12 @@
 //!     ],
 //! )?;
 //!
-//! // Without agency: applies only XPT v5 structural validation
+//! // Write with structural validation only
 //! Xpt::writer(dataset.clone())
 //!     .finalize()?
 //!     .write_path("ae.xpt")?;
 //!
-//! // With agency: applies agency-specific validation rules
+//! // Write with FDA agency compliance validation
 //! Xpt::writer(dataset)
 //!     .agency(Agency::FDA)
 //!     .finalize()?
@@ -59,14 +51,46 @@
 //! # Ok::<(), xportrs::Error>(())
 //! ```
 //!
-//! ## Modules
+//! ## Entry Points
 //!
-//! - [`agency`]: Regulatory agency definitions (FDA, PMDA, NMPA)
-//! - [`config`]: Configuration options for reading and writing
-//! - [`dataset`]: Core data structures (`Dataset`, `Column`, `ColumnData`)
-//! - [`metadata`]: Variable and dataset metadata
-//! - [`validate`]: Validation logic and issue reporting
-//! - [`xpt`]: XPT format implementation details
+//! The [`Xpt`] struct provides all main functionality:
+//!
+//! - [`Xpt::read`] - Read a file in one line
+//! - [`Xpt::reader`] - Read with options (member selection, etc.)
+//! - [`Xpt::writer`] - Build a validated write plan
+//! - [`Xpt::inspect`] - Examine file metadata without loading data
+//!
+//! ## Data Types
+//!
+//! - [`Dataset`] - Tabular data container with domain code and columns
+//! - [`Column`] - Single variable with name and data
+//! - [`ColumnData`] - Type-safe column values (numeric, character, date/time)
+//! - [`DomainCode`] - Type-safe domain identifier (e.g., "AE", "DM", "LB")
+//! - [`Label`] - Type-safe label string for datasets and variables
+//!
+//! ## Validation & Compliance
+//!
+//! - [`Agency`] - FDA, PMDA, NMPA regulatory requirements
+//! - [`Issue`] - Validation problems with severity and context
+//! - [`Severity`] - Error (blocking) or Warning (informational)
+//!
+//! When an agency is specified, the following rules are enforced:
+//!
+//! - ASCII-only names, labels, and character values
+//! - Dataset names: max 8 bytes, uppercase alphanumeric
+//! - Variable names: max 8 bytes, uppercase alphanumeric with underscores
+//! - Labels: max 40 bytes
+//! - Character values: max 200 bytes
+//! - Automatic file splitting for files exceeding 5GB
+//!
+//! ## Feature Flags
+//!
+//! | Feature   | Description                                        |
+//! |-----------|---------------------------------------------------|
+//! | `serde`   | Serialization/deserialization support              |
+//! | `tracing` | Structured logging with the `tracing` crate       |
+//! | `polars`  | Polars `DataFrame` integration                     |
+//! | `full`    | All optional features                              |
 //!
 //! ## CDISC Terminology
 //!
@@ -75,11 +99,6 @@
 //! - **Domain dataset**: A table identified by a domain code (e.g., "AE", "DM", "LB")
 //! - **Observation**: One row/record in the dataset
 //! - **Variable**: One column; may have a role (Identifier/Topic/Timing/Qualifier/Rule)
-//!
-//! ## Safety
-//!
-//! This crate is built with `#![forbid(unsafe_code)]`. All binary parsing and
-//! encoding uses safe Rust constructs.
 
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
@@ -97,6 +116,10 @@ mod schema;
 pub mod validate;
 mod write_plan;
 pub mod xpt;
+
+// Optional integrations
+#[cfg(feature = "polars")]
+pub mod polars;
 
 // Main entry point - the unified API
 pub use api::{Xpt, XptReaderBuilder};

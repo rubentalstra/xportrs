@@ -88,6 +88,14 @@ pub enum Error {
         /// A description of the encoding error.
         message: String,
     },
+
+    /// A Polars conversion error occurred.
+    #[cfg(feature = "polars")]
+    #[error("polars error: {message}")]
+    Polars {
+        /// A description of the Polars error.
+        message: String,
+    },
 }
 
 impl Error {
