@@ -86,7 +86,8 @@ impl XptWritePlan {
 
     /// Sets the configuration.
     #[must_use]
-    pub fn config(mut self, config: Config) -> Self {
+    #[allow(dead_code)]
+    pub(crate) fn config(mut self, config: Config) -> Self {
         self.config = config;
         self
     }
@@ -103,14 +104,16 @@ impl XptWritePlan {
 
     /// Sets variable metadata.
     #[must_use]
-    pub fn variable_metadata(mut self, meta: Vec<VariableMetadata>) -> Self {
+    #[allow(dead_code)]
+    pub(crate) fn variable_metadata(mut self, meta: Vec<VariableMetadata>) -> Self {
         self.variable_meta = Some(meta);
         self
     }
 
     /// Sets dataset metadata.
     #[must_use]
-    pub fn dataset_metadata(mut self, meta: DatasetMetadata) -> Self {
+    #[allow(dead_code)]
+    pub(crate) fn dataset_metadata(mut self, meta: DatasetMetadata) -> Self {
         self.dataset_meta = Some(meta);
         self
     }

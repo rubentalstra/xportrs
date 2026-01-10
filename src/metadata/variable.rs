@@ -10,7 +10,7 @@ use crate::dataset::VariableRole;
 /// When provided, it takes precedence over inferred values from the data.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct VariableMetadata {
+pub(crate) struct VariableMetadata {
     /// The domain code this variable belongs to.
     pub domain_code: String,
 
@@ -47,10 +47,11 @@ pub struct VariableMetadata {
     pub role: Option<VariableRole>,
 }
 
+#[allow(dead_code)]
 impl VariableMetadata {
     /// Creates new variable metadata with required fields.
     #[must_use]
-    pub fn new(domain_code: impl Into<String>, variable_name: impl Into<String>) -> Self {
+    pub(crate) fn new(domain_code: impl Into<String>, variable_name: impl Into<String>) -> Self {
         Self {
             domain_code: domain_code.into(),
             variable_name: variable_name.into(),
@@ -60,42 +61,42 @@ impl VariableMetadata {
 
     /// Sets the XPT type.
     #[must_use]
-    pub fn with_xpt_type(mut self, xpt_type: XptVarType) -> Self {
+    pub(crate) fn with_xpt_type(mut self, xpt_type: XptVarType) -> Self {
         self.xpt_type = Some(xpt_type);
         self
     }
 
     /// Sets the byte length.
     #[must_use]
-    pub fn with_length(mut self, length: usize) -> Self {
+    pub(crate) fn with_length(mut self, length: usize) -> Self {
         self.length = Some(length);
         self
     }
 
     /// Sets the label.
     #[must_use]
-    pub fn with_label(mut self, label: impl Into<String>) -> Self {
+    pub(crate) fn with_label(mut self, label: impl Into<String>) -> Self {
         self.label = Some(label.into());
         self
     }
 
     /// Sets the format.
     #[must_use]
-    pub fn with_format(mut self, format: impl Into<String>) -> Self {
+    pub(crate) fn with_format(mut self, format: impl Into<String>) -> Self {
         self.format = Some(format.into());
         self
     }
 
     /// Sets the ordering key.
     #[must_use]
-    pub fn with_order(mut self, order: i32) -> Self {
+    pub(crate) fn with_order(mut self, order: i32) -> Self {
         self.order = Some(order);
         self
     }
 
     /// Sets the variable role.
     #[must_use]
-    pub fn with_role(mut self, role: VariableRole) -> Self {
+    pub(crate) fn with_role(mut self, role: VariableRole) -> Self {
         self.role = Some(role);
         self
     }

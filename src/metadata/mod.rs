@@ -7,5 +7,6 @@
 mod dataset;
 mod variable;
 
-pub use dataset::DatasetMetadata;
-pub use variable::{VariableMetadata, XptVarType};
+pub(crate) use dataset::DatasetMetadata;
+pub(crate) use variable::VariableMetadata;
+pub use variable::XptVarType;

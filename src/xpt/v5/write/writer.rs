@@ -31,7 +31,7 @@ pub struct XptWriter<W: Write> {
 
 impl<W: Write> XptWriter<W> {
     /// Creates a new XPT writer.
-    pub fn new(writer: W, options: WriteOptions) -> Self {
+    pub(crate) fn new(writer: W, options: WriteOptions) -> Self {
         Self {
             writer: RecordWriter::new(writer),
             options,
@@ -193,7 +193,7 @@ impl XptWriter<BufWriter<File>> {
     /// # Errors
     ///
     /// Returns an error if the file cannot be created.
-    pub fn create(path: impl AsRef<Path>, options: WriteOptions) -> Result<Self> {
+    pub(crate) fn create(path: impl AsRef<Path>, options: WriteOptions) -> Result<Self> {
         let file = File::create(path.as_ref()).map_err(XportrsError::Io)?;
         Ok(Self::new(BufWriter::new(file), options))
     }

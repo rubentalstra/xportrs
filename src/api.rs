@@ -13,16 +13,6 @@
 //! # Ok::<(), xportrs::XportrsError>(())
 //! ```
 //!
-//! ## Read with options
-//! ```no_run
-//! use xportrs::{Xpt, ReadOptions, TextMode};
-//!
-//! let dataset = Xpt::reader("ae.xpt")?
-//!     .options(ReadOptions::new().with_text_mode(TextMode::Latin1))
-//!     .read()?;
-//! # Ok::<(), xportrs::XportrsError>(())
-//! ```
-//!
 //! ## Write a dataset
 //! ```no_run
 //! use xportrs::{Xpt, DomainDataset, Column, ColumnData};
@@ -127,12 +117,10 @@ impl Xpt {
     /// # Example
     ///
     /// ```no_run
-    /// use xportrs::{Xpt, ReadOptions};
+    /// use xportrs::Xpt;
     ///
-    /// // Read with custom options
-    /// let dataset = Xpt::reader("ae.xpt")?
-    ///     .options(ReadOptions::default())
-    ///     .read()?;
+    /// // Read the first dataset
+    /// let dataset = Xpt::reader("ae.xpt")?.read()?;
     ///
     /// // Read a specific member
     /// let dm = Xpt::reader("study.xpt")?.read_member("DM")?;
@@ -226,22 +214,10 @@ impl std::fmt::Debug for XptReaderBuilder {
 }
 
 impl XptReaderBuilder {
-    /// Sets custom read options.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use xportrs::{Xpt, ReadOptions, TextMode};
-    ///
-    /// let dataset = Xpt::reader("ae.xpt")?
-    ///     .options(ReadOptions::new()
-    ///         .with_text_mode(TextMode::Latin1)
-    ///         .with_preserve_blanks(false))
-    ///     .read()?;
-    /// # Ok::<(), xportrs::XportrsError>(())
-    /// ```
+    /// Sets custom read options (internal use).
     #[must_use]
-    pub fn options(mut self, options: ReadOptions) -> Self {
+    #[allow(dead_code)]
+    pub(crate) fn options(mut self, options: ReadOptions) -> Self {
         self.options = options;
         self
     }

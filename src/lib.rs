@@ -105,7 +105,7 @@ pub use api::{Xpt, XptReaderBuilder};
 pub use agency::Agency;
 
 // Configuration types users may need
-pub use config::{Config, ReadOptions, TextMode, Verbosity, WriteOptions};
+pub use config::{TextMode, Verbosity};
 
 // Dataset types - needed to construct data
 pub use dataset::{Column, ColumnData, DomainDataset, VariableRole};
@@ -114,7 +114,7 @@ pub use dataset::{Column, ColumnData, DomainDataset, VariableRole};
 pub use error::{Result, XportrsError};
 
 // Metadata types - for advanced usage
-pub use metadata::{DatasetMetadata, VariableMetadata, XptVarType};
+pub use metadata::XptVarType;
 
 // Validation types
 pub use validate::{Issue, Severity, Target};

@@ -78,7 +78,7 @@ impl<R: Read + Seek> XptReader<R> {
     /// # Errors
     ///
     /// Returns an error if the member is not found or cannot be read.
-    pub fn read_member(&mut self, name: &str, options: &ReadOptions) -> Result<DomainDataset> {
+    pub(crate) fn read_member(&mut self, name: &str, options: &ReadOptions) -> Result<DomainDataset> {
         let member = self
             .file_info
             .find_member(name)
@@ -95,7 +95,7 @@ impl<R: Read + Seek> XptReader<R> {
     /// # Errors
     ///
     /// Returns an error if any member cannot be read.
-    pub fn read_all(&mut self, options: &ReadOptions) -> Result<Vec<DomainDataset>> {
+    pub(crate) fn read_all(&mut self, options: &ReadOptions) -> Result<Vec<DomainDataset>> {
         let members: Vec<_> = self.file_info.members.clone();
         let mut datasets = Vec::with_capacity(members.len());
 
