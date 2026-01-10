@@ -14,7 +14,7 @@
 // are part of the planned v8 API but not yet used.
 #![allow(dead_code)]
 
-use crate::error::{Result, Error};
+use crate::error::{Error, Result};
 use crate::xpt::XptVersion;
 
 /// Checks if V8 operations are supported.

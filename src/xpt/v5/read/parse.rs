@@ -4,7 +4,7 @@
 
 use std::io::{Read, Seek};
 
-use crate::error::{Result, Error};
+use crate::error::{Error, Result};
 use crate::xpt::v5::constants::{
     LIBRARY_HEADER, MEMBER_HEADER, NAMESTR_HEADER, NAMESTR_LEN, OBS_HEADER, RECORD_LEN,
 };
@@ -37,9 +37,7 @@ pub struct XptMemberInfo {
 pub fn parse_header<R: Read + Seek>(reader: &mut R) -> Result<XptInfo> {
     // Read and validate library header
     let mut header_buf = [0u8; RECORD_LEN];
-    reader
-        .read_exact(&mut header_buf)
-        .map_err(Error::Io)?;
+    reader.read_exact(&mut header_buf).map_err(Error::Io)?;
 
     if &header_buf != LIBRARY_HEADER {
         return Err(Error::corrupt(
@@ -48,17 +46,13 @@ pub fn parse_header<R: Read + Seek>(reader: &mut R) -> Result<XptInfo> {
     }
 
     // Read first real header record (contains SAS identifier and timestamps)
-    reader
-        .read_exact(&mut header_buf)
-        .map_err(Error::Io)?;
+    reader.read_exact(&mut header_buf).map_err(Error::Io)?;
 
     let created = extract_timestamp(&header_buf, 32, 48);
     let modified = extract_timestamp(&header_buf, 48, 64);
 
     // Read second header record (typically contains modified timestamp)
-    reader
-        .read_exact(&mut header_buf)
-        .map_err(Error::Io)?;
+    reader.read_exact(&mut header_buf).map_err(Error::Io)?;
 
     // Parse members
     let mut members = Vec::new();
@@ -128,9 +122,7 @@ fn parse_member<R: Read + Seek>(reader: &mut R) -> Result<XptMemberInfo> {
     let namestr_records = namestr_total_bytes.div_ceil(RECORD_LEN);
 
     let mut namestr_data = vec![0u8; namestr_records * RECORD_LEN];
-    reader
-        .read_exact(&mut namestr_data)
-        .map_err(Error::Io)?;
+    reader.read_exact(&mut namestr_data).map_err(Error::Io)?;
 
     for i in 0..nvars {
         let start = i * NAMESTR_LEN;

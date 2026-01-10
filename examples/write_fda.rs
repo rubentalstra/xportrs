@@ -14,10 +14,7 @@ fn main() -> xportrs::Result<()> {
         vec![
             Column::new(
                 "STUDYID",
-                ColumnData::String(vec![
-                    Some("STUDY001".into()),
-                    Some("STUDY001".into()),
-                ]),
+                ColumnData::String(vec![Some("STUDY001".into()), Some("STUDY001".into())]),
             ),
             Column::new(
                 "USUBJID",

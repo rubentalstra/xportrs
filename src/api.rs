@@ -32,7 +32,7 @@ use std::path::Path;
 
 use crate::config::ReadOptions;
 use crate::dataset::Dataset;
-use crate::error::{Result, Error};
+use crate::error::{Error, Result};
 use crate::write_plan::XptWriterBuilder;
 use crate::xpt::v5::read::{XptInfo, XptReader as V5Reader};
 

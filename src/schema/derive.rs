@@ -8,10 +8,10 @@ use std::collections::HashMap;
 use crate::agency::Agency;
 use crate::config::Config;
 use crate::dataset::{ColumnData, Dataset};
-use crate::error::{Result, Error};
+use crate::error::{Error, Result};
 use crate::metadata::{DatasetMetadata, VariableMetadata, XptVarType};
 
-use super::plan::{VariableSpec, DatasetSchema};
+use super::plan::{DatasetSchema, VariableSpec};
 
 /// Derives a schema plan from a dataset and optional metadata.
 ///

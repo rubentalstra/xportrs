@@ -34,17 +34,15 @@ fn main() -> xportrs::Result<()> {
             Column::new("AGE", ColumnData::I64(vec![Some(45), Some(62), Some(38)])),
             Column::new(
                 "SEX",
-                ColumnData::String(vec![
-                    Some("M".into()),
-                    Some("F".into()),
-                    Some("M".into()),
-                ]),
+                ColumnData::String(vec![Some("M".into()), Some("F".into()), Some("M".into())]),
             ),
         ],
     )?;
 
     println!("Writing original dataset...");
-    Xpt::writer(original).finalize()?.write_path(original_path)?;
+    Xpt::writer(original)
+        .finalize()?
+        .write_path(original_path)?;
 
     // Read the dataset back
     let dataset = Xpt::read(original_path)?;

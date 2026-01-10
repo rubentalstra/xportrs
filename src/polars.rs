@@ -118,7 +118,10 @@ fn column_data_to_series(name: &str, data: &ColumnData) -> Result<Series> {
                 .iter()
                 .map(|opt| opt.as_ref().map(|b| bytes_to_hex(b)))
                 .collect();
-            let ca: StringChunked = strings.iter().map(|s: &Option<String>| s.as_deref()).collect();
+            let ca: StringChunked = strings
+                .iter()
+                .map(|s: &Option<String>| s.as_deref())
+                .collect();
             ca.with_name(name.into()).into_series()
         }
         ColumnData::Date(values) => {

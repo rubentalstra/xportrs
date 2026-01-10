@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 
 use crate::config::WriteOptions;
 use crate::dataset::{Column, ColumnData, Dataset};
-use crate::error::{Result, Error};
+use crate::error::{Error, Result};
 use crate::schema::DatasetSchema;
 
 use super::size::max_rows_for_size;
@@ -28,7 +28,11 @@ impl SplitWriter {
     /// * `base_path` - Base path for output files (e.g., "output/ae.xpt")
     /// * `max_size_gb` - Maximum file size in GB
     /// * `options` - Write options
-    pub(crate) fn new(base_path: impl AsRef<Path>, max_size_gb: f64, options: WriteOptions) -> Self {
+    pub(crate) fn new(
+        base_path: impl AsRef<Path>,
+        max_size_gb: f64,
+        options: WriteOptions,
+    ) -> Self {
         let max_size_bytes = (max_size_gb * 1024.0 * 1024.0 * 1024.0) as usize;
         Self {
             base_path: base_path.as_ref().to_path_buf(),

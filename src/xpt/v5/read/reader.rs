@@ -8,7 +8,7 @@ use std::path::Path;
 
 use crate::config::ReadOptions;
 use crate::dataset::{Column, ColumnData, Dataset};
-use crate::error::{Result, Error};
+use crate::error::{Error, Result};
 
 use super::obs::ObservationReader;
 use super::parse::{XptMemberInfo, parse_header};
@@ -147,9 +147,7 @@ impl<R: Read + Seek> XptReader<R> {
                             (ColumnData::F64(vec), ObsValue::Numeric(v)) => vec.push(v),
                             (ColumnData::String(vec), ObsValue::Character(v)) => vec.push(v),
                             _ => {
-                                return Err(Error::corrupt(
-                                    "type mismatch in observation data",
-                                ));
+                                return Err(Error::corrupt("type mismatch in observation data"));
                             }
                         }
                     }

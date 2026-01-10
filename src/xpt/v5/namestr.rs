@@ -6,7 +6,7 @@
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use std::io::Cursor;
 
-use crate::error::{Result, Error};
+use crate::error::{Error, Result};
 use crate::metadata::XptVarType;
 use crate::schema::VariableSpec;
 
@@ -110,9 +110,7 @@ pub(crate) fn pack_namestr(var: &VariableSpec, var_num: usize) -> Result<[u8; NA
 
     // ntype: 1 = numeric, 2 = character
     let ntype: i16 = if var.xpt_type.is_numeric() { 1 } else { 2 };
-    cursor
-        .write_i16::<BigEndian>(ntype)
-        .map_err(Error::Io)?;
+    cursor.write_i16::<BigEndian>(ntype).map_err(Error::Io)?;
 
     // nhfun: hash (unused)
     cursor.write_i16::<BigEndian>(0).map_err(Error::Io)?;

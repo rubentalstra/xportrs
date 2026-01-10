@@ -5,7 +5,7 @@
 use std::io::Read;
 
 use crate::config::ReadOptions;
-use crate::error::{Result, Error};
+use crate::error::{Error, Result};
 use crate::xpt::v5::constants::RECORD_LEN;
 use crate::xpt::v5::encoding::{decode_ibm_float, decode_text};
 use crate::xpt::v5::namestr::NamestrV5;
@@ -30,7 +30,11 @@ impl<'a, R: Read> ObservationReader<'a, R> {
     /// # Errors
     ///
     /// Returns an error if the reader cannot be initialized.
-    pub(crate) fn new(reader: &'a mut R, variables: &[NamestrV5], options: &ReadOptions) -> Result<Self> {
+    pub(crate) fn new(
+        reader: &'a mut R,
+        variables: &[NamestrV5],
+        options: &ReadOptions,
+    ) -> Result<Self> {
         let row_len: usize = variables.iter().map(NamestrV5::length).sum();
 
         Ok(Self {

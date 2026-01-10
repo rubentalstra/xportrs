@@ -10,7 +10,7 @@ use chrono::Utc;
 
 use crate::config::WriteOptions;
 use crate::dataset::{ColumnData, Dataset};
-use crate::error::{Result, Error};
+use crate::error::{Error, Result};
 use crate::schema::DatasetSchema;
 use crate::xpt::v5::constants::{
     LIBRARY_HEADER, MEMBER_HEADER, MEMBER_HEADER_DATA, NAMESTR_HEADER, OBS_HEADER, PAD_CHAR,
@@ -92,9 +92,7 @@ impl<W: Write> XptWriter<W> {
     /// Writes the member header section.
     fn write_member_header(&mut self, plan: &DatasetSchema) -> Result<()> {
         // Record 1: Member header marker
-        self.writer
-            .write_record(MEMBER_HEADER)
-            .map_err(Error::Io)?;
+        self.writer.write_record(MEMBER_HEADER).map_err(Error::Io)?;
 
         // Record 2: Member descriptor
         // Format (must match parse.rs expectations):
@@ -134,25 +132,19 @@ impl<W: Write> XptWriter<W> {
         header[54..60].copy_from_slice(nvars_str.as_bytes());
         header[60..80].copy_from_slice(b"00000000000000000000");
 
-        self.writer
-            .write_record(&header)
-            .map_err(Error::Io)?;
+        self.writer.write_record(&header).map_err(Error::Io)?;
 
         // Write NAMESTR records for each variable
         for (i, var) in plan.variables.iter().enumerate() {
             let namestr = pack_namestr(var, i)?;
-            self.writer
-                .write_bytes(&namestr)
-                .map_err(Error::Io)?;
+            self.writer.write_bytes(&namestr).map_err(Error::Io)?;
         }
 
         // Pad to record boundary
         self.writer.pad_and_flush().map_err(Error::Io)?;
 
         // OBS header record
-        self.writer
-            .write_record(OBS_HEADER)
-            .map_err(Error::Io)?;
+        self.writer.write_record(OBS_HEADER).map_err(Error::Io)?;
 
         Ok(())
     }
@@ -162,10 +154,7 @@ impl<W: Write> XptWriter<W> {
         for row_idx in 0..dataset.nrows() {
             for var in &plan.variables {
                 let col = dataset.column(&var.name).ok_or_else(|| {
-                    Error::invalid_schema(format!(
-                        "column '{}' not found in dataset",
-                        var.name
-                    ))
+                    Error::invalid_schema(format!("column '{}' not found in dataset", var.name))
                 })?;
 
                 if var.xpt_type.is_numeric() {
@@ -224,9 +213,7 @@ fn get_numeric_value(data: &ColumnData, row: usize) -> Result<Option<f64>> {
             .copied()
             .flatten()
             .map(|t| sas_seconds_since_midnight(t) as f64)),
-        _ => Err(Error::invalid_schema(
-            "expected numeric column data type",
-        )),
+        _ => Err(Error::invalid_schema("expected numeric column data type")),
     }
 }
 
@@ -255,9 +242,7 @@ fn get_character_value(data: &ColumnData, row: usize) -> Result<Option<String>> 
             .copied()
             .flatten()
             .map(|t| t.format("%H:%M:%S").to_string())),
-        _ => Err(Error::invalid_schema(
-            "expected character column data type",
-        )),
+        _ => Err(Error::invalid_schema("expected character column data type")),
     }
 }
 

@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 use crate::agency::Agency;
 use crate::config::Config;
 use crate::dataset::Dataset;
-use crate::error::{Result, Error};
+use crate::error::{Error, Result};
 use crate::metadata::{DatasetMetadata, VariableMetadata};
 use crate::schema::{DatasetSchema, derive_schema_plan};
 use crate::validate::{Issue, IssueCollection, validate_v5_schema};
@@ -316,7 +316,9 @@ mod tests {
         )
         .unwrap();
 
-        let plan = XptWriterBuilder::new(dataset).agency(Agency::FDA).finalize();
+        let plan = XptWriterBuilder::new(dataset)
+            .agency(Agency::FDA)
+            .finalize();
 
         assert!(plan.is_ok());
     }

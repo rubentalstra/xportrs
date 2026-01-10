@@ -25,15 +25,24 @@ fn main() -> xportrs::Result<()> {
         print!("  {} - ", col.name());
         match col.data() {
             ColumnData::String(values) => {
-                let first = values.first().and_then(|v| v.as_deref()).unwrap_or("(null)");
+                let first = values
+                    .first()
+                    .and_then(|v| v.as_deref())
+                    .unwrap_or("(null)");
                 println!("{} values, first: \"{}\"", values.len(), first);
             }
             ColumnData::I64(values) => {
-                let first = values.first().and_then(|v| *v).map_or("(null)".to_string(), |v| v.to_string());
+                let first = values
+                    .first()
+                    .and_then(|v| *v)
+                    .map_or("(null)".to_string(), |v| v.to_string());
                 println!("{} values, first: {}", values.len(), first);
             }
             ColumnData::F64(values) => {
-                let first = values.first().and_then(|v| *v).map_or("(null)".to_string(), |v| format!("{:.2}", v));
+                let first = values
+                    .first()
+                    .and_then(|v| *v)
+                    .map_or("(null)".to_string(), |v| format!("{:.2}", v));
                 println!("{} values, first: {}", values.len(), first);
             }
             _ => println!("{} values", col.len()),
@@ -49,10 +58,7 @@ fn create_test_file(path: &str) -> xportrs::Result<()> {
         vec![
             Column::new(
                 "USUBJID",
-                ColumnData::String(vec![
-                    Some("STUDY01-001".into()),
-                    Some("STUDY01-002".into()),
-                ]),
+                ColumnData::String(vec![Some("STUDY01-001".into()), Some("STUDY01-002".into())]),
             ),
             Column::new("AESEQ", ColumnData::I64(vec![Some(1), Some(1)])),
             Column::new("AESTDY", ColumnData::F64(vec![Some(15.0), Some(22.0)])),

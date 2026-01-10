@@ -5,7 +5,7 @@
 
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 
-use crate::error::{Result, Error};
+use crate::error::{Error, Result};
 
 use super::newtypes::{DomainCode, Label};
 
@@ -319,6 +319,63 @@ impl ColumnData {
     }
 }
 
+// Convenience From implementations for ColumnData.
+// These allow creating columns without wrapping values in Option.
+
+impl From<Vec<f64>> for ColumnData {
+    fn from(values: Vec<f64>) -> Self {
+        Self::F64(values.into_iter().map(Some).collect())
+    }
+}
+
+impl From<Vec<i64>> for ColumnData {
+    fn from(values: Vec<i64>) -> Self {
+        Self::I64(values.into_iter().map(Some).collect())
+    }
+}
+
+impl From<Vec<i32>> for ColumnData {
+    fn from(values: Vec<i32>) -> Self {
+        Self::I64(values.into_iter().map(|v| Some(i64::from(v))).collect())
+    }
+}
+
+impl From<Vec<bool>> for ColumnData {
+    fn from(values: Vec<bool>) -> Self {
+        Self::Bool(values.into_iter().map(Some).collect())
+    }
+}
+
+impl From<Vec<String>> for ColumnData {
+    fn from(values: Vec<String>) -> Self {
+        Self::String(values.into_iter().map(Some).collect())
+    }
+}
+
+impl From<Vec<&str>> for ColumnData {
+    fn from(values: Vec<&str>) -> Self {
+        Self::String(values.into_iter().map(|s| Some(s.to_string())).collect())
+    }
+}
+
+impl From<Vec<NaiveDate>> for ColumnData {
+    fn from(values: Vec<NaiveDate>) -> Self {
+        Self::Date(values.into_iter().map(Some).collect())
+    }
+}
+
+impl From<Vec<NaiveDateTime>> for ColumnData {
+    fn from(values: Vec<NaiveDateTime>) -> Self {
+        Self::DateTime(values.into_iter().map(Some).collect())
+    }
+}
+
+impl From<Vec<NaiveTime>> for ColumnData {
+    fn from(values: Vec<NaiveTime>) -> Self {
+        Self::Time(values.into_iter().map(Some).collect())
+    }
+}
+
 /// CDISC variable roles.
 ///
 /// These roles are metadata that help classify variables according to CDISC SDTM
@@ -400,5 +457,38 @@ mod tests {
         assert!(ColumnData::Time(vec![]).is_numeric());
         assert!(ColumnData::String(vec![]).is_character());
         assert!(ColumnData::Bytes(vec![]).is_character());
+    }
+
+    #[test]
+    fn test_column_data_from_conversions() {
+        // Test From<Vec<f64>>
+        let data: ColumnData = vec![1.0, 2.0, 3.0].into();
+        assert_eq!(data.len(), 3);
+        assert!(data.is_numeric());
+
+        // Test From<Vec<i64>>
+        let data: ColumnData = vec![1i64, 2, 3].into();
+        assert_eq!(data.len(), 3);
+        assert!(data.is_numeric());
+
+        // Test From<Vec<i32>>
+        let data: ColumnData = vec![1i32, 2, 3].into();
+        assert_eq!(data.len(), 3);
+        assert!(data.is_numeric());
+
+        // Test From<Vec<bool>>
+        let data: ColumnData = vec![true, false, true].into();
+        assert_eq!(data.len(), 3);
+        assert!(data.is_numeric());
+
+        // Test From<Vec<String>>
+        let data: ColumnData = vec!["a".to_string(), "b".to_string()].into();
+        assert_eq!(data.len(), 2);
+        assert!(data.is_character());
+
+        // Test From<Vec<&str>>
+        let data: ColumnData = vec!["a", "b", "c"].into();
+        assert_eq!(data.len(), 3);
+        assert!(data.is_character());
     }
 }
