@@ -12,9 +12,6 @@ on:
         default: false
         type: boolean
 
-permissions:
-  contents: read
-
 concurrency:
   group: publish-${{ github.ref }}
   cancel-in-progress: false
@@ -26,6 +23,8 @@ jobs:
   validate:
     name: Validate
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
       version: ${{ steps.version.outputs.version }}
     steps:
@@ -62,6 +61,10 @@ jobs:
     name: Publish
     needs: validate
     runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: read
+      id-token: write
     if: ${{ github.event_name == 'push' || !inputs.dry_run }}
     steps:
       - uses: actions/checkout@v6
@@ -69,10 +72,14 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Authenticate with crates.io
+        uses: rust-lang/crates-io-auth-action@v1
+        id: auth
+
       - name: Publish to crates.io
-        env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: cargo publish
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
 
       - name: Verify publication
         env:
