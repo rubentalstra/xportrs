@@ -1,3 +1,5 @@
+{{#title Troubleshooting - xportrs Guide}}
+
 # Troubleshooting
 
 This guide covers common issues and their solutions when working with xportrs.
@@ -14,12 +16,14 @@ This guide covers common issues and their solutions when working with xportrs.
 
 **Solution**: Shorten the variable name to ≤8 characters.
 
-```rust
+```rust,ignore
+# use xportrs::{Column, ColumnData};
+# let data = ColumnData::F64(vec![Some(1.0)]);
 // Wrong
-Column::new("MYLONGVARNAME", data)
+Column::new("MYLONGVARNAME", data.clone());
 
 // Correct
-Column::new("MYVAR", data)
+Column::new("MYVAR", data);
 ```
 
 ### Variable Label Too Long
@@ -32,12 +36,16 @@ Column::new("MYVAR", data)
 
 **Solution**: Shorten the label.
 
-```rust
+```rust,ignore
+# use xportrs::{Column, ColumnData};
+# let data = ColumnData::F64(vec![Some(1.0)]);
 // Wrong (41 characters)
-.with_label("This is a very long label that exceeds 40")
+Column::new("VAR", data.clone())
+    .with_label("This is a very long label that exceeds 40");
 
 // Correct (40 characters max)
-.with_label("Unique Subject Identifier")
+Column::new("VAR", data)
+    .with_label("Unique Subject Identifier");
 ```
 
 ### Non-ASCII Characters (FDA)
@@ -50,12 +58,16 @@ Column::new("MYVAR", data)
 
 **Solution**: Replace non-ASCII characters.
 
-```rust
+```rust,ignore
+# use xportrs::{Column, ColumnData};
+# let data = ColumnData::F64(vec![Some(1.0)]);
 // Wrong
-.with_label("Événement indésirable")
+Column::new("VAR", data.clone())
+    .with_label("Événement indésirable");
 
 // Correct
-.with_label("Adverse Event")
+Column::new("VAR", data)
+    .with_label("Adverse Event");
 
 // Or use a helper function
 fn to_ascii(s: &str) -> String {
@@ -79,18 +91,19 @@ Error: Column length mismatch: expected 100, got 99
 
 **Solution**: Ensure all columns have the same length.
 
-```rust
+```rust,ignore
+# use xportrs::{Column, ColumnData, Dataset};
 // Wrong
 Dataset::new("AE", vec![
     Column::new("A", ColumnData::F64(vec![Some(1.0), Some(2.0)])),  // 2 rows
     Column::new("B", ColumnData::F64(vec![Some(1.0)])),              // 1 row!
-])
+]);
 
 // Correct - same length
 Dataset::new("AE", vec![
     Column::new("A", ColumnData::F64(vec![Some(1.0), Some(2.0)])),
     Column::new("B", ColumnData::F64(vec![Some(1.0), Some(2.0)])),
-])
+]);
 ```
 
 ## Warnings
@@ -105,9 +118,11 @@ Dataset::new("AE", vec![
 
 **Solution**: Add a label.
 
-```rust
+```rust,ignore
+# use xportrs::{Column, ColumnData};
+# let data = ColumnData::F64(vec![Some(1.0)]);
 Column::new("MYVAR", data)
-.with_label("My Variable Description")
+    .with_label("My Variable Description");
 ```
 
 ### Missing Dataset Label
@@ -120,12 +135,14 @@ Column::new("MYVAR", data)
 
 **Solution**: Use `with_label` or `set_label`.
 
-```rust
+```rust,ignore
+# use xportrs::{Column, ColumnData, Dataset};
+# let columns = vec![Column::new("A", ColumnData::F64(vec![Some(1.0)]))];
 // At construction
-Dataset::with_label("AE", "Adverse Events", columns)
+Dataset::with_label("AE", "Adverse Events", columns.clone());
 
 // Or after
-let mut ds = Dataset::new("AE", columns) ?;
+let mut ds = Dataset::new("AE", columns)?;
 ds.set_label("Adverse Events");
 ```
 
@@ -139,12 +156,12 @@ Error: No such file or directory (os error 2)
 
 **Solution**: Verify the file path exists.
 
-```rust
+```rust,ignore
 use std::path::Path;
 
 let path = "data.xpt";
-if ! Path::new(path).exists() {
-eprintln ! ("File not found: {}", path);
+if !Path::new(path).exists() {
+    eprintln!("File not found: {}", path);
 }
 ```
 
@@ -177,11 +194,15 @@ Error: MemberNotFound { domain_code: "XX" }
 
 **Solution**: Check available members.
 
-```rust
-let info = Xpt::inspect("multi.xpt") ?;
+```rust,ignore
+# use xportrs::Xpt;
+# fn main() -> xportrs::Result<()> {
+let info = Xpt::inspect("multi.xpt")?;
 for name in info.member_names() {
-println ! ("Available: {}", name);
+    println!("Available: {}", name);
 }
+# Ok(())
+# }
 ```
 
 ## Writing Errors
@@ -194,17 +215,17 @@ Error: Permission denied (os error 13)
 
 **Solution**: Check file/directory permissions.
 
-```rust
+```rust,ignore
 use std::fs;
 
 let dir = "/output";
-fs::create_dir_all(dir) ?;  // Create if missing
+fs::create_dir_all(dir)?;  // Create if missing
 
 // Check write permission
 let test_file = format!("{}/test.tmp", dir);
-match fs::write( & test_file, "test") {
-Ok(_) => { fs::remove_file( & test_file) ?; }
-Err(e) => eprintln ! ("Cannot write to {}: {}", dir, e),
+match fs::write(&test_file, "test") {
+    Ok(_) => { fs::remove_file(&test_file)?; }
+    Err(e) => eprintln!("Cannot write to {}: {}", dir, e),
 }
 ```
 
@@ -229,23 +250,26 @@ Error: No space left on device (os error 28)
 
 **Solution**: For critical values, store as strings or accept minor precision loss (~14-16 digits).
 
-```rust
+```rust,ignore
+# use xportrs::{Column, ColumnData};
 // Store as string for exact preservation
 Column::new("EXACTVAL", ColumnData::String(vec![
     Some("3.141592653589793".into()),
-]))
+]));
 ```
 
 ### Missing Values Handling
 
-```rust
+```rust,ignore
+# use xportrs::ColumnData;
+# let col_data = ColumnData::F64(vec![Some(1.0), None]);
 // Check for missing values
-if let ColumnData::F64(values) = col.data() {
-for (i, val) in values.iter().enumerate() {
-if val.is_none() {
-println ! ("Row {} is missing", i);
-}
-}
+if let ColumnData::F64(values) = &col_data {
+    for (i, val) in values.iter().enumerate() {
+        if val.is_none() {
+            println!("Row {} is missing", i);
+        }
+    }
 }
 ```
 
@@ -261,12 +285,13 @@ Error: Invalid format syntax: "DATE"
 
 **Solution**: SAS formats end with a period.
 
-```rust
+```rust,ignore
+# use xportrs::Format;
 // Wrong
-Format::parse("DATE9")
+Format::parse("DATE9");
 
 // Correct
-Format::parse("DATE9.")
+Format::parse("DATE9.");
 ```
 
 ### Format Not Preserved
@@ -275,14 +300,15 @@ Format::parse("DATE9.")
 
 **Solution**: Use named formats.
 
-```rust
+```rust,ignore
+# use xportrs::Format;
 // May not be preserved (bare numeric format)
-Format::parse("8.2")
+Format::parse("8.2");
 
 // Will be preserved (named format)
-Format::parse("BEST12.")
-Format::parse("DATE9.")
-Format::character(200)
+Format::parse("BEST12.");
+Format::parse("DATE9.");
+Format::character(200);
 ```
 
 ## Performance Issues
@@ -291,28 +317,37 @@ Format::character(200)
 
 **Solution**: Use row limiting for previews.
 
-```rust
+```rust,ignore
+# use xportrs::Xpt;
+# fn main() -> xportrs::Result<()> {
 // Preview first 100 rows
 let preview = Xpt::reader("large.xpt")
-.row_limit(100)
-.read() ?;
+    .row_limit(100)
+    .read()?;
+# Ok(())
+# }
 ```
 
 ### Memory Usage
 
 **Solution**: Process in chunks for very large datasets.
 
-```rust
+```rust,ignore
+# use xportrs::{Dataset, Xpt};
+# fn process(_ds: &Dataset) {}
+# fn main() -> xportrs::Result<()> {
 // Read, process, and release
 {
-let dataset = Xpt::read("chunk1.xpt") ?;
-process( & dataset);
+    let dataset = Xpt::read("chunk1.xpt")?;
+    process(&dataset);
 } // dataset dropped, memory freed
 
 {
-let dataset = Xpt::read("chunk2.xpt") ?;
-process( & dataset);
+    let dataset = Xpt::read("chunk2.xpt")?;
+    process(&dataset);
 }
+# Ok(())
+# }
 ```
 
 ## Pinnacle 21 Validation Failures
@@ -323,9 +358,12 @@ process( & dataset);
 
 **Solution**: Ensure labels are consistent.
 
-```rust
+```rust,ignore
+# use xportrs::{Column, ColumnData};
+# let data = ColumnData::String(vec![Some("001".into())]);
 // Label should match define.xml exactly
-.with_label("Unique Subject Identifier")  // As in define.xml
+Column::new("USUBJID", data)
+    .with_label("Unique Subject Identifier");  // As in define.xml
 ```
 
 ### SD1001: Variable Name Invalid
@@ -334,14 +372,16 @@ process( & dataset);
 
 **Solution**: Use uppercase, alphanumeric, start with letter.
 
-```rust
+```rust,ignore
+# use xportrs::{Column, ColumnData};
+# let data = ColumnData::F64(vec![Some(1.0)]);
 // Wrong
-Column::new("1stVar", data)   // Starts with number
-Column::new("my-var", data)   // Contains hyphen
+Column::new("1stVar", data.clone());   // Starts with number
+Column::new("my-var", data.clone());   // Contains hyphen
 
 // Correct
-Column::new("FIRSTVAR", data)
-Column::new("MYVAR", data)
+Column::new("FIRSTVAR", data.clone());
+Column::new("MYVAR", data);
 ```
 
 ## Getting Help

@@ -1,6 +1,26 @@
 # Summary
 
-[Introduction](introduction.md)
+[Introduction](README.md)
+
+---
+
+# User Guide
+
+- [Quick Start](guides/quickstart.md)
+- [FDA Submission Workflow](guides/fda-submission.md)
+- [Read-Modify-Write](guides/roundtrip.md)
+- [Troubleshooting](guides/troubleshooting.md)
+
+# API Reference
+
+- [Dataset and Column](api/dataset.md)
+- [Format Type](api/format.md)
+- [Reading XPT Files](api/reading.md)
+- [Writing XPT Files](api/writing.md)
+- [Validation](api/validation.md)
+- [Metadata](api/metadata.md)
+
+---
 
 # Regulatory Compliance
 
@@ -18,21 +38,7 @@
 - [Timestamps and Dates](format/timestamps.md)
 - [Text Encoding](format/encoding.md)
 
-# API Reference
-
-- [Dataset and Column](api/dataset.md)
-- [Format Type](api/format.md)
-- [Reading XPT Files](api/reading.md)
-- [Writing XPT Files](api/writing.md)
-- [Validation](api/validation.md)
-- [Metadata](api/metadata.md)
-
-# Guides
-
-- [Quick Start](guides/quickstart.md)
-- [FDA Submission Workflow](guides/fda-submission.md)
-- [Read-Modify-Write](guides/roundtrip.md)
-- [Troubleshooting](guides/troubleshooting.md)
+---
 
 # Architecture
 
@@ -46,10 +52,12 @@
 - [Glossary](reference/glossary.md)
 - [Changelog](reference/changelog.md)
 
-# For Developers
+---
 
-- [For developers](for_developers/README.md)
+# Development
 
------------
+- [Contributing](for_developers/README.md)
+
+---
 
 [Contributors](misc/contributors.md)

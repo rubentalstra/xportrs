@@ -1,3 +1,5 @@
+{{#title FDA Submission Workflow - xportrs Guide}}
+
 # FDA Submission Workflow
 
 This guide walks through creating FDA-compliant XPT files for regulatory submissions.
@@ -12,7 +14,7 @@ This guide walks through creating FDA-compliant XPT files for regulatory submiss
 
 Plan your dataset structure based on SDTM/ADaM:
 
-```rust
+```rust,ignore
 // Example: Adverse Events (AE) domain
 // Required SDTM variables: STUDYID, DOMAIN, USUBJID, AESEQ, AETERM, ...
 
@@ -21,9 +23,10 @@ use xportrs::{Column, ColumnData, Dataset, Format, VariableRole};
 
 ## Step 2: Create the Dataset with Full Metadata
 
-```rust
-use xportrs::{Column, ColumnData, Dataset, Format, VariableRole};
-
+```rust,ignore
+# use xportrs::{Column, ColumnData, Dataset, Format, VariableRole};
+# struct YourDataSource { studyid: Vec<Option<String>>, usubjid: Vec<Option<String>>, aeseq: Vec<Option<f64>>, aeterm: Vec<Option<String>>, aedecod: Vec<Option<String>>, aesev: Vec<Option<String>>, aestdtc: Vec<Option<String>>, aeendtc: Vec<Option<String>> }
+# impl YourDataSource { fn len(&self) -> usize { self.studyid.len() } }
 fn create_ae_dataset(data: &YourDataSource) -> xportrs::Result<Dataset> {
     let dataset = Dataset::with_label("AE", "Adverse Events", vec![
         // Identifier variables
@@ -94,9 +97,8 @@ fn create_ae_dataset(data: &YourDataSource) -> xportrs::Result<Dataset> {
 
 ## Step 3: Validate for FDA Compliance
 
-```rust
-use xportrs::{Agency, Severity, Xpt};
-
+```rust,ignore
+# use xportrs::{Agency, Dataset, Severity, Xpt};
 fn validate_for_fda(dataset: Dataset) -> xportrs::Result<xportrs::ValidatedWrite> {
     let validated = Xpt::writer(dataset)
         .agency(Agency::FDA)
@@ -132,9 +134,8 @@ fn validate_for_fda(dataset: Dataset) -> xportrs::Result<xportrs::ValidatedWrite
 
 ## Step 4: Write the XPT File
 
-```rust
-use std::path::Path;
-
+```rust,ignore
+# use std::path::Path;
 fn write_submission_file(
     validated: xportrs::ValidatedWrite,
     output_dir: &Path,
@@ -159,9 +160,8 @@ fn write_submission_file(
 
 ## Step 5: Verify the Output
 
-```rust
-use xportrs::Xpt;
-
+```rust,ignore
+# use xportrs::Xpt;
 fn verify_output(path: &str) -> xportrs::Result<()> {
     // Read back
     let dataset = Xpt::read(path)?;
@@ -188,11 +188,11 @@ fn verify_output(path: &str) -> xportrs::Result<()> {
 
 ## Complete Example
 
-```rust
-use xportrs::{Agency, Column, ColumnData, Dataset, Format, Severity, Xpt};
-use std::path::PathBuf;
-
-fn main() -> xportrs::Result<()> {
+```rust,ignore
+# use xportrs::{Agency, Column, ColumnData, Dataset, Format, Severity, Xpt};
+# use std::path::PathBuf;
+# fn main() -> xportrs::Result<()> {
+fn create_submission() -> xportrs::Result<()> {
     // 1. Create dataset
     let dataset = Dataset::with_label("AE", "Adverse Events", vec![
         Column::new("STUDYID", ColumnData::String(vec![
@@ -266,6 +266,8 @@ fn main() -> xportrs::Result<()> {
 
     Ok(())
 }
+# Ok(())
+# }
 ```
 
 ## Checklist

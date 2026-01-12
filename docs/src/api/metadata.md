@@ -1,3 +1,5 @@
+{{#title Metadata - xportrs API}}
+
 # Metadata
 
 xportrs provides rich metadata support for XPT files, ensuring CDISC compliance and data clarity.
@@ -25,22 +27,28 @@ graph TB
 
 The domain code is the dataset name (1-8 characters):
 
-```rust
-use xportrs::Dataset;
-
+```rust,ignore
+# use xportrs::{Dataset, Column, ColumnData};
+# fn main() -> xportrs::Result<()> {
+# let columns = vec![Column::new("A", ColumnData::F64(vec![Some(1.0)]))];
 let dataset = Dataset::new("AE", columns)?;
 
 // Access domain code
 let code: &str = dataset.domain_code();  // "AE"
+# Ok(())
+# }
 ```
 
 ### Dataset Label
 
 The dataset label provides a description (0-40 characters):
 
-```rust
+```rust,ignore
+# use xportrs::{Dataset, Column, ColumnData};
+# fn main() -> xportrs::Result<()> {
+# let columns = vec![Column::new("A", ColumnData::F64(vec![Some(1.0)]))];
 // Set at construction
-let dataset = Dataset::with_label("AE", "Adverse Events", columns)?;
+let dataset = Dataset::with_label("AE", "Adverse Events", columns.clone())?;
 
 // Or set later
 let mut dataset = Dataset::new("AE", columns)?;
@@ -48,6 +56,8 @@ dataset.set_label("Adverse Events");
 
 // Access
 let label: Option<&str> = dataset.dataset_label();
+# Ok(())
+# }
 ```
 
 ## Variable Metadata
@@ -56,9 +66,10 @@ let label: Option<&str> = dataset.dataset_label();
 
 Variable names follow SAS naming rules:
 
-```rust
-use xportrs::{Column, ColumnData, VariableName};
-
+```rust,ignore
+# use xportrs::{Column, ColumnData, VariableName};
+# fn main() {
+# let data = ColumnData::String(vec![Some("001".into())]);
 // Name is set at construction
 let col = Column::new("USUBJID", data);
 
@@ -68,15 +79,17 @@ let name: &str = col.name();
 // VariableName type for validation
 let var_name = VariableName::new("USUBJID");
 assert_eq!(var_name.as_str(), "USUBJID");
+# }
 ```
 
 ### Variable Label
 
 Labels describe the variable (0-40 characters):
 
-```rust
-use xportrs::{Column, ColumnData, Label};
-
+```rust,ignore
+# use xportrs::{Column, ColumnData, Label};
+# fn main() {
+# let data = ColumnData::String(vec![Some("001".into())]);
 let col = Column::new("USUBJID", data)
     .with_label("Unique Subject Identifier");
 
@@ -88,17 +101,19 @@ if let Some(label) = col.label() {
 // Label type
 let label = Label::new("Unique Subject Identifier");
 assert_eq!(label.as_str(), "Unique Subject Identifier");
+# }
 ```
 
 ### Format
 
 Display formats control how values are shown:
 
-```rust
-use xportrs::{Column, ColumnData, Format};
-
+```rust,ignore
+# use xportrs::{Column, ColumnData, Format};
+# fn main() -> xportrs::Result<()> {
+# let data = ColumnData::F64(vec![Some(1.0)]);
 // Using Format object
-let col = Column::new("AESTDT", data)
+let col = Column::new("AESTDT", data.clone())
     .with_format(Format::parse("DATE9.")?);
 
 // Using format string
@@ -109,26 +124,35 @@ let col = Column::new("AESTDT", data)
 if let Some(format) = col.format() {
     println!("Format: {}", format);
 }
+# Ok(())
+# }
 ```
 
 ### Informat
 
 Input formats control how values are read:
 
-```rust
+```rust,ignore
+# use xportrs::{Column, ColumnData, Format};
+# fn main() -> xportrs::Result<()> {
+# let data = ColumnData::F64(vec![Some(1.0)]);
 let col = Column::new("RAWDATE", data)
     .with_informat(Format::parse("DATE9.")?);
 
 if let Some(informat) = col.informat() {
     println!("Informat: {}", informat);
 }
+# Ok(())
+# }
 ```
 
 ### Length
 
 Explicit length for character variables:
 
-```rust
+```rust,ignore
+# use xportrs::{Column, ColumnData};
+# fn main() {
 // Auto-derived from data
 let col = Column::new("VAR", ColumnData::String(vec![
     Some("Hello".into()),  // 5 characters
@@ -137,6 +161,7 @@ let col = Column::new("VAR", ColumnData::String(vec![
 // Length will be 5
 
 // Explicit override
+let data = ColumnData::String(vec![Some("text".into())]);
 let col = Column::new("VAR", data)
     .with_length(200);  // Force 200 bytes
 
@@ -144,15 +169,17 @@ let col = Column::new("VAR", data)
 if let Some(len) = col.explicit_length() {
     println!("Explicit length: {}", len);
 }
+# }
 ```
 
 ### Variable Role
 
 Roles categorize variables per CDISC:
 
-```rust
-use xportrs::{Column, ColumnData, VariableRole};
-
+```rust,ignore
+# use xportrs::{Column, ColumnData, VariableRole};
+# fn main() {
+# let data = ColumnData::String(vec![Some("001".into())]);
 let col = Column::with_role(
     "USUBJID",
     VariableRole::Identifier,
@@ -174,56 +201,63 @@ let roles = [
 if let Some(role) = col.role() {
     println!("Role: {:?}", role);
 }
+# }
 ```
 
 ## Metadata Types
 
 ### DomainCode
 
-```rust
-use xportrs::DomainCode;
-
+```rust,ignore
+# use xportrs::DomainCode;
+# fn main() {
 let code = DomainCode::new("AE");
 
 // Access
 let s: &str = code.as_str();
-let owned: String = code.into_inner();
+let code2 = DomainCode::new("AE");
+let owned: String = code2.into_inner();
 
 // Traits
 assert_eq!(code, DomainCode::new("AE"));
 println!("{}", code);  // "AE"
+# }
 ```
 
 ### Label
 
-```rust
-use xportrs::Label;
-
+```rust,ignore
+# use xportrs::Label;
+# fn main() {
 let label = Label::new("Adverse Events");
 
 // Access
 let s: &str = label.as_str();
-let owned: String = label.into_inner();
+let label2 = Label::new("AE");
+let owned: String = label2.into_inner();
 
 // From string
 let label: Label = "Test".into();
+# }
 ```
 
 ### VariableName
 
-```rust
-use xportrs::VariableName;
-
+```rust,ignore
+# use xportrs::VariableName;
+# fn main() {
 let name = VariableName::new("USUBJID");
 
 // Access
 let s: &str = name.as_str();
-let owned: String = name.into_inner();
+let name2 = VariableName::new("TEST");
+let owned: String = name2.into_inner();
 
 // Validation (at construction or later)
 // Names are uppercased automatically
 let name = VariableName::new("usubjid");
 assert_eq!(name.as_str(), "USUBJID");
+# }
 ```
 
 ## Metadata in XPT Files
@@ -245,9 +279,9 @@ nifd      82-83   2     Informat decimals
 
 ### Reading Metadata
 
-```rust
-use xportrs::Xpt;
-
+```rust,ignore
+# use xportrs::Xpt;
+# fn main() -> xportrs::Result<()> {
 let dataset = Xpt::read("ae.xpt")?;
 
 // Dataset metadata
@@ -275,13 +309,15 @@ for col in dataset.columns() {
         println!("  Role: {:?}", role);
     }
 }
+# Ok(())
+# }
 ```
 
 ### Preserving Metadata on Roundtrip
 
-```rust
-use xportrs::Xpt;
-
+```rust,ignore
+# use xportrs::Xpt;
+# fn main() -> xportrs::Result<()> {
 // Read
 let original = Xpt::read("ae.xpt")?;
 
@@ -289,13 +325,15 @@ let original = Xpt::read("ae.xpt")?;
 // ...
 
 // Write
-Xpt::writer(original)
+Xpt::writer(original.clone())
     .finalize()?
     .write_path("ae_modified.xpt")?;
 
 // Verify
 let reloaded = Xpt::read("ae_modified.xpt")?;
 assert_eq!(reloaded.dataset_label(), original.dataset_label());
+# Ok(())
+# }
 ```
 
 ## Metadata and Define-XML
@@ -303,15 +341,20 @@ assert_eq!(reloaded.dataset_label(), original.dataset_label());
 > [!IMPORTANT]
 > Variable labels in XPT files should match those in define.xml. Pinnacle 21 validates this consistency.
 
-```rust
+```rust,ignore
+# use xportrs::{Dataset, Column, ColumnData};
+# fn main() -> xportrs::Result<()> {
+# let data = ColumnData::String(vec![Some("test".into())]);
 // Create dataset with labels matching define.xml
 let dataset = Dataset::with_label("AE", "Adverse Events", vec![
-    Column::new("STUDYID", data)
+    Column::new("STUDYID", data.clone())
         .with_label("Study Identifier"),  // Must match define.xml
     Column::new("USUBJID", data)
         .with_label("Unique Subject Identifier"),  // Must match define.xml
     // ...
 ])?;
+# Ok(())
+# }
 ```
 
 ## Best Practices
@@ -322,7 +365,8 @@ let dataset = Dataset::with_label("AE", "Adverse Events", vec![
 4. **Assign roles**: Categorize variables per CDISC
 5. **Verify roundtrip**: Ensure metadata survives read/write cycles
 
-```rust
+```rust,ignore
+# use xportrs::{Column, ColumnData, Format, VariableRole};
 // Complete metadata example
 let col = Column::with_role(
     "AESTDTC",

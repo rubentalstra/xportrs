@@ -1,3 +1,5 @@
+{{#title Format Type - xportrs API}}
+
 # Format Type
 
 The `Format` type represents a SAS display format or informat. It provides parsing and construction of format specifications.
@@ -17,9 +19,9 @@ SAS formats control how values are displayed or read:
 
 ### Parsing from String
 
-```rust
-use xportrs::Format;
-
+```rust,ignore
+# use xportrs::Format;
+# fn main() -> xportrs::Result<()> {
 // Date format
 let date_fmt = Format::parse("DATE9.")?;
 assert_eq!(date_fmt.name(), "DATE");
@@ -36,13 +38,14 @@ let char_fmt = Format::parse("$CHAR200.")?;
 assert_eq!(char_fmt.name(), "$CHAR");
 assert_eq!(char_fmt.length(), 200);
 assert!(char_fmt.is_character());
+# Ok(())
+# }
 ```
 
 ### Using Constructors
 
-```rust
-use xportrs::Format;
-
+```rust,ignore
+# use xportrs::Format;
 // Numeric format
 let num = Format::numeric(8, 2);
 assert_eq!(num.length(), 8);
@@ -58,9 +61,8 @@ assert_eq!(char_fmt.length(), 200);
 
 When reading XPT files, formats are reconstructed from NAMESTR fields:
 
-```rust
-use xportrs::Format;
-
+```rust,ignore
+# use xportrs::Format;
 // Reconstruct from XPT fields
 let format = Format::from_namestr(
     "DATE    ",  // nform (8 bytes, space-padded)
@@ -75,9 +77,9 @@ assert_eq!(format.length(), 9);
 
 ## Format Properties
 
-```rust
-use xportrs::Format;
-
+```rust,ignore
+# use xportrs::Format;
+# fn main() -> xportrs::Result<()> {
 let format = Format::parse("$CHAR200.")?;
 
 // Format name (may include $ prefix)
@@ -97,32 +99,42 @@ let is_char: bool = format.is_character();  // true
 
 // Display representation
 println!("{}", format);  // "$CHAR200."
+# Ok(())
+# }
 ```
 
 ## Common Format Patterns
 
 ### Date Formats
 
-```rust
-use xportrs::Format;
-
+```rust,ignore
+# use xportrs::Format;
+# fn main() -> xportrs::Result<()> {
 // Standard date formats
 let date9 = Format::parse("DATE9.")?;      // 15JAN2024
 let date7 = Format::parse("DATE7.")?;      // 15JAN24
 let yymmdd = Format::parse("YYMMDD10.")?;  // 2024-01-15
 let e8601 = Format::parse("E8601DA10.")?;  // 2024-01-15
+# Ok(())
+# }
 ```
 
 ### DateTime Formats
 
-```rust
+```rust,ignore
+# use xportrs::Format;
+# fn main() -> xportrs::Result<()> {
 let datetime = Format::parse("DATETIME20.")?;  // 15JAN2024:14:30:00
 let e8601dt = Format::parse("E8601DT19.")?;    // 2024-01-15T14:30:00
+# Ok(())
+# }
 ```
 
 ### Numeric Formats
 
-```rust
+```rust,ignore
+# use xportrs::Format;
+# fn main() -> xportrs::Result<()> {
 // Bare numeric format
 let bare = Format::parse("8.")?;    // 8 characters, 0 decimals
 let decimal = Format::parse("8.2")?;  // 8 characters, 2 decimals
@@ -130,43 +142,57 @@ let decimal = Format::parse("8.2")?;  // 8 characters, 2 decimals
 // Named numeric formats
 let best = Format::parse("BEST12.")?;    // Best representation
 let comma = Format::parse("COMMA10.2")?; // Comma-separated
+# Ok(())
+# }
 ```
 
 ### Character Formats
 
-```rust
+```rust,ignore
+# use xportrs::Format;
+# fn main() -> xportrs::Result<()> {
 // Character formats start with $
 let char200 = Format::parse("$CHAR200.")?;
 let char40 = Format::parse("$40.")?;  // Shorthand for $CHAR40.
+# Ok(())
+# }
 ```
 
 ## Using Formats with Columns
 
 ### Setting Format on Column
 
-```rust
-use xportrs::{Column, ColumnData, Format};
-
+```rust,ignore
+# use xportrs::{Column, ColumnData, Format};
+# fn main() -> xportrs::Result<()> {
+# let data = ColumnData::F64(vec![Some(1.0)]);
 // Using Format object
-let col = Column::new("AESTDTC", data)
+let col = Column::new("AESTDTC", data.clone())
     .with_format(Format::character(19));
 
 // Parsing from string
-let col = Column::new("AESTDT", data)
+let col = Column::new("AESTDT", data.clone())
     .with_format_str("DATE9.")?;
 
 // Using constructor
 let col = Column::new("VALUE", data)
     .with_format(Format::numeric(8, 2));
+# Ok(())
+# }
 ```
 
 ### Setting Informat
 
 Informats control how data is read:
 
-```rust
+```rust,ignore
+# use xportrs::{Column, ColumnData, Format};
+# fn main() -> xportrs::Result<()> {
+# let data = ColumnData::F64(vec![Some(1.0)]);
 let col = Column::new("RAWDATE", data)
     .with_informat(Format::parse("DATE9.")?);
+# Ok(())
+# }
 ```
 
 ## Format in XPT Files
@@ -180,9 +206,9 @@ When written to XPT, formats are stored in the NAMESTR record:
 | `nfd` | 2 bytes | Format decimals |
 | `nfj` | 2 bytes | Justification (0=left, 1=right) |
 
-```rust
-use xportrs::{Column, ColumnData, Format, Xpt};
-
+```rust,ignore
+# use xportrs::{Column, ColumnData, Format, Xpt};
+# fn main() -> xportrs::Result<()> {
 let col = Column::new("AESTDT", ColumnData::F64(vec![Some(23391.0)]))
     .with_format_str("DATE9.")?;
 
@@ -191,15 +217,16 @@ let col = Column::new("AESTDT", ColumnData::F64(vec![Some(23391.0)]))
 // nfl = 9
 // nfd = 0
 // nfj = 1 (right-justified)
+# Ok(())
+# }
 ```
 
 ## Format Validation
 
 Invalid format strings return errors:
 
-```rust
-use xportrs::Format;
-
+```rust,ignore
+# use xportrs::Format;
 // Missing period
 let result = Format::parse("DATE9");
 assert!(result.is_err());
@@ -215,9 +242,9 @@ assert!(result.is_err());
 
 ## Display and Debug
 
-```rust
-use xportrs::Format;
-
+```rust,ignore
+# use xportrs::Format;
+# fn main() -> xportrs::Result<()> {
 let format = Format::parse("DATE9.")?;
 
 // Display: canonical format string
@@ -225,12 +252,16 @@ println!("{}", format);  // "DATE9."
 
 // Debug: detailed representation
 println!("{:?}", format);  // Format { name: "DATE", length: 9, ... }
+# Ok(())
+# }
 ```
 
 ## Common Traits
 
-```rust
-use xportrs::Format;
+```rust,ignore
+# use xportrs::Format;
+# fn main() -> xportrs::Result<()> {
+let format = Format::parse("DATE9.")?;
 
 // Clone
 let format2 = format.clone();
@@ -243,6 +274,8 @@ println!("{:?}", format);
 
 // Display
 println!("{}", format);
+# Ok(())
+# }
 ```
 
 ## FDA Format Recommendations

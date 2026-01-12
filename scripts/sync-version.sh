@@ -9,6 +9,8 @@
 # - .zenodo.json
 # - codemeta.json
 # - README.md
+# - docs/src/README.md
+# - docs/src/guides/quickstart.md
 
 set -euo pipefail
 
@@ -60,6 +62,18 @@ echo -e "${GREEN}done${NC}"
 echo -n "  Updating README.md... "
 sed -i.bak "s/xportrs = \"[^\"]*\"/xportrs = \"$VERSION\"/" README.md
 rm -f README.md.bak
+echo -e "${GREEN}done${NC}"
+
+# Update docs/src/README.md
+echo -n "  Updating docs/src/README.md... "
+sed -i.bak "s/xportrs = \"[^\"]*\"/xportrs = \"$VERSION\"/" docs/src/README.md
+rm -f docs/src/README.md.bak
+echo -e "${GREEN}done${NC}"
+
+# Update docs/src/guides/quickstart.md
+echo -n "  Updating docs/src/guides/quickstart.md... "
+sed -i.bak "s/xportrs = \"[^\"]*\"/xportrs = \"$VERSION\"/" docs/src/guides/quickstart.md
+rm -f docs/src/guides/quickstart.md.bak
 echo -e "${GREEN}done${NC}"
 
 echo ""

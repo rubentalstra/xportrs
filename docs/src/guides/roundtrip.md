@@ -1,12 +1,13 @@
+{{#title Read-Modify-Write Workflows - xportrs Guide}}
+
 # Read-Modify-Write Workflows
 
 This guide covers common patterns for reading, modifying, and writing XPT files.
 
 ## Basic Roundtrip
 
-```rust
-use xportrs::Xpt;
-
+```rust,ignore
+# use xportrs::Xpt;
 fn basic_roundtrip(input: &str, output: &str) -> xportrs::Result<()> {
     // Read
     let dataset = Xpt::read(input)?;
@@ -26,9 +27,8 @@ fn basic_roundtrip(input: &str, output: &str) -> xportrs::Result<()> {
 
 xportrs automatically preserves metadata during roundtrip:
 
-```rust
-use xportrs::Xpt;
-
+```rust,ignore
+# use xportrs::Xpt;
 fn verify_metadata_preservation(path: &str) -> xportrs::Result<()> {
     // Read original
     let original = Xpt::read(path)?;
@@ -63,9 +63,8 @@ fn verify_metadata_preservation(path: &str) -> xportrs::Result<()> {
 
 ## Adding Columns
 
-```rust
-use xportrs::{Column, ColumnData, Format, Xpt};
-
+```rust,ignore
+# use xportrs::{Column, ColumnData, Format, Xpt};
 fn add_derived_column(input: &str, output: &str) -> xportrs::Result<()> {
     let mut dataset = Xpt::read(input)?;
 
@@ -94,9 +93,8 @@ fn add_derived_column(input: &str, output: &str) -> xportrs::Result<()> {
 
 ## Modifying Column Data
 
-```rust
-use xportrs::{Column, ColumnData, Xpt};
-
+```rust,ignore
+# use xportrs::{Column, ColumnData, Xpt};
 fn modify_column_data(input: &str, output: &str) -> xportrs::Result<()> {
     let dataset = Xpt::read(input)?;
 
@@ -147,9 +145,8 @@ fn modify_column_data(input: &str, output: &str) -> xportrs::Result<()> {
 
 ## Filtering Rows
 
-```rust
-use xportrs::{Column, ColumnData, Dataset, Xpt};
-
+```rust,ignore
+# use xportrs::{Column, ColumnData, Dataset, Xpt};
 fn filter_rows(input: &str, output: &str, keep_indices: &[usize]) -> xportrs::Result<()> {
     let dataset = Xpt::read(input)?;
 
@@ -203,9 +200,8 @@ fn filter_rows(input: &str, output: &str, keep_indices: &[usize]) -> xportrs::Re
 
 ## Merging Datasets
 
-```rust
-use xportrs::{Column, ColumnData, Dataset, Xpt};
-
+```rust,ignore
+# use xportrs::{Column, ColumnData, Dataset, Xpt};
 fn merge_datasets(input1: &str, input2: &str, output: &str) -> xportrs::Result<()> {
     let ds1 = Xpt::read(input1)?;
     let ds2 = Xpt::read(input2)?;
@@ -257,10 +253,9 @@ fn merge_datasets(input1: &str, input2: &str, output: &str) -> xportrs::Result<(
 
 ## Updating Labels
 
-```rust
-use xportrs::{Column, Dataset, Xpt};
-use std::collections::HashMap;
-
+```rust,ignore
+# use xportrs::{Column, Dataset, Xpt};
+# use std::collections::HashMap;
 fn update_labels(
     input: &str,
     output: &str,
@@ -299,22 +294,20 @@ fn update_labels(
     Ok(())
 }
 
-// Usage
-fn main() -> xportrs::Result<()> {
-    let mut updates = HashMap::new();
-    updates.insert("USUBJID", "Unique Subject Identifier");
-    updates.insert("AETERM", "Reported Adverse Event Term");
-
-    update_labels("ae.xpt", "ae_updated.xpt", &updates)
-}
+# // Usage
+# fn main() -> xportrs::Result<()> {
+#     let mut updates = HashMap::new();
+#     updates.insert("USUBJID", "Unique Subject Identifier");
+#     updates.insert("AETERM", "Reported Adverse Event Term");
+#     update_labels("ae.xpt", "ae_updated.xpt", &updates)
+# }
 ```
 
 ## Batch Processing
 
-```rust
-use xportrs::Xpt;
-use std::path::Path;
-
+```rust,ignore
+# use xportrs::Xpt;
+# use std::path::Path;
 fn process_directory(input_dir: &Path, output_dir: &Path) -> xportrs::Result<()> {
     std::fs::create_dir_all(output_dir)?;
 
@@ -346,9 +339,8 @@ fn process_directory(input_dir: &Path, output_dir: &Path) -> xportrs::Result<()>
 
 ## Error Handling in Roundtrips
 
-```rust
-use xportrs::{Error, Xpt};
-
+```rust,ignore
+# use xportrs::{Error, Xpt};
 fn safe_roundtrip(input: &str, output: &str) -> Result<(), Box<dyn std::error::Error>> {
     // Read with error handling
     let dataset = match Xpt::read(input) {

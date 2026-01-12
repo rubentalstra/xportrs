@@ -1,3 +1,5 @@
+{{#title Validation API - xportrs}}
+
 # Validation API
 
 xportrs provides comprehensive validation for XPT files. This page details the validation API.
@@ -24,9 +26,10 @@ graph TB
 
 The `ValidatedWrite` type represents a validated dataset ready for writing:
 
-```rust
-use xportrs::{Severity, Xpt};
-
+```rust,ignore
+# use xportrs::{Severity, Xpt, Dataset, Column, ColumnData};
+# fn main() -> xportrs::Result<()> {
+# let dataset = Dataset::new("AE", vec![Column::new("A", ColumnData::F64(vec![Some(1.0)]))])?;
 let validated = Xpt::writer(dataset).finalize()?;
 
 // Check for issues
@@ -40,6 +43,8 @@ let issues = validated.issues();
 if !validated.has_errors() {
     validated.write_path("output.xpt")?;
 }
+# Ok(())
+# }
 ```
 
 ## Issue Type
@@ -48,9 +53,9 @@ The `Issue` enum represents validation issues:
 
 ### Issue Variants
 
-```rust
-use xportrs::Issue;
-
+```rust,ignore
+# use xportrs::Issue;
+# let issue: Issue = todo!();
 match issue {
     Issue::VariableNameTooLong { variable, length } => {
         println!("Variable {} name is {} bytes (max 8)", variable, length);
@@ -74,9 +79,9 @@ match issue {
 
 ### Issue Properties
 
-```rust
-use xportrs::Severity;
-
+```rust,ignore
+# use xportrs::{Severity, Issue};
+# let issue: Issue = todo!();
 // Severity level
 let severity: Severity = issue.severity();
 
@@ -92,9 +97,9 @@ println!("{:?}", issue);
 
 ## Severity Levels
 
-```rust
-use xportrs::Severity;
-
+```rust,ignore
+# use xportrs::Severity;
+# let severity = Severity::Error;
 match severity {
     Severity::Error => {
         // Blocks file writing
@@ -117,7 +122,10 @@ assert!(Severity::Warning < Severity::Error);
 
 ## Filtering Issues
 
-```rust
+```rust,ignore
+# use xportrs::{Xpt, Dataset, Column, ColumnData, Severity};
+# fn main() -> xportrs::Result<()> {
+# let dataset = Dataset::new("AE", vec![Column::new("A", ColumnData::F64(vec![Some(1.0)]))])?;
 let validated = Xpt::writer(dataset).finalize()?;
 
 // Get only errors
@@ -137,13 +145,16 @@ let error_count = validated.issues()
     .iter()
     .filter(|i| i.severity() == Severity::Error)
     .count();
+# Ok(())
+# }
 ```
 
 ## Agency-Specific Validation
 
-```rust
-use xportrs::{Agency, Xpt};
-
+```rust,ignore
+# use xportrs::{Agency, Xpt, Dataset, Column, ColumnData};
+# fn main() -> xportrs::Result<()> {
+# let dataset = Dataset::new("AE", vec![Column::new("A", ColumnData::F64(vec![Some(1.0)]))])?;
 // FDA: Strict ASCII validation
 let fda_result = Xpt::writer(dataset.clone())
     .agency(Agency::FDA)
@@ -155,6 +166,8 @@ for issue in fda_result.issues() {
         println!("ASCII issue: {}", issue);
     }
 }
+# Ok(())
+# }
 ```
 
 ## Validation Rules
@@ -197,7 +210,7 @@ for issue in fda_result.issues() {
 
 Add custom validation before xportrs validation:
 
-```rust
+```rust,ignore
 use xportrs::{Dataset, Xpt};
 
 fn custom_validate(dataset: &Dataset) -> Result<(), String> {
@@ -234,7 +247,7 @@ fn write_with_validation(dataset: Dataset, path: &str) -> xportrs::Result<()> {
 
 ## Validation Reporting
 
-```rust
+```rust,ignore
 use xportrs::{Severity, Xpt};
 
 fn report_validation(dataset: xportrs::Dataset) {

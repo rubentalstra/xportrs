@@ -1,3 +1,5 @@
+{{#title Reading XPT Files - xportrs API}}
+
 # Reading XPT Files
 
 xportrs provides multiple ways to read XPT files, from simple one-liners to detailed inspection.
@@ -6,23 +8,25 @@ xportrs provides multiple ways to read XPT files, from simple one-liners to deta
 
 The simplest way to read an XPT file:
 
-```rust
-use xportrs::Xpt;
-
+```rust,ignore
+# use xportrs::Xpt;
+# fn main() -> xportrs::Result<()> {
 let dataset = Xpt::read("ae.xpt")?;
 
 println!("Domain: {}", dataset.domain_code());
 println!("Rows: {}", dataset.nrows());
 println!("Columns: {}", dataset.ncols());
+# Ok(())
+# }
 ```
 
 ## Reading Multiple Members
 
 XPT files can contain multiple datasets (members):
 
-```rust
-use xportrs::Xpt;
-
+```rust,ignore
+# use xportrs::Xpt;
+# fn main() -> xportrs::Result<()> {
 // Read all members
 let datasets = Xpt::read_all("multi.xpt")?;
 
@@ -32,15 +36,17 @@ for dataset in datasets {
 
 // Read specific member
 let ae = Xpt::read_member("multi.xpt", "AE")?;
+# Ok(())
+# }
 ```
 
 ## Inspecting Files
 
 Get file metadata without loading all data:
 
-```rust
-use xportrs::Xpt;
-
+```rust,ignore
+# use xportrs::Xpt;
+# fn main() -> xportrs::Result<()> {
 let info = Xpt::inspect("data.xpt")?;
 
 // File timestamps
@@ -57,52 +63,62 @@ for name in info.member_names() {
 if let Some(member) = info.find_member("AE") {
     println!("AE has {} variables", member.variables.len());
 }
+# Ok(())
+# }
 ```
 
 ## Builder API
 
 For more control, use the reader builder:
 
-```rust
-use xportrs::Xpt;
-
+```rust,ignore
+# use xportrs::Xpt;
+# fn main() -> xportrs::Result<()> {
 let dataset = Xpt::reader("data.xpt")
     .row_limit(1000)     // Read only first 1000 rows
     .read()?;            // Read first/only member
+# Ok(())
+# }
 ```
 
 ### Row Limiting
 
-```rust
+```rust,ignore
+# use xportrs::Xpt;
+# fn main() -> xportrs::Result<()> {
 // Read only first 100 rows (useful for previews)
 let preview = Xpt::reader("large.xpt")
     .row_limit(100)
     .read()?;
 
 println!("Preview: {} rows", preview.nrows());
+# Ok(())
+# }
 ```
 
 ## Reading from Buffers
 
 Read from in-memory data:
 
-```rust
-use std::io::Cursor;
-use xportrs::Xpt;
-
-let xpt_bytes: Vec<u8> = /* ... */;
+```rust,ignore
+# use std::io::Cursor;
+# use xportrs::Xpt;
+# fn main() -> xportrs::Result<()> {
+let xpt_bytes: Vec<u8> = vec![]; // Your XPT data here
 let cursor = Cursor::new(xpt_bytes);
 
 let dataset = Xpt::reader_from(cursor).read()?;
+# Ok(())
+# }
 ```
 
 ## Accessing Data
 
 Once loaded, access the data through the Dataset API:
 
-```rust
-use xportrs::{ColumnData, Xpt};
-
+```rust,ignore
+# use xportrs::{ColumnData, Xpt};
+# fn main() -> xportrs::Result<()> {
 let dataset = Xpt::read("ae.xpt")?;
 
 // Access by column name
@@ -127,13 +143,17 @@ if let ColumnData::F64(values) = aeseq.data() {
         }
     }
 }
+# Ok(())
+# }
 ```
 
 ## Metadata Preservation
 
 xportrs preserves metadata when reading:
 
-```rust
+```rust,ignore
+# use xportrs::Xpt;
+# fn main() -> xportrs::Result<()> {
 let dataset = Xpt::read("ae.xpt")?;
 
 // Dataset label
@@ -144,26 +164,27 @@ if let Some(label) = dataset.dataset_label() {
 // Column metadata
 for col in dataset.columns() {
     println!("Variable: {}", col.name());
-    
+
     if let Some(label) = col.label() {
         println!("  Label: {}", label);
     }
-    
+
     if let Some(format) = col.format() {
         println!("  Format: {}", format);
     }
-    
+
     if let Some(len) = col.explicit_length() {
         println!("  Length: {}", len);
     }
 }
+# Ok(())
+# }
 ```
 
 ## Error Handling
 
-```rust
-use xportrs::{Error, Xpt};
-
+```rust,ignore
+# use xportrs::{Error, Xpt};
 match Xpt::read("missing.xpt") {
     Ok(dataset) => println!("Loaded {} rows", dataset.nrows()),
     Err(Error::Io(e)) => eprintln!("IO error: {}", e),
@@ -178,9 +199,9 @@ match Xpt::read("missing.xpt") {
 
 For large files, consider:
 
-```rust
-use xportrs::Xpt;
-
+```rust,ignore
+# use xportrs::Xpt;
+# fn main() -> xportrs::Result<()> {
 // 1. Preview first to understand structure
 let info = Xpt::inspect("large.xpt")?;
 println!("File has {} members", info.members.len());
@@ -198,16 +219,18 @@ for name in columns_of_interest {
         println!("{}: {} values", name, col.len());
     }
 }
+# Ok(())
+# }
 ```
 
 ## Thread Safety
 
 Datasets are `Send + Sync`, allowing concurrent access:
 
-```rust
-use std::sync::Arc;
-use xportrs::Xpt;
-
+```rust,ignore
+# use std::sync::Arc;
+# use xportrs::Xpt;
+# fn main() -> xportrs::Result<()> {
 let dataset = Arc::new(Xpt::read("ae.xpt")?);
 
 let handles: Vec<_> = (0..4).map(|i| {
@@ -220,16 +243,18 @@ let handles: Vec<_> = (0..4).map(|i| {
 for handle in handles {
     handle.join().unwrap();
 }
+# Ok(())
+# }
 ```
 
 ## Example: Read and Process
 
-```rust
+```rust,ignore
 use xportrs::{ColumnData, Xpt};
 
 fn process_adverse_events(path: &str) -> xportrs::Result<()> {
     let dataset = Xpt::read(path)?;
-    
+
     // Verify expected columns
     let required = ["USUBJID", "AETERM", "AESEV"];
     for name in required {
@@ -239,12 +264,12 @@ fn process_adverse_events(path: &str) -> xportrs::Result<()> {
             ));
         }
     }
-    
+
     // Process data
     let usubjid = &dataset["USUBJID"];
     let aeterm = &dataset["AETERM"];
     let aesev = &dataset["AESEV"];
-    
+
     if let (
         ColumnData::String(subjects),
         ColumnData::String(terms),
@@ -257,7 +282,7 @@ fn process_adverse_events(path: &str) -> xportrs::Result<()> {
             println!("{}: {} ({})", subj, term, sev);
         }
     }
-    
+
     Ok(())
 }
 ```

@@ -1,3 +1,5 @@
+{{#title Dataset and Column API - xportrs}}
+
 # Dataset and Column
 
 The `Dataset` and `Column` types are the core data structures in xportrs for representing XPT datasets.
@@ -11,6 +13,7 @@ A `Dataset` represents a single SAS dataset (domain) with columns of data.
 ```rust
 use xportrs::{Dataset, Column, ColumnData};
 
+# fn main() -> xportrs::Result<()> {
 // Basic creation
 let dataset = Dataset::new("AE", vec![
     Column::new("USUBJID", ColumnData::String(vec![Some("001".into())])),
@@ -22,11 +25,13 @@ let dataset = Dataset::with_label("AE", "Adverse Events", vec![
     Column::new("USUBJID", ColumnData::String(vec![Some("001".into())])),
     Column::new("AESEQ", ColumnData::F64(vec![Some(1.0)])),
 ])?;
+# Ok(())
+# }
 ```
 
 ### Dataset Properties
 
-```rust
+```rust,ignore
 // Domain code (dataset name)
 let code: &str = dataset.domain_code();
 
@@ -44,17 +49,23 @@ let columns: &[Column] = dataset.columns();
 ### Setting the Label
 
 ```rust
+use xportrs::{Dataset, Column, ColumnData};
+
+# fn main() -> xportrs::Result<()> {
+# let columns = vec![Column::new("A", ColumnData::F64(vec![Some(1.0)]))];
 // Using with_label at construction
-let dataset = Dataset::with_label("AE", "Adverse Events", columns)?;
+let dataset = Dataset::with_label("AE", "Adverse Events", columns.clone())?;
 
 // Or set later
 let mut dataset = Dataset::new("AE", columns)?;
 dataset.set_label("Adverse Events");
+# Ok(())
+# }
 ```
 
 ### Accessing Columns
 
-```rust
+```rust,ignore
 // By index
 let first_col: &Column = &dataset[0];
 
@@ -67,7 +78,7 @@ let col: Option<&Column> = dataset.column("AESEQ");
 
 ### Iterating
 
-```rust
+```rust,ignore
 // Iterate over columns
 for col in dataset.iter() {
     println!("{}: {}", col.name(), col.len());
@@ -87,6 +98,9 @@ for col in dataset {
 ### Extending a Dataset
 
 ```rust
+use xportrs::{Dataset, Column, ColumnData};
+
+# fn main() -> xportrs::Result<()> {
 let mut dataset = Dataset::new("AE", vec![
     Column::new("A", ColumnData::F64(vec![Some(1.0)])),
 ])?;
@@ -98,6 +112,8 @@ dataset.extend([
 ]);
 
 assert_eq!(dataset.ncols(), 3);
+# Ok(())
+# }
 ```
 
 ## Column
@@ -109,6 +125,7 @@ A `Column` represents a single variable with its data and metadata.
 ```rust
 use xportrs::{Column, ColumnData, Format, VariableRole};
 
+# fn main() {
 // Basic column
 let col = Column::new("USUBJID", ColumnData::String(vec![
     Some("001".into()),
@@ -127,11 +144,12 @@ let col = Column::with_role(
     VariableRole::Identifier,
     ColumnData::String(vec![Some("001".into())]),
 );
+# }
 ```
 
 ### Column Properties
 
-```rust
+```rust,ignore
 // Name
 let name: &str = col.name();
 
@@ -160,6 +178,10 @@ let informat: Option<&Format> = col.informat();
 ### Builder Methods
 
 ```rust
+use xportrs::{Column, ColumnData, Format};
+
+# fn main() -> xportrs::Result<()> {
+# let data = ColumnData::F64(vec![Some(1.0)]);
 let col = Column::new("VAR", data)
     .with_label("Variable Label")
     .with_format(Format::numeric(8, 2))
@@ -167,8 +189,11 @@ let col = Column::new("VAR", data)
     .with_length(200);
 
 // Parse format from string
+# let data = ColumnData::F64(vec![Some(1.0)]);
 let col = Column::new("DATE", data)
     .with_format_str("DATE9.")?;
+# Ok(())
+# }
 ```
 
 ## ColumnData
@@ -180,6 +205,7 @@ let col = Column::new("DATE", data)
 ```rust
 use xportrs::ColumnData;
 
+# fn main() {
 // Floating-point numbers
 let floats = ColumnData::F64(vec![Some(1.0), Some(2.0), None]);
 
@@ -194,26 +220,15 @@ let strings = ColumnData::String(vec![Some("hello".into()), None]);
 
 // Binary data
 let bytes = ColumnData::Bytes(vec![Some(vec![0x01, 0x02]), None]);
-
-// Dates (chrono::NaiveDate)
-use chrono::NaiveDate;
-let dates = ColumnData::Date(vec![
-    Some(NaiveDate::from_ymd_opt(2024, 1, 15).unwrap()),
-    None,
-]);
-
-// DateTimes (chrono::NaiveDateTime)
-use chrono::NaiveDateTime;
-let datetimes = ColumnData::DateTime(vec![/* ... */]);
-
-// Times (chrono::NaiveTime)
-use chrono::NaiveTime;
-let times = ColumnData::Time(vec![/* ... */]);
+# }
 ```
 
 ### From Conversions
 
 ```rust
+use xportrs::ColumnData;
+
+# fn main() {
 // From Vec<f64>
 let data: ColumnData = vec![1.0, 2.0, 3.0].into();
 
@@ -228,11 +243,12 @@ let data: ColumnData = vec![1i64, 2, 3].into();
 
 // From Vec<bool>
 let data: ColumnData = vec![true, false, true].into();
+# }
 ```
 
 ### Accessing Data
 
-```rust
+```rust,ignore
 match col.data() {
     ColumnData::F64(values) => {
         for value in values {
@@ -258,7 +274,7 @@ match col.data() {
 
 Both `Dataset` and `Column` implement standard Rust traits:
 
-```rust
+```rust,ignore
 use xportrs::{Dataset, Column};
 
 // Clone
@@ -288,8 +304,9 @@ std::thread::spawn(move || {
 Dataset creation can fail:
 
 ```rust
-use xportrs::{Dataset, Column, ColumnData, Error};
+use xportrs::{Dataset, Column, ColumnData};
 
+# fn main() {
 // Column length mismatch
 let result = Dataset::new("AE", vec![
     Column::new("A", ColumnData::F64(vec![Some(1.0), Some(2.0)])),
@@ -300,6 +317,7 @@ match result {
     Ok(ds) => println!("Created dataset"),
     Err(e) => eprintln!("Error: {}", e),
 }
+# }
 ```
 
 ## Example: Complete Dataset
@@ -346,4 +364,5 @@ fn create_ae_dataset() -> xportrs::Result<Dataset> {
 
     Ok(dataset)
 }
+# fn main() { let _ = create_ae_dataset(); }
 ```

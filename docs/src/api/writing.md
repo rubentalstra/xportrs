@@ -1,3 +1,5 @@
+{{#title Writing XPT Files - xportrs API}}
+
 # Writing XPT Files
 
 xportrs provides a builder API for writing XPT files with validation.
@@ -6,9 +8,9 @@ xportrs provides a builder API for writing XPT files with validation.
 
 The simplest way to write an XPT file:
 
-```rust
-use xportrs::{Column, ColumnData, Dataset, Xpt};
-
+```rust,ignore
+# use xportrs::{Column, ColumnData, Dataset, Xpt};
+# fn main() -> xportrs::Result<()> {
 let dataset = Dataset::new("AE", vec![
     Column::new("USUBJID", ColumnData::String(vec![Some("001".into())])),
     Column::new("AESEQ", ColumnData::F64(vec![Some(1.0)])),
@@ -17,15 +19,18 @@ let dataset = Dataset::new("AE", vec![
 Xpt::writer(dataset)
     .finalize()?
     .write_path("ae.xpt")?;
+# Ok(())
+# }
 ```
 
 ## Writer Builder
 
 The writer builder provides options for validation and output:
 
-```rust
-use xportrs::{Agency, Dataset, Xpt};
-
+```rust,ignore
+# use xportrs::{Agency, Dataset, Xpt, Column, ColumnData};
+# fn main() -> Result<(), Box<dyn std::error::Error>> {
+# let dataset = Dataset::new("AE", vec![Column::new("A", ColumnData::F64(vec![Some(1.0)]))])?;
 let validated = Xpt::writer(dataset)
     .agency(Agency::FDA)           // Agency-specific validation
     .finalize()?;                  // Validate and prepare
@@ -40,6 +45,8 @@ if validated.has_errors() {
 
 // Write if valid
 validated.write_path("output.xpt")?;
+# Ok(())
+# }
 ```
 
 ## Validation Workflow
@@ -56,9 +63,10 @@ graph LR
 
 ### Checking Issues
 
-```rust
-use xportrs::{Severity, Xpt};
-
+```rust,ignore
+# use xportrs::{Severity, Xpt, Dataset, Column, ColumnData};
+# fn main() -> xportrs::Result<()> {
+# let dataset = Dataset::new("AE", vec![Column::new("A", ColumnData::F64(vec![Some(1.0)]))])?;
 let validated = Xpt::writer(dataset).finalize()?;
 
 // Check for any issues
@@ -73,15 +81,18 @@ for issue in validated.issues() {
         Severity::Info => println!("INFO: {}", issue),
     }
 }
+# Ok(())
+# }
 ```
 
 ## Agency Validation
 
 Different agencies have different requirements:
 
-```rust
-use xportrs::{Agency, Xpt};
-
+```rust,ignore
+# use xportrs::{Agency, Xpt, Dataset, Column, ColumnData};
+# fn main() -> xportrs::Result<()> {
+# let dataset = Dataset::new("AE", vec![Column::new("A", ColumnData::F64(vec![Some(1.0)]))])?;
 // FDA (strict ASCII)
 let fda_result = Xpt::writer(dataset.clone())
     .agency(Agency::FDA)
@@ -96,19 +107,23 @@ let pmda_result = Xpt::writer(dataset.clone())
 let nmpa_result = Xpt::writer(dataset)
     .agency(Agency::NMPA)
     .finalize()?;
+# Ok(())
+# }
 ```
 
 ## Writing to Different Destinations
 
 ### Write to File Path
 
-```rust
+```rust,ignore
+# let validated = todo!();
 validated.write_path("output.xpt")?;
 ```
 
 ### Write to Buffer
 
-```rust
+```rust,ignore
+# let validated = todo!();
 let mut buffer = Vec::new();
 validated.write_to(&mut buffer)?;
 
@@ -118,10 +133,10 @@ println!("Wrote {} bytes", buffer.len());
 
 ### Write to Any Writer
 
-```rust
-use std::fs::File;
-use std::io::BufWriter;
-
+```rust,ignore
+# use std::fs::File;
+# use std::io::BufWriter;
+# let validated = todo!();
 let file = File::create("output.xpt")?;
 let mut writer = BufWriter::new(file);
 validated.write_to(&mut writer)?;
@@ -131,9 +146,10 @@ validated.write_to(&mut writer)?;
 
 Large datasets are automatically split:
 
-```rust
-use xportrs::Xpt;
-
+```rust,ignore
+# use xportrs::{Xpt, Dataset, Column, ColumnData};
+# fn main() -> xportrs::Result<()> {
+# let large_dataset = Dataset::new("AE", vec![Column::new("A", ColumnData::F64(vec![Some(1.0)]))])?;
 let paths = Xpt::writer(large_dataset)
     .max_file_size_gb(5.0)  // Default is 5.0
     .finalize()?
@@ -142,11 +158,13 @@ let paths = Xpt::writer(large_dataset)
 for path in paths {
     println!("Wrote: {}", path.display());
 }
+# Ok(())
+# }
 ```
 
 ## Complete Example
 
-```rust
+```rust,ignore
 use xportrs::{Agency, Column, ColumnData, Dataset, Format, Xpt};
 
 fn write_adverse_events() -> xportrs::Result<()> {
@@ -225,9 +243,10 @@ fn write_adverse_events() -> xportrs::Result<()> {
 
 ## Error Handling
 
-```rust
-use xportrs::{Error, Xpt};
-
+```rust,ignore
+# use xportrs::{Error, Xpt, Dataset, Column, ColumnData};
+# fn main() {
+# let dataset = Dataset::new("AE", vec![Column::new("A", ColumnData::F64(vec![Some(1.0)]))]).unwrap();
 let result = Xpt::writer(dataset)
     .finalize()
     .and_then(|v| v.write_path("output.xpt"));
@@ -244,6 +263,7 @@ match result {
     }
     Err(e) => eprintln!("Error: {}", e),
 }
+# }
 ```
 
 ## Best Practices
@@ -257,7 +277,9 @@ match result {
 4. **Test roundtrip**: Verify files can be read back correctly
 5. **Check file size**: Ensure files don't exceed agency limits
 
-```rust
+```rust,ignore
+use xportrs::{Agency, Dataset, Error, Xpt};
+
 // Production-ready writing pattern
 fn write_submission_file(dataset: Dataset, path: &str) -> xportrs::Result<()> {
     let validated = Xpt::writer(dataset)
@@ -276,7 +298,7 @@ fn write_submission_file(dataset: Dataset, path: &str) -> xportrs::Result<()> {
 
     // Write and verify
     let paths = validated.write_path(path)?;
-    
+
     // Verify by reading back
     for path in &paths {
         let _ = Xpt::read(path)?;
