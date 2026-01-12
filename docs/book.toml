@@ -18,6 +18,13 @@ extra-watch-dirs = ["theme"]
 [preprocessor.mermaid]
 command = "mdbook-mermaid"
 
+[preprocessor.termlink]
+glossary-path = "reference/glossary.md"
+link-first-only = true
+css-class = "glossary-term"
+case-sensitive = false
+exclude-pages = ["reference/glossary.md", "reference/changelog.md"]
+
 [output.html]
 # Theme settings
 default-theme = "light"
@@ -34,7 +41,7 @@ no-section-label = false
 sidebar-header-nav = true
 
 # Custom assets
-additional-css = []
+additional-css = ["theme/glossary.css"]
 additional-js = []
 
 # 404 page

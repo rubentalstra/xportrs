@@ -51,6 +51,9 @@ jobs:
       - name: Install mdbook-mermaid
         run: cargo install mdbook-mermaid --version ${MDBOOK_MERMAID_VERSION} --locked
 
+      - name: Install mdbook-termlink
+        run: cargo install mdbook-termlink --locked
+
       - name: Setup Mermaid
         run: mdbook-mermaid install docs
 
