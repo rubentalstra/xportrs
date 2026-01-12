@@ -14,8 +14,6 @@
 
 </div>
 
----
-
 A safe, DataFrame-agnostic implementation of SAS Transport v5 (XPT) file I/O with built-in regulatory compliance validation for FDA, PMDA, and NMPA submissions.
 
 ## Features
