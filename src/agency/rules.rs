@@ -189,24 +189,46 @@ impl Rule {
             }
 
             Self::LabelMaxBytes(max) => {
-                if let Some(ref label) = plan.dataset_label
-                    && label.len() > *max
-                {
-                    issues.push(Issue::AgencyLabelTooLong {
-                        name: plan.domain_code.clone(),
-                        is_dataset: true,
-                        max: *max,
-                        actual: label.len(),
-                    });
+                // Check dataset label
+                if let Some(ref label) = plan.dataset_label {
+                    let byte_len = label.len();
+                    if byte_len > *max {
+                        issues.push(Issue::AgencyLabelTooLong {
+                            name: plan.domain_code.clone(),
+                            is_dataset: true,
+                            max: *max,
+                            actual: byte_len,
+                        });
+                    } else if !label.is_ascii() && byte_len >= (*max * 80 / 100) {
+                        // Warn when multi-byte label is >= 80% of limit
+                        issues.push(Issue::MultiByteLabelNearLimit {
+                            name: plan.domain_code.clone(),
+                            is_dataset: true,
+                            byte_count: byte_len,
+                            max_bytes: *max,
+                            char_count: label.chars().count(),
+                        });
+                    }
                 }
 
+                // Check variable labels
                 for var in &plan.variables {
-                    if var.label.len() > *max {
+                    let byte_len = var.label.len();
+                    if byte_len > *max {
                         issues.push(Issue::AgencyLabelTooLong {
                             name: var.name.clone(),
                             is_dataset: false,
                             max: *max,
-                            actual: var.label.len(),
+                            actual: byte_len,
+                        });
+                    } else if !var.label.is_ascii() && byte_len >= (*max * 80 / 100) {
+                        // Warn when multi-byte label is >= 80% of limit
+                        issues.push(Issue::MultiByteLabelNearLimit {
+                            name: var.name.clone(),
+                            is_dataset: false,
+                            byte_count: byte_len,
+                            max_bytes: *max,
+                            char_count: var.label.chars().count(),
                         });
                     }
                 }

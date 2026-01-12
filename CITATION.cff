@@ -1,0 +1,35 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: xportrs
+message: >-
+    If you use this software, please cite it using the
+    metadata from this file.
+type: software
+authors:
+    -   family-names: Talstra
+        given-names: Ruben
+repository-code: 'https://github.com/rubentalstra/xportrs'
+url: 'https://github.com/rubentalstra/xportrs'
+abstract: >-
+    Pure Rust SAS XPORT (XPT) reader and writer for CDISC
+    clinical trial data submissions. Provides a safe,
+    DataFrame-agnostic implementation of XPT v5 I/O with
+    built-in regulatory compliance validation for FDA, PMDA,
+    and NMPA submissions.
+keywords:
+    - rust
+    - sas
+    - xpt
+    - xport
+    - cdisc
+    - clinical-trials
+    - fda
+    - pmda
+    - nmpa
+    - sdtm
+    - adam
+license: MIT
+version: 0.0.4
+date-released: '2026-01-12'

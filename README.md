@@ -25,14 +25,14 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-xportrs = "0.0.2"
+xportrs = "0.0.4"
 ```
 
 With optional features:
 
 ```toml
 [dependencies]
-xportrs = { version = "0.0.2", features = ["serde", "tracing"] }
+xportrs = { version = "0.0.4", features = ["serde", "tracing"] }
 ```
 
 ## Quick Start
@@ -106,21 +106,22 @@ println!("Created {} file(s)", files.len());
 
 ### Supported Agencies
 
-| Agency         | Description                                      | Max File Size |
-|----------------|--------------------------------------------------|---------------|
-| `Agency::FDA`  | U.S. Food and Drug Administration                | 5 GB          |
-| `Agency::PMDA` | Japan Pharmaceuticals and Medical Devices Agency | 5 GB          |
-| `Agency::NMPA` | China National Medical Products Administration   | 5 GB          |
+| Agency         | Description                                      | Max Size | Character Support |
+|----------------|--------------------------------------------------|----------|-------------------|
+| `Agency::FDA`  | U.S. Food and Drug Administration                | 5 GB     | ASCII only        |
+| `Agency::PMDA` | Japan Pharmaceuticals and Medical Devices Agency | 5 GB     | Japanese (UTF-8)  |
+| `Agency::NMPA` | China National Medical Products Administration   | 5 GB     | Chinese (UTF-8)   |
 
 ### Agency Validation Rules
 
 When an agency is specified, the following validations are applied:
 
-- **ASCII-only** names, labels, and character values
-- **Dataset names**: max 8 bytes, uppercase alphanumeric, must start with letter
-- **Variable names**: max 8 bytes, uppercase alphanumeric with underscores
+- **Dataset/variable names**: ASCII only, max 8 bytes, uppercase alphanumeric
 - **Labels**: max 40 bytes
-- **Character values**: max 200 bytes
+  - FDA: ASCII only
+  - PMDA: Japanese characters allowed (UTF-8)
+  - NMPA: Chinese characters allowed (UTF-8)
+- **Character values**: max 200 bytes (same encoding rules as labels)
 - **File naming**: dataset name must match file stem (case-insensitive)
 
 ## Automatic File Splitting
@@ -198,11 +199,12 @@ This crate uses CDISC SDTM vocabulary:
 |-----------|----------------------------------------------------|
 | `serde`   | Enable serialization/deserialization support       |
 | `tracing` | Enable structured logging with the `tracing` crate |
+| `polars`  | Enable Polars DataFrame integration                |
 | `full`    | Enable all optional features                       |
 
 ```toml
 # Enable all features
-xportrs = { version = "0.0.2", features = ["full"] }
+xportrs = { version = "0.0.4", features = ["full"] }
 ```
 
 ## Temporal Utilities

@@ -68,22 +68,31 @@ pub enum Agency {
 
     /// Japan Pharmaceuticals and Medical Devices Agency.
     ///
-    /// Requirements are largely aligned with FDA:
+    /// Requirements:
     /// - XPT v5 format
-    /// - ASCII-only names, labels, and character values
-    /// - Dataset/variable names: max 8 bytes
-    /// - Labels: max 40 bytes
-    /// - Character values: max 200 bytes
+    /// - Dataset/variable names: ASCII only, max 8 bytes
+    /// - Labels: max 40 bytes, **Japanese characters allowed (UTF-8)**
+    /// - Character values: max 200 bytes, **Japanese characters allowed**
+    /// - Max file size: 5 GB (files should be split if larger)
+    ///
+    /// Note: Japanese characters are permitted in labels and values where
+    /// translation would lose essential information. Data lengths for
+    /// Japanese items may differ from ASCII equivalents.
     PMDA,
 
     /// China National Medical Products Administration.
     ///
-    /// Requirements are largely aligned with FDA:
+    /// Requirements:
     /// - XPT v5 format
-    /// - ASCII-only names, labels, and character values
-    /// - Dataset/variable names: max 8 bytes
-    /// - Labels: max 40 bytes
-    /// - Character values: max 200 bytes
+    /// - Dataset/variable names: ASCII only, max 8 bytes
+    /// - Labels: max 40 bytes, **Chinese characters allowed (UTF-8)**
+    /// - Character values: max 200 bytes, **Chinese characters allowed**
+    /// - Supported encodings: UTF-8, GB2312, GBK, GB18030, Big5
+    /// - Max file size: 5 GB (files should be split if larger)
+    ///
+    /// Note: Chinese language support is required for labels and certain
+    /// data fields. Multi-byte characters count towards byte limits
+    /// (1 Chinese character = up to 4 bytes in UTF-8).
     NMPA,
 }
 
@@ -148,15 +157,29 @@ impl Agency {
     }
 
     /// Returns whether ASCII-only labels are required.
+    ///
+    /// - FDA: `true` (ASCII only)
+    /// - PMDA: `false` (Japanese characters allowed)
+    /// - NMPA: `false` (Chinese characters allowed)
     #[must_use]
     pub const fn requires_ascii_labels(self) -> bool {
-        true
+        match self {
+            Self::FDA => true,
+            Self::PMDA | Self::NMPA => false,
+        }
     }
 
     /// Returns whether ASCII-only character values are required.
+    ///
+    /// - FDA: `true` (ASCII only)
+    /// - PMDA: `false` (Japanese characters allowed)
+    /// - NMPA: `false` (Chinese characters allowed)
     #[must_use]
     pub const fn requires_ascii_values(self) -> bool {
-        true
+        match self {
+            Self::FDA => true,
+            Self::PMDA | Self::NMPA => false,
+        }
     }
 
     /// Returns whether dataset name must match the file stem.
@@ -167,23 +190,37 @@ impl Agency {
 
     /// Returns the validation [`Rule`] items for this agency.
     ///
-    /// Rules are applied in order during validation.
+    /// Rules are applied in order during validation. Each agency has specific
+    /// encoding requirements:
+    /// - FDA: ASCII-only for names, labels, and values
+    /// - PMDA: ASCII for names, Japanese (UTF-8) allowed in labels/values
+    /// - NMPA: ASCII for names, Chinese (UTF-8) allowed in labels/values
     #[must_use]
     pub fn rules(self) -> Vec<Rule> {
-        // All agencies currently share the same rules (aligned with FDA)
-        vec![
+        let mut rules = vec![
+            // All agencies require ASCII names (SAS XPT format limitation)
             Rule::RequireAsciiNames,
-            Rule::RequireAsciiLabels,
-            Rule::RequireAsciiCharacterValues,
+            // Byte length limits
             Rule::DatasetNameMaxBytes(self.max_dataset_name_bytes()),
             Rule::VariableNameMaxBytes(self.max_variable_name_bytes()),
             Rule::LabelMaxBytes(self.max_label_bytes()),
             Rule::CharacterValueMaxBytes(self.max_character_value_bytes()),
+            // File naming and pattern rules
             Rule::DatasetNameMatchesFileStem,
             Rule::dataset_name_pattern(r"^[A-Z][A-Z0-9]{0,7}$"),
             Rule::variable_name_pattern(r"^[A-Z_][A-Z0-9_]{0,7}$"),
             Rule::MaxFileSizeGb(self.max_file_size_gb()),
-        ]
+        ];
+
+        // Agency-specific encoding rules for labels and values
+        if self.requires_ascii_labels() {
+            rules.push(Rule::RequireAsciiLabels);
+        }
+        if self.requires_ascii_values() {
+            rules.push(Rule::RequireAsciiCharacterValues);
+        }
+
+        rules
     }
 
     /// Validates a schema plan against this agency's requirements.
@@ -265,5 +302,101 @@ mod tests {
         assert_eq!(format!("{}", Agency::FDA), "FDA");
         assert_eq!(format!("{}", Agency::PMDA), "PMDA");
         assert_eq!(format!("{}", Agency::NMPA), "NMPA");
+    }
+
+    #[test]
+    fn test_agency_specific_ascii_requirements() {
+        // FDA requires ASCII for everything
+        assert!(Agency::FDA.requires_ascii_names());
+        assert!(Agency::FDA.requires_ascii_labels());
+        assert!(Agency::FDA.requires_ascii_values());
+
+        // PMDA allows non-ASCII in labels/values
+        assert!(Agency::PMDA.requires_ascii_names());
+        assert!(!Agency::PMDA.requires_ascii_labels());
+        assert!(!Agency::PMDA.requires_ascii_values());
+
+        // NMPA allows non-ASCII in labels/values
+        assert!(Agency::NMPA.requires_ascii_names());
+        assert!(!Agency::NMPA.requires_ascii_labels());
+        assert!(!Agency::NMPA.requires_ascii_values());
+    }
+
+    #[test]
+    fn test_agency_rules_differ() {
+        let fda_rules = Agency::FDA.rules();
+        let pmda_rules = Agency::PMDA.rules();
+
+        // FDA should have RequireAsciiLabels
+        assert!(
+            fda_rules
+                .iter()
+                .any(|r| matches!(r, Rule::RequireAsciiLabels))
+        );
+
+        // PMDA should NOT have RequireAsciiLabels
+        assert!(
+            !pmda_rules
+                .iter()
+                .any(|r| matches!(r, Rule::RequireAsciiLabels))
+        );
+    }
+
+    #[test]
+    fn test_pmda_allows_japanese_labels() {
+        let mut plan = DatasetSchema::new("AE");
+        plan.dataset_label = Some("有害事象".to_string()); // Japanese
+        plan.variables = vec![VariableSpec::numeric("AESEQ")];
+        plan.recalculate_positions();
+
+        let issues = Agency::PMDA.validate(&plan, None);
+        // Should NOT have any errors (warnings are OK)
+        assert!(!issues.iter().any(|i| i.severity() == Severity::Error));
+    }
+
+    #[test]
+    fn test_nmpa_allows_chinese_labels() {
+        let mut plan = DatasetSchema::new("AE");
+        plan.dataset_label = Some("不良事件".to_string()); // Chinese
+        plan.variables = vec![VariableSpec::numeric("AESEQ")];
+        plan.recalculate_positions();
+
+        let issues = Agency::NMPA.validate(&plan, None);
+        // Should NOT have any errors (warnings are OK)
+        assert!(!issues.iter().any(|i| i.severity() == Severity::Error));
+    }
+
+    #[test]
+    fn test_fda_rejects_non_ascii_labels() {
+        let mut plan = DatasetSchema::new("AE");
+        plan.dataset_label = Some("Événements".to_string()); // French accented
+        plan.variables = vec![VariableSpec::numeric("AESEQ")];
+        plan.recalculate_positions();
+
+        let issues = Agency::FDA.validate(&plan, None);
+        // Should have NonAsciiDatasetLabel error
+        assert!(
+            issues
+                .iter()
+                .any(|i| matches!(i, Issue::NonAsciiDatasetLabel { .. }))
+        );
+    }
+
+    #[test]
+    fn test_multibyte_label_warning() {
+        let mut plan = DatasetSchema::new("AE");
+        // Japanese label using 36 bytes (90% of 40-byte limit)
+        // 12 Japanese characters * 3 bytes each = 36 bytes
+        plan.dataset_label = Some("有害事象データセット詳細".to_string());
+        plan.variables = vec![VariableSpec::numeric("AESEQ")];
+        plan.recalculate_positions();
+
+        let issues = Agency::PMDA.validate(&plan, None);
+        // Should have a warning about approaching byte limit
+        assert!(
+            issues
+                .iter()
+                .any(|i| matches!(i, Issue::MultiByteLabelNearLimit { .. }))
+        );
     }
 }

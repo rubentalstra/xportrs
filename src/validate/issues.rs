@@ -214,6 +214,23 @@ pub enum Issue {
         /// Maximum policy limit.
         max: usize,
     },
+
+    /// Warning when a label contains multi-byte characters and is near the byte limit.
+    ///
+    /// This warning helps users catch potential truncation issues when using
+    /// non-ASCII characters (Japanese, Chinese, etc.) in labels.
+    MultiByteLabelNearLimit {
+        /// The name (dataset or variable).
+        name: String,
+        /// Whether this is a dataset (true) or variable (false).
+        is_dataset: bool,
+        /// Current byte count.
+        byte_count: usize,
+        /// Maximum allowed bytes.
+        max_bytes: usize,
+        /// Character count (for context).
+        char_count: usize,
+    },
 }
 
 impl Issue {
@@ -222,7 +239,9 @@ impl Issue {
     pub const fn severity(&self) -> Severity {
         match self {
             // Warnings
-            Self::CharacterValueLengthExceeded { .. } => Severity::Warning,
+            Self::CharacterValueLengthExceeded { .. } | Self::MultiByteLabelNearLimit { .. } => {
+                Severity::Warning
+            }
             // Everything else is an error
             _ => Severity::Error,
         }
@@ -257,8 +276,11 @@ impl Issue {
                 Some(Target::Variable(variable.clone()))
             }
 
-            // Special case for label (can be either)
+            // Special case for label (can be either dataset or variable)
             Self::AgencyLabelTooLong {
+                name, is_dataset, ..
+            }
+            | Self::MultiByteLabelNearLimit {
                 name, is_dataset, ..
             } => {
                 if *is_dataset {
@@ -472,6 +494,20 @@ impl fmt::Display for Issue {
                     f,
                     "character variable '{}' length {} exceeds {} policy limit of {} bytes",
                     variable, length, agency, max
+                )?;
+            }
+            Self::MultiByteLabelNearLimit {
+                name,
+                is_dataset,
+                byte_count,
+                max_bytes,
+                char_count,
+            } => {
+                let kind = if *is_dataset { "dataset" } else { "variable" };
+                write!(
+                    f,
+                    "{} '{}' label uses {} of {} bytes ({} characters) - approaching limit with multi-byte characters",
+                    kind, name, byte_count, max_bytes, char_count
                 )?;
             }
         }

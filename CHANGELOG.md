@@ -7,17 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Agency-specific character encoding validation:
+  - FDA: Strict ASCII-only for names, labels, and values
+  - PMDA: ASCII for names, Japanese (UTF-8) allowed in labels/values
+  - NMPA: ASCII for names, Chinese (UTF-8) allowed in labels/values
+- Added multi-byte label warning when labels approach byte limits
+
+### Fixed
+
+- Corrected agency validation rules to match actual regulatory requirements
+- Fixed documentation claiming V8 write support (detection only)
+- Fixed documentation claiming Polars is included by default (it's optional)
+
 ## [0.0.1] - 2026-01-08
 
 ### Added
 
 - Initial release
 - Full SAS Transport V5 format support
-- Full SAS Transport V8 format support (extended limits)
+- SAS Transport V8 format detection (write support planned)
 - IEEE to IBM floating-point conversion and vice versa
 - All 28 SAS missing value codes (`.`, `.A`-`.Z`, `._`)
 - Streaming API for memory-efficient processing of large files
-- Polars DataFrame integration (included by default)
+- Polars DataFrame integration (optional `polars` feature)
 - Optional Serde support (`serde` feature)
 - CDISC validation rules
 - FDA compliance checking
