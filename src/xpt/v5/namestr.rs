@@ -292,8 +292,7 @@ mod tests {
 
     #[test]
     fn test_character_variable() {
-        let var = VariableSpec::character("USUBJID", 20)
-            .with_format(Format::character(20));
+        let var = VariableSpec::character("USUBJID", 20).with_format(Format::character(20));
 
         let packed = pack_namestr(&var, 1).unwrap();
         let unpacked = unpack_namestr(&packed).unwrap();

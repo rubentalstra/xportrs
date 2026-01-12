@@ -172,12 +172,8 @@ impl<R: Read + Seek> XptReader<R> {
 
                 // Transfer format if present
                 if !var.nform.is_empty() {
-                    col = col.with_format(Format::from_namestr(
-                        &var.nform,
-                        var.nfl,
-                        var.nfd,
-                        var.nfj,
-                    ));
+                    col = col
+                        .with_format(Format::from_namestr(&var.nform, var.nfl, var.nfd, var.nfj));
                 }
 
                 // Transfer informat if present

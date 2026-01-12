@@ -279,28 +279,35 @@ fn test_metadata_roundtrip() {
     let path = dir.path().join("ae_metadata.xpt");
 
     // Create dataset with full CDISC metadata
-    let dataset = Dataset::with_label("AE", "Adverse Events", vec![
-        Column::new("STUDYID", ColumnData::String(vec![Some("STUDY123".into())]))
-            .with_label("Study Identifier")
-            .with_format(Format::character(20))
-            .with_length(20), // explicit length override
-        Column::new("USUBJID", ColumnData::String(vec![Some("001-001".into())]))
-            .with_label("Unique Subject Identifier")
-            .with_format(Format::character(40))
-            .with_length(40), // explicit length override
-        Column::new("AESEQ", ColumnData::F64(vec![Some(1.0)]))
-            .with_label("Sequence Number")
-            .with_format(Format::numeric(8, 0)),
-        Column::new("AESTDTC", ColumnData::F64(vec![Some(21185.0)]))
-            .with_label("Start Date/Time")
-            .with_format_str("DATE9.")
-            .unwrap(),
-    ])
+    let dataset = Dataset::with_label(
+        "AE",
+        "Adverse Events",
+        vec![
+            Column::new("STUDYID", ColumnData::String(vec![Some("STUDY123".into())]))
+                .with_label("Study Identifier")
+                .with_format(Format::character(20))
+                .with_length(20), // explicit length override
+            Column::new("USUBJID", ColumnData::String(vec![Some("001-001".into())]))
+                .with_label("Unique Subject Identifier")
+                .with_format(Format::character(40))
+                .with_length(40), // explicit length override
+            Column::new("AESEQ", ColumnData::F64(vec![Some(1.0)]))
+                .with_label("Sequence Number")
+                .with_format(Format::numeric(8, 0)),
+            Column::new("AESTDTC", ColumnData::F64(vec![Some(21185.0)]))
+                .with_label("Start Date/Time")
+                .with_format_str("DATE9.")
+                .unwrap(),
+        ],
+    )
     .unwrap();
 
     // Verify original dataset has metadata
     assert_eq!(dataset.dataset_label().unwrap(), "Adverse Events");
-    assert_eq!(dataset.columns()[0].label().unwrap().to_string(), "Study Identifier");
+    assert_eq!(
+        dataset.columns()[0].label().unwrap().to_string(),
+        "Study Identifier"
+    );
     assert!(dataset.columns()[0].format().is_some());
 
     // Write
@@ -317,13 +324,27 @@ fn test_metadata_roundtrip() {
     assert_eq!(loaded.dataset_label().unwrap(), "Adverse Events");
 
     // Verify variable labels preserved
-    assert_eq!(loaded.columns()[0].label().unwrap().to_string(), "Study Identifier");
-    assert_eq!(loaded.columns()[1].label().unwrap().to_string(), "Unique Subject Identifier");
-    assert_eq!(loaded.columns()[2].label().unwrap().to_string(), "Sequence Number");
-    assert_eq!(loaded.columns()[3].label().unwrap().to_string(), "Start Date/Time");
+    assert_eq!(
+        loaded.columns()[0].label().unwrap().to_string(),
+        "Study Identifier"
+    );
+    assert_eq!(
+        loaded.columns()[1].label().unwrap().to_string(),
+        "Unique Subject Identifier"
+    );
+    assert_eq!(
+        loaded.columns()[2].label().unwrap().to_string(),
+        "Sequence Number"
+    );
+    assert_eq!(
+        loaded.columns()[3].label().unwrap().to_string(),
+        "Start Date/Time"
+    );
 
     // Verify formats preserved
-    let format0 = loaded.columns()[0].format().expect("STUDYID should have format");
+    let format0 = loaded.columns()[0]
+        .format()
+        .expect("STUDYID should have format");
     assert_eq!(format0.name_without_prefix(), "CHAR");
     assert_eq!(format0.length(), 20);
 
@@ -331,7 +352,9 @@ fn test_metadata_roundtrip() {
     // as they have no format name. Only named formats like DATE9. are preserved.
     // The AESEQ column used Format::numeric(8, 0) which creates a bare format.
 
-    let format3 = loaded.columns()[3].format().expect("AESTDTC should have format");
+    let format3 = loaded.columns()[3]
+        .format()
+        .expect("AESTDTC should have format");
     assert_eq!(format3.name_without_prefix(), "DATE");
     assert_eq!(format3.length(), 9);
 
@@ -362,7 +385,9 @@ fn test_missing_labels_warning() {
     // Check that the issues include missing label warnings
     let issues = validated.issues();
     assert!(
-        issues.iter().any(|i| format!("{}", i).contains("missing a label")),
+        issues
+            .iter()
+            .any(|i| format!("{}", i).contains("missing a label")),
         "Expected missing label warnings, got: {:?}",
         issues
     );

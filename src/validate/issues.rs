@@ -293,9 +293,7 @@ impl Issue {
             | Self::NonAsciiDatasetName { dataset }
             | Self::NonAsciiDatasetLabel { dataset }
             | Self::AgencyDatasetNameTooLong { dataset, .. }
-            | Self::MissingDatasetLabel { dataset } => {
-                Some(Target::Dataset(dataset.clone()))
-            }
+            | Self::MissingDatasetLabel { dataset } => Some(Target::Dataset(dataset.clone())),
 
             // Variable targets
             Self::VariableNameTooLong { variable, .. }

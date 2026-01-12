@@ -86,11 +86,7 @@ impl Justification {
     /// Creates a justification from an XPT `nfj` field value.
     #[must_use]
     pub fn from_nfj(value: i16) -> Self {
-        if value == 0 {
-            Self::Left
-        } else {
-            Self::Right
-        }
+        if value == 0 { Self::Left } else { Self::Right }
     }
 
     /// Returns the XPT `nfj` field value.
@@ -325,11 +321,7 @@ impl Format {
         // Find where the name ends and the width begins
         let (name, length) = parse_name_and_width(before_dot, s)?;
 
-        let full_name = if is_char {
-            format!("${}", name)
-        } else {
-            name
-        };
+        let full_name = if is_char { format!("${}", name) } else { name };
 
         Ok(Self {
             name: full_name.clone(),
@@ -451,7 +443,10 @@ impl<'de> serde::Deserialize<'de> for Format {
 /// - "DATE9" -> ("DATE", 9)
 /// - "BEST12" -> ("BEST", 12)
 /// - "CHAR200" -> ("CHAR", 200)
-fn parse_name_and_width(before_dot: &str, original: &str) -> Result<(String, u16), FormatParseError> {
+fn parse_name_and_width(
+    before_dot: &str,
+    original: &str,
+) -> Result<(String, u16), FormatParseError> {
     if before_dot.is_empty() {
         return Err(FormatParseError {
             input: original.to_string(),

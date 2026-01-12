@@ -301,11 +301,10 @@ mod tests {
         // Create a column with explicit length override
         let dataset = Dataset::new(
             "AE",
-            vec![Column::new(
-                "USUBJID",
-                ColumnData::String(vec![Some("short".into())]),
-            )
-            .with_length(100)], // Force length to 100 even though data is shorter
+            vec![
+                Column::new("USUBJID", ColumnData::String(vec![Some("short".into())]))
+                    .with_length(100),
+            ], // Force length to 100 even though data is shorter
         )
         .unwrap();
 

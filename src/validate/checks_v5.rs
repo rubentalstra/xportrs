@@ -153,13 +153,27 @@ mod tests {
 
         // All issues should be warnings, not errors
         for issue in &issues {
-            assert!(issue.is_warning(), "Expected warning, got error: {:?}", issue);
+            assert!(
+                issue.is_warning(),
+                "Expected warning, got error: {:?}",
+                issue
+            );
         }
 
         // Check for specific warning types
-        assert!(issues.iter().any(|i| matches!(i, Issue::MissingDatasetLabel { .. })));
-        assert!(issues.iter().any(|i| matches!(i, Issue::MissingVariableLabel { variable } if variable == "AESEQ")));
-        assert!(issues.iter().any(|i| matches!(i, Issue::MissingVariableLabel { variable } if variable == "USUBJID")));
+        assert!(
+            issues
+                .iter()
+                .any(|i| matches!(i, Issue::MissingDatasetLabel { .. }))
+        );
+        assert!(
+            issues.iter().any(
+                |i| matches!(i, Issue::MissingVariableLabel { variable } if variable == "AESEQ")
+            )
+        );
+        assert!(issues.iter().any(
+            |i| matches!(i, Issue::MissingVariableLabel { variable } if variable == "USUBJID")
+        ));
     }
 
     #[test]
@@ -170,7 +184,11 @@ mod tests {
 
         let issues = validate_v5_schema(&plan);
         assert!(!issues.is_empty());
-        assert!(issues.iter().any(|i| matches!(i, Issue::DatasetNameTooLong { .. })));
+        assert!(
+            issues
+                .iter()
+                .any(|i| matches!(i, Issue::DatasetNameTooLong { .. }))
+        );
     }
 
     #[test]
