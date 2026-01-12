@@ -26,30 +26,39 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
+  MDBOOK_VERSION: "0.5.2"
+  MDBOOK_MERMAID_VERSION: "0.17.0"
 
 jobs:
   # ============================================================
   # Build Documentation
-  # Compiles mdBook with mermaid diagrams
+  # Compiles mdBook with mermaid diagrams and termlink
   # ============================================================
   build:
     name: Build
     runs-on: ubuntu-latest
-    env:
-      MDBOOK_VERSION: 0.5.2
-      MDBOOK_MERMAID_VERSION: 0.17.0
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
 
       - name: Install mdBook
-        run: |
-          curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf -y | sh
-          rustup update
-          cargo install --version ${MDBOOK_VERSION} mdbook
+        uses: taiki-e/install-action@v2
+        with:
+          tool: mdbook@${{ env.MDBOOK_VERSION }}
 
       - name: Install mdbook-mermaid
-        run: cargo install mdbook-mermaid --version ${MDBOOK_MERMAID_VERSION} --locked
+        uses: taiki-e/install-action@v2
+        with:
+          tool: mdbook-mermaid@${{ env.MDBOOK_MERMAID_VERSION }}
+
+      - name: Install mdbook-termlink
+        run: cargo install mdbook-termlink --locked
 
       - name: Setup Mermaid
         run: mdbook-mermaid install docs
@@ -65,8 +74,8 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: docs/book
-  
-  
+
+
   # ============================================================
   # Deploy to GitHub Pages
   # Only runs on main branch pushes

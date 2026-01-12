@@ -1,0 +1,10 @@
+/* Glossary term styling for mdbook-termlink */
+.glossary-term {
+    text-decoration: underline dotted currentColor;
+    text-underline-offset: 2px;
+    cursor: help;
+}
+
+.glossary-term:hover {
+    background-color: rgba(var(--links), 0.1);
+}
