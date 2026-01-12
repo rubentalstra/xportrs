@@ -199,7 +199,11 @@ impl<R: Read + Seek> XptReader<R> {
             })
             .collect();
 
-        Dataset::with_label(member.name.clone(), member.label.clone(), cols)
+        let mut dataset = Dataset::new(member.name.clone(), cols)?;
+        if let Some(ref label) = member.label {
+            dataset.set_label(label.as_str());
+        }
+        Ok(dataset)
     }
 }
 

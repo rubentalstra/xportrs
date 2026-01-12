@@ -279,7 +279,7 @@ fn test_metadata_roundtrip() {
     let path = dir.path().join("ae_metadata.xpt");
 
     // Create dataset with full CDISC metadata
-    let dataset = Dataset::with_label("AE", Some("Adverse Events"), vec![
+    let dataset = Dataset::with_label("AE", "Adverse Events", vec![
         Column::new("STUDYID", ColumnData::String(vec![Some("STUDY123".into())]))
             .with_label("Study Identifier")
             .with_format(Format::character(20))

@@ -1,0 +1,36 @@
+[book]
+title = "xportrs Documentation"
+description = "SAS Transport (XPT) file format library for CDISC/FDA regulatory submissions"
+authors = ["Ruben Talstra", "xportrs contributors"]
+language = "en"
+text-direction = "ltr"
+
+[rust]
+edition = "2024"
+
+[build]
+build-dir = "book"
+create-missing = false
+extra-watch-dirs = ["theme"]
+
+[preprocessor.mermaid]
+command = "mdbook-mermaid"
+
+[output.html]
+default-theme = "light"
+preferred-dark-theme = "navy"
+mathjax-support = true
+git-repository-url = "https://github.com/rubentalstra/xportrs"
+edit-url-template = "https://github.com/rubentalstra/xportrs/edit/main/docs/{path}"
+
+[output.html.fold]
+enable = true
+level = 1
+
+[output.html.playground]
+editable = false
+copyable = true
+
+[output.html.search]
+enable = true
+limit-results = 30

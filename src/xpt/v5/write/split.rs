@@ -126,11 +126,11 @@ fn slice_dataset(dataset: &Dataset, start: usize, end: usize) -> Result<Dataset>
         })
         .collect();
 
-    Dataset::with_label(
-        dataset.domain_code().to_string(),
-        dataset.dataset_label().map(String::from),
-        columns,
-    )
+    let mut result = Dataset::new(dataset.domain_code().to_string(), columns)?;
+    if let Some(label) = dataset.dataset_label() {
+        result.set_label(label);
+    }
+    Ok(result)
 }
 
 /// Slices column data.

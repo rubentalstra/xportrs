@@ -92,11 +92,11 @@ impl Dataset {
     /// Returns [`Error::ColumnLengthMismatch`] if any [`Column`] has a different length than the others.
     pub fn with_label(
         domain_code: impl Into<DomainCode>,
-        dataset_label: Option<impl Into<Label>>,
+        dataset_label: impl Into<Label>,
         columns: Vec<Column>,
     ) -> Result<Self> {
         let mut dataset = Self::new(domain_code, columns)?;
-        dataset.dataset_label = dataset_label.map(Into::into);
+        dataset.dataset_label = Some(dataset_label.into());
         Ok(dataset)
     }
 
@@ -122,6 +122,30 @@ impl Dataset {
     #[must_use]
     pub fn dataset_label(&self) -> Option<&str> {
         self.dataset_label.as_ref().map(Label::as_str)
+    }
+
+    /// Sets the dataset label.
+    ///
+    /// This is useful when you need to conditionally set a label.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use xportrs::{Column, ColumnData, Dataset};
+    ///
+    /// let mut dataset = Dataset::new("AE", vec![
+    ///     Column::new("AESEQ", ColumnData::F64(vec![Some(1.0)])),
+    /// ])?;
+    ///
+    /// // Conditionally set label
+    /// let label: Option<&str> = Some("Adverse Events");
+    /// if let Some(lbl) = label {
+    ///     dataset.set_label(lbl);
+    /// }
+    /// # Ok::<(), xportrs::Error>(())
+    /// ```
+    pub fn set_label(&mut self, label: impl Into<Label>) {
+        self.dataset_label = Some(label.into());
     }
 
     /// Returns a reference to the columns.
