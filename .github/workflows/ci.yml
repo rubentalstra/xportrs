@@ -38,47 +38,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Check version consistency
-        run: |
-          # Extract versions from all files
-          CARGO_VERSION=$(grep -m1 '^version = ' Cargo.toml | sed 's/version = "\(.*\)"/\1/')
-          CITATION_VERSION=$(grep -m1 '^version:' CITATION.cff | sed 's/version: //')
-          ZENODO_VERSION=$(grep -m1 '"version"' .zenodo.json | sed 's/.*"version": "\([^"]*\)".*/\1/')
-          CODEMETA_VERSION=$(grep -m1 '"version"' codemeta.json | sed 's/.*"version": "\([^"]*\)".*/\1/')
-          README_VERSION=$(grep -oP 'xportrs = "\K[^"]+' README.md | head -1)
-
-          echo "Cargo.toml:    $CARGO_VERSION"
-          echo "CITATION.cff:  $CITATION_VERSION"
-          echo ".zenodo.json:  $ZENODO_VERSION"
-          echo "codemeta.json: $CODEMETA_VERSION"
-          echo "README.md:     $README_VERSION"
-
-          # Check all versions match
-          MISMATCH=0
-          if [ "$CARGO_VERSION" != "$CITATION_VERSION" ]; then
-            echo "::error::Version mismatch: Cargo.toml ($CARGO_VERSION) != CITATION.cff ($CITATION_VERSION)"
-            MISMATCH=1
-          fi
-          if [ "$CARGO_VERSION" != "$ZENODO_VERSION" ]; then
-            echo "::error::Version mismatch: Cargo.toml ($CARGO_VERSION) != .zenodo.json ($ZENODO_VERSION)"
-            MISMATCH=1
-          fi
-          if [ "$CARGO_VERSION" != "$CODEMETA_VERSION" ]; then
-            echo "::error::Version mismatch: Cargo.toml ($CARGO_VERSION) != codemeta.json ($CODEMETA_VERSION)"
-            MISMATCH=1
-          fi
-          if [ "$CARGO_VERSION" != "$README_VERSION" ]; then
-            echo "::error::Version mismatch: Cargo.toml ($CARGO_VERSION) != README.md ($README_VERSION)"
-            MISMATCH=1
-          fi
-
-          if [ $MISMATCH -eq 1 ]; then
-            echo ""
-            echo "Run './scripts/sync-version.sh' to fix version mismatches"
-            exit 1
-          fi
-
-          echo ""
-          echo "All versions match: $CARGO_VERSION"
+        run: ./scripts/sync-version.sh --check
 
   # Compile all dependencies and cache them for parallel jobs
   build:
