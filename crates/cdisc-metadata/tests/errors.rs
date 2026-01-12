@@ -1,6 +1,6 @@
 //! Tests for error handling.
 
-use cdisc_metadata::{load_adam, load_sdtm, load_send, load_standard, Error};
+use cdisc_metadata::{Error, load_adam, load_sdtm, load_send, load_standard};
 use std::path::Path;
 
 // =============================================================================

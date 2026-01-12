@@ -1,6 +1,6 @@
 //! Tests for core types: VarType, Variable, DatasetDef, Standard.
 
-use cdisc_metadata::{sdtm_ig_v3_4, VarType};
+use cdisc_metadata::{VarType, sdtm_ig_v3_4};
 
 // =============================================================================
 // VarType Tests
