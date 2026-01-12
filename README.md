@@ -1,264 +1,88 @@
-# xportrs <img src=".github/logo.svg" align="right" alt="" width="120" />
+<div align="center">
+
+<img src=".github/logo.svg" alt="xportrs logo" width="140" />
+
+# xportrs
+
+**Pure Rust SAS XPORT (XPT) library for CDISC clinical trial data submissions**
 
 [![Crates.io](https://img.shields.io/crates/v/xportrs.svg)](https://crates.io/crates/xportrs)
 [![Documentation](https://docs.rs/xportrs/badge.svg)](https://docs.rs/xportrs)
 [![CI](https://github.com/rubentalstra/xportrs/actions/workflows/ci.yml/badge.svg)](https://github.com/rubentalstra/xportrs/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![MSRV](https://img.shields.io/badge/MSRV-1.92-blue.svg)](https://blog.rust-lang.org/)
 [![dependency status](https://deps.rs/repo/github/rubentalstra/xportrs/status.svg)](https://deps.rs/repo/github/rubentalstra/xportrs)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-**Pure Rust SAS XPORT (XPT) reader and writer for CDISC clinical trial data submissions.**
+</div>
 
-`xportrs` provides a safe, DataFrame-agnostic implementation of XPT v5 I/O with built-in regulatory compliance validation for FDA, PMDA, and NMPA submissions.
+---
+
+A safe, DataFrame-agnostic implementation of SAS Transport v5 (XPT) file I/O with built-in regulatory compliance validation for FDA, PMDA, and NMPA submissions.
 
 ## Features
 
-- **DataFrame-agnostic** - Works with any in-memory table representation
-- **Agency compliance** - Built-in validation for FDA, PMDA, and NMPA requirements
-- **Auto file splitting** - Automatically splits large files to meet agency size limits (5GB)
-- **XPT v5 support** - Full read and write support for SAS XPORT v5 format
-- **Configurable** - Text encoding modes, validation strictness, and more
+- **Regulatory Compliance** — Built-in validation for FDA, PMDA, and NMPA submission requirements
+- **Read & Write** — Full support for SAS Transport v5 format
+- **Auto File Splitting** — Automatically splits files exceeding agency size limits (5 GB)
+- **Framework Agnostic** — Works with any in-memory data representation
+- **Safe by Design** — Zero unsafe code, no C dependencies
+
+## Regulatory Agency Support
+
+| Agency   | Region        | Character Encoding | Max File Size |
+|----------|---------------|--------------------|---------------|
+| **FDA**  | United States | ASCII              | 5 GB          |
+| **PMDA** | Japan         | UTF-8 (Japanese)   | 5 GB          |
+| **NMPA** | China         | UTF-8 (Chinese)    | 5 GB          |
+
+All agencies enforce: 8-byte variable names, 40-byte labels, 200-byte character values.
 
 ## Installation
-
-Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
 xportrs = "0.0.4"
 ```
 
-With optional features:
-
-```toml
-[dependencies]
-xportrs = { version = "0.0.4", features = ["serde", "tracing"] }
-```
-
-## Quick Start
-
-### Reading XPT Files
+## Quick Example
 
 ```rust
-use xportrs::Xpt;
+use xportrs::{Xpt, Agency};
 
-// Simple: read the first dataset
-let dataset = Xpt::read("ae.xpt") ?;
-println!("Domain: {}", dataset.domain_code());
-println!("Rows: {}", dataset.nrows());
+fn main() -> Result<(), xportrs::Error> {
+    // Read an XPT file
+    let dataset = Xpt::read("dm.xpt")?;
 
-// Read a specific member from a multi-dataset file
-let dm = Xpt::reader("study.xpt") ?.read_member("DM") ?;
+    // Write with FDA compliance validation
+    Xpt::writer(dataset)
+        .agency(Agency::FDA)
+        .finalize()?
+        .write_path("dm.xpt")?;
 
-// Read all members
-let datasets = Xpt::reader("study.xpt") ?.read_all() ?;
-
-// Inspect file metadata without loading data
-let info = Xpt::inspect("data.xpt") ?;
-for name in info.member_names() {
-println ! ("Member: {}", name);
+    Ok(())
 }
 ```
 
-### Writing XPT Files
+For comprehensive examples and API documentation, see [docs.rs/xportrs](https://docs.rs/xportrs).
 
-```rust
-use xportrs::{Xpt, Dataset, Column, ColumnData};
+## Documentation
 
-// Create a dataset
-let dataset = Dataset::new(
-"AE".to_string(),
-vec![
-    Column::new("USUBJID", ColumnData::String(vec![
-        Some("01-001".into()),
-        Some("01-002".into()),
-    ])),
-    Column::new("AESEQ", ColumnData::I64(vec![Some(1), Some(1)])),
-    Column::new("AESTDY", ColumnData::F64(vec![Some(15.0), Some(22.0)])),
-],
-) ?;
+- [API Reference](https://docs.rs/xportrs) — Full API documentation
+- [Examples](examples/README.md) — Code examples for reading, writing, and validation
+- [CONTRIBUTING](CONTRIBUTING.md) — Contribution guidelines
 
-// Write with structural validation only
-Xpt::writer(dataset)
-.finalize() ?
-.write_path("ae.xpt") ?;
-```
+## Safety & Quality
 
-## Agency Compliance
-
-When submitting clinical trial data to regulatory agencies, use the
-`agency()` method to enable agency-specific validation rules:
-
-```rust
-use xportrs::{Xpt, Agency, Dataset};
-
-let dataset = Dataset::new("AE", vec![/* ... */]) ?;
-
-// FDA submission - applies all FDA validation rules
-let files = Xpt::writer(dataset)
-.agency(Agency::FDA)
-.finalize() ?
-.write_path("ae.xpt") ?;
-
-// Returns Vec<PathBuf> - multiple files if splitting occurred
-println!("Created {} file(s)", files.len());
-```
-
-### Supported Agencies
-
-| Agency         | Description                                      | Max Size | Character Support |
-|----------------|--------------------------------------------------|----------|-------------------|
-| `Agency::FDA`  | U.S. Food and Drug Administration                | 5 GB     | ASCII only        |
-| `Agency::PMDA` | Japan Pharmaceuticals and Medical Devices Agency | 5 GB     | Japanese (UTF-8)  |
-| `Agency::NMPA` | China National Medical Products Administration   | 5 GB     | Chinese (UTF-8)   |
-
-### Agency Validation Rules
-
-When an agency is specified, the following validations are applied:
-
-- **Dataset/variable names**: ASCII only, max 8 bytes, uppercase alphanumeric
-- **Labels**: max 40 bytes
-  - FDA: ASCII only
-  - PMDA: Japanese characters allowed (UTF-8)
-  - NMPA: Chinese characters allowed (UTF-8)
-- **Character values**: max 200 bytes (same encoding rules as labels)
-- **File naming**: dataset name must match file stem (case-insensitive)
-
-## Automatic File Splitting
-
-Large XPT files are automatically split when an agency is specified:
-
-```rust
-use xportrs::{Xpt, Agency, Dataset};
-
-// Large dataset with millions of rows
-let large_dataset = Dataset::new("LB", /* ... */) ?;
-
-// Files > 5GB are automatically split into numbered parts
-let files = Xpt::writer(large_dataset)
-.agency(Agency::FDA)
-.finalize() ?
-.write_path("lb.xpt") ?;
-
-// Result: ["lb_001.xpt", "lb_002.xpt", ...] if split
-// Result: ["lb.xpt"] if no split needed
-```
-
-## Data Types
-
-`xportrs` supports the following column data types:
-
-| Rust Type            | XPT Type  | Description                        |
-|----------------------|-----------|------------------------------------|
-| `ColumnData::F64`    | Numeric   | 64-bit floating point              |
-| `ColumnData::I64`    | Numeric   | 64-bit integer (stored as float)   |
-| `ColumnData::String` | Character | Variable-length text (1-200 bytes) |
-
-All types support `Option<T>` for missing values (SAS missing = `.`).
-
-## Validation Issues
-
-The library provides detailed validation feedback:
-
-```rust
-use xportrs::{Xpt, Agency, Dataset};
-
-let plan = Xpt::writer(dataset)
-.agency(Agency::FDA)
-.finalize() ?;
-
-// Check for issues before writing
-if plan.has_errors() {
-for issue in plan.issues() {
-eprintln ! ("{}", issue);
-}
-}
-
-if plan.has_warnings() {
-for issue in plan.issues().iter().filter( | i | i.is_warning()) {
-println ! ("Warning: {}", issue);
-}
-}
-
-plan.write_path("ae.xpt") ?;
-```
-
-## CDISC Terminology
-
-This crate uses CDISC SDTM vocabulary:
-
-| Term               | Description                                                          |
-|--------------------|----------------------------------------------------------------------|
-| **Domain dataset** | A table identified by a domain code (e.g., "AE", "DM", "LB")         |
-| **Observation**    | One row/record in the dataset                                        |
-| **Variable**       | One column; may have a role (Identifier/Topic/Timing/Qualifier/Rule) |
-
-## Feature Flags
-
-| Feature   | Description                                        |
-|-----------|----------------------------------------------------|
-| `serde`   | Enable serialization/deserialization support       |
-| `tracing` | Enable structured logging with the `tracing` crate |
-| `polars`  | Enable Polars DataFrame integration                |
-| `full`    | Enable all optional features                       |
-
-```toml
-# Enable all features
-xportrs = { version = "0.0.4", features = ["full"] }
-```
-
-## Temporal Utilities
-
-Convert between Rust chrono types and SAS date/time values:
-
-```rust
-use xportrs::temporal::{
-    sas_days_since_1960,
-    sas_seconds_since_1960,
-    date_from_sas_days,
-    datetime_from_sas_seconds,
-};
-use chrono::NaiveDate;
-
-// Convert Rust date to SAS days
-let date = NaiveDate::from_ymd_opt(2024, 6, 15).unwrap();
-let sas_days = sas_days_since_1960( & date);
-
-// Convert SAS days back to Rust date
-let back = date_from_sas_days(sas_days);
-```
-
-## Safety
-
-This crate is built with
-`#![forbid(unsafe_code)]`. All binary parsing and encoding uses safe Rust constructs. The library has been designed with security in mind:
-
-- No unsafe code blocks
-- No external C dependencies
-- Comprehensive input validation
-- Protection against malformed files
-
-## Minimum Supported Rust Version (MSRV)
-
-The minimum supported Rust version is **1.92**.
+| Aspect                  | Status                    |
+|-------------------------|---------------------------|
+| Unsafe Code             | `#![forbid(unsafe_code)]` |
+| External C Dependencies | None                      |
+| Minimum Rust Version    | 1.92                      |
 
 ## Related Projects
 
-- [xportr (R)](https://github.com/atorus-research/xportr) - The R package that inspired this crate
-- [Trial Submission Studio](https://github.com/rubentalstra/trial-submission-studio) - Desktop application using xportrs
+- [xportr](https://github.com/atorus-research/xportr) — R package that inspired this crate
+- [Trial Submission Studio](https://github.com/rubentalstra/trial-submission-studio) — Desktop application using xportrs
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details.
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Run tests (`cargo test`)
-4. Run clippy (`cargo clippy --all-targets --all-features -- -D warnings`)
-5. Commit your changes (`git commit -m 'Add amazing feature'`)
-6. Push to the branch (`git push origin feature/amazing-feature`)
-7. Open a Pull Request
+MIT License — see [LICENSE](LICENSE) for details.

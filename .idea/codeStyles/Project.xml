@@ -4,6 +4,9 @@
       <option name="WRAP_TEXT_IF_LONG" value="false" />
       <option name="INSERT_QUOTE_ARROWS_ON_WRAP" value="false" />
     </Markdown>
+    <MarkdownInjectionDummy>
+      <option name="FORMAT_INJECTED_CODE" value="false" />
+    </MarkdownInjectionDummy>
     <MarkdownNavigatorCodeStyleSettings>
       <option name="FORMAT_WITH_SOFT_WRAP" value="false" />
     </MarkdownNavigatorCodeStyleSettings>
