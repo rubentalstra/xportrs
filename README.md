@@ -6,7 +6,6 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![MSRV](https://img.shields.io/badge/MSRV-1.92-blue.svg)](https://blog.rust-lang.org/)
 [![dependency status](https://deps.rs/repo/github/rubentalstra/xportrs/status.svg)](https://deps.rs/repo/github/rubentalstra/xportrs)
-[![codecov](https://codecov.io/gh/rubentalstra/xportrs/graph/badge.svg)](https://codecov.io/gh/rubentalstra/xportrs)
 
 **Pure Rust SAS XPORT (XPT) reader and writer for CDISC clinical trial data submissions.**
 
