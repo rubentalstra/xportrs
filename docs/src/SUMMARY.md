@@ -28,6 +28,7 @@
 - [CDISC Standards](regulatory/cdisc.md)
 - [FDA Technical Conformance Guide](regulatory/fda-guide.md)
 - [XPT V5 Specification](regulatory/xpt-v5-spec.md)
+- [XPT V8/V9 Specification](regulatory/xpt-v8-spec.md)
 - [Validation Rules](regulatory/validation.md)
 
 # XPT Format Specification

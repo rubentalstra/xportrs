@@ -160,7 +160,17 @@ The authoritative source for XPT V5 format is:
 
 **SAS Technical Note TS-140: Record Layout of a SAS Version 5 or 6 Data Set in SAS Transport (XPORT) Format**
 
-[Download TS-140 (PDF)](https://support.sas.com/content/dam/SAS/support/en/technical-papers/record-layout-of-a-sas-version-5-or-6-data-set-in-sas-transport-xport-format.pdf)
+<iframe
+    src="../assets/pdfs/ts-140-xpt-v5-v6-spec.pdf"
+    width="100%"
+    height="600px"
+    style="border: 1px solid #ccc; border-radius: 4px;">
+</iframe>
+
+<p style="text-align: center; margin-top: 10px;">
+<a href="../assets/pdfs/ts-140-xpt-v5-v6-spec.pdf" download>Download PDF</a> |
+<a href="https://support.sas.com/content/dam/SAS/support/en/technical-papers/record-layout-of-a-sas-version-5-or-6-data-set-in-sas-transport-xport-format.pdf" target="_blank">View on SAS Support</a>
+</p>
 
 ## Format Family
 
