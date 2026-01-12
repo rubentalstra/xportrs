@@ -69,6 +69,16 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: Run tests
         run: cargo test --all-features
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@cargo-nextest
+      - name: Run tests (JUnit output)
+        run: cargo nextest run --all-features --profile ci
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: target/nextest/ci/junit.xml
 
   coverage:
     name: Code Coverage
