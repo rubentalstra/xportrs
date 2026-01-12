@@ -39,7 +39,7 @@ All agencies enforce: 8-byte variable names, 40-byte labels, 200-byte character 
 
 ```toml
 [dependencies]
-xportrs = "0.0.5"
+xportrs = "0.0.6"
 ```
 
 ## Quick Example
