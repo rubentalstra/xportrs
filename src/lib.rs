@@ -129,8 +129,8 @@ pub use config::{TextMode, Verbosity};
 
 // Dataset types - needed to construct data
 pub use dataset::{
-    Column, ColumnData, ColumnNames, Dataset, DomainCode, IntoIter, Iter, IterMut, Label,
-    VariableName, VariableRole,
+    Column, ColumnData, ColumnNames, Dataset, DomainCode, Format, FormatParseError, IntoIter, Iter,
+    IterMut, Justification, Label, VariableName, VariableRole,
 };
 
 // Error types

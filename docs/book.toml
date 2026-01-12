@@ -1,0 +1,72 @@
+[book]
+title = "xportrs Documentation"
+description = "SAS Transport (XPT) file format library for CDISC/FDA regulatory submissions"
+authors = ["Ruben Talstra", "xportrs contributors"]
+language = "en"
+src = "src"
+text-direction = "ltr"
+
+[rust]
+edition = "2024"
+
+[build]
+build-dir = "book"
+create-missing = false
+use-default-preprocessors = true
+extra-watch-dirs = ["theme"]
+
+[preprocessor.mermaid]
+command = "mdbook-mermaid"
+
+[output.html]
+# Theme settings
+default-theme = "light"
+preferred-dark-theme = "navy"
+smart-punctuation = true
+
+# Repository links
+git-repository-url = "https://github.com/rubentalstra/xportrs"
+edit-url-template = "https://github.com/rubentalstra/xportrs/edit/main/docs/{path}"
+
+# Site configuration
+site-url = "/"
+no-section-label = false
+sidebar-header-nav = true
+
+# Custom assets
+additional-css = []
+additional-js = []
+
+# 404 page
+input-404 = "404.md"
+
+[output.html.print]
+enable = true
+page-break = true
+
+[output.html.fold]
+enable = true
+level = 1
+
+[output.html.playground]
+editable = false
+copyable = true
+copy-js = true
+line-numbers = false
+runnable = true
+
+[output.html.code]
+# Hide lines prefixed with # in Rust code
+hidelines = { rust = "#" }
+
+[output.html.search]
+enable = true
+limit-results = 30
+teaser-word-count = 30
+use-boolean-and = false
+boost-title = 2
+boost-hierarchy = 1
+boost-paragraph = 1
+expand = true
+heading-split-level = 3
+copy-js = true

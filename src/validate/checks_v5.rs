@@ -39,13 +39,18 @@ pub(crate) fn validate_v5_schema(plan: &DatasetSchema) -> Vec<Issue> {
     }
 
     // Check dataset label length
-    if let Some(ref label) = plan.dataset_label
-        && label.len() > constraints::MAX_LABEL_BYTES
-    {
-        issues.push(Issue::DatasetLabelTooLong {
+    if let Some(ref label) = plan.dataset_label {
+        if label.len() > constraints::MAX_LABEL_BYTES {
+            issues.push(Issue::DatasetLabelTooLong {
+                dataset: plan.domain_code.clone(),
+                max: constraints::MAX_LABEL_BYTES,
+                actual: label.len(),
+            });
+        }
+    } else {
+        // Missing dataset label - warning per Pinnacle 21 SD0063A
+        issues.push(Issue::MissingDatasetLabel {
             dataset: plan.domain_code.clone(),
-            max: constraints::MAX_LABEL_BYTES,
-            actual: label.len(),
         });
     }
 
@@ -60,8 +65,13 @@ pub(crate) fn validate_v5_schema(plan: &DatasetSchema) -> Vec<Issue> {
             });
         }
 
-        // Variable label length
-        if var.label.len() > constraints::MAX_LABEL_BYTES {
+        // Variable label length and missing label check
+        if var.label.is_empty() {
+            // Missing variable label - warning per Pinnacle 21 SD0063
+            issues.push(Issue::MissingVariableLabel {
+                variable: var.name.clone(),
+            });
+        } else if var.label.len() > constraints::MAX_LABEL_BYTES {
             issues.push(Issue::VariableLabelTooLong {
                 variable: var.name.clone(),
                 max: constraints::MAX_LABEL_BYTES,
@@ -115,7 +125,21 @@ mod tests {
     use crate::schema::plan::VariableSpec;
 
     #[test]
-    fn test_valid_schema() {
+    fn test_valid_schema_with_labels() {
+        let mut plan = DatasetSchema::new("AE").with_label(Some("Adverse Events".into()));
+        plan.variables = vec![
+            VariableSpec::numeric("AESEQ").with_label("Sequence Number"),
+            VariableSpec::character("USUBJID", 20).with_label("Unique Subject Identifier"),
+        ];
+        plan.recalculate_positions();
+
+        let issues = validate_v5_schema(&plan);
+        // Should have no errors or warnings when labels are provided
+        assert!(issues.is_empty());
+    }
+
+    #[test]
+    fn test_missing_labels_warnings() {
         let mut plan = DatasetSchema::new("AE");
         plan.variables = vec![
             VariableSpec::numeric("AESEQ"),
@@ -124,7 +148,32 @@ mod tests {
         plan.recalculate_positions();
 
         let issues = validate_v5_schema(&plan);
-        assert!(issues.is_empty());
+        // Should have warnings for missing dataset label and variable labels
+        assert!(!issues.is_empty());
+
+        // All issues should be warnings, not errors
+        for issue in &issues {
+            assert!(
+                issue.is_warning(),
+                "Expected warning, got error: {:?}",
+                issue
+            );
+        }
+
+        // Check for specific warning types
+        assert!(
+            issues
+                .iter()
+                .any(|i| matches!(i, Issue::MissingDatasetLabel { .. }))
+        );
+        assert!(
+            issues.iter().any(
+                |i| matches!(i, Issue::MissingVariableLabel { variable } if variable == "AESEQ")
+            )
+        );
+        assert!(issues.iter().any(
+            |i| matches!(i, Issue::MissingVariableLabel { variable } if variable == "USUBJID")
+        ));
     }
 
     #[test]
@@ -135,7 +184,11 @@ mod tests {
 
         let issues = validate_v5_schema(&plan);
         assert!(!issues.is_empty());
-        assert!(matches!(issues[0], Issue::DatasetNameTooLong { .. }));
+        assert!(
+            issues
+                .iter()
+                .any(|i| matches!(i, Issue::DatasetNameTooLong { .. }))
+        );
     }
 
     #[test]

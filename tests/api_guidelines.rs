@@ -419,7 +419,7 @@ fn constructor_conventions() {
 
     // Secondary constructors use _with_ suffix
     let _ = Column::with_role("VAR", VariableRole::Identifier, ColumnData::F64(vec![]));
-    let _ = Dataset::with_label("AE", Some("Label"), vec![]);
+    let _ = Dataset::with_label("AE", "Label", vec![]);
 }
 
 // =============================================================================

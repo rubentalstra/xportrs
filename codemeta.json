@@ -3,7 +3,7 @@
   "@type": "SoftwareSourceCode",
   "name": "xportrs",
   "description": "Pure Rust SAS XPORT (XPT) reader and writer for CDISC clinical trial data submissions. Provides a safe, DataFrame-agnostic implementation of XPT v5 I/O with built-in regulatory compliance validation for FDA, PMDA, and NMPA submissions.",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "identifier": "https://doi.org/10.5281/zenodo.18219718",
   "url": "https://github.com/rubentalstra/xportrs",
   "codeRepository": "https://github.com/rubentalstra/xportrs",

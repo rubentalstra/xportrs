@@ -30,6 +30,9 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Check version consistency
+        run: ./scripts/sync-version.sh --check
+
       - name: Get version
         id: version
         run: |

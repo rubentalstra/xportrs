@@ -1,5 +1,6 @@
 <component name="ProjectCodeStyleConfiguration">
   <code_scheme name="Project" version="173">
+    <option name="AUTODETECT_INDENTS" value="false" />
     <Markdown>
       <option name="WRAP_TEXT_IF_LONG" value="false" />
       <option name="INSERT_QUOTE_ARROWS_ON_WRAP" value="false" />
@@ -10,7 +11,11 @@
     <MarkdownNavigatorCodeStyleSettings>
       <option name="FORMAT_WITH_SOFT_WRAP" value="false" />
     </MarkdownNavigatorCodeStyleSettings>
+    <editorconfig>
+      <option name="ENABLED" value="false" />
+    </editorconfig>
     <codeStyleSettings language="Markdown">
+      <option name="RIGHT_MARGIN" value="200" />
       <option name="WRAP_ON_TYPING" value="0" />
     </codeStyleSettings>
   </code_scheme>

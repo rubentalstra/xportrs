@@ -7,7 +7,7 @@ use std::collections::HashMap;
 
 use crate::agency::Agency;
 use crate::config::Config;
-use crate::dataset::{ColumnData, Dataset};
+use crate::dataset::{ColumnData, Dataset, Format};
 use crate::error::{Error, Result};
 use crate::metadata::{DatasetMetadata, VariableMetadata, XptVarType};
 
@@ -64,29 +64,42 @@ pub fn derive_schema_plan(
             infer_xpt_type(col.data())
         };
 
-        // 4. Determine length
-        let length = determine_length(col.data(), xpt_type, meta.and_then(|m| m.length), config)?;
+        // 4. Determine length - Column.explicit_length() takes priority, then metadata, then inferred
+        let length_override = col.explicit_length().or(meta.and_then(|m| m.length));
+        let length = determine_length(col.data(), xpt_type, length_override, config)?;
 
         // Create planned variable
         let mut planned =
             VariableSpec::new(col.name().to_string(), xpt_type, length).with_source_index(idx);
 
-        // Merge metadata
+        // First, apply Column's metadata (label, format, informat, role)
+        if let Some(label) = col.label() {
+            planned.label = truncate_to_bytes(label, 40);
+        }
+        if let Some(format) = col.format() {
+            planned.format = Some(format.clone());
+        }
+        if let Some(informat) = col.informat() {
+            planned.informat = Some(informat.clone());
+        }
+        if let Some(role) = col.role() {
+            planned.role = Some(role);
+        }
+
+        // Then, override with VariableMetadata if provided (metadata takes priority)
         if let Some(m) = meta {
             if let Some(ref label) = m.label {
                 planned.label = truncate_to_bytes(label, 40);
             }
-            if let Some(ref format) = m.format {
-                planned.format = truncate_to_bytes(format, 8);
+            if let Some(ref format_str) = m.format {
+                // Try to parse the format string; ignore invalid formats
+                if let Ok(format) = Format::parse(format_str) {
+                    planned.format = Some(format);
+                }
             }
             if let Some(role) = m.role {
                 planned.role = Some(role);
             }
-        }
-
-        // Use column role if not in metadata
-        if planned.role.is_none() {
-            planned.role = col.role();
         }
 
         planned_vars.push(planned);
@@ -239,6 +252,67 @@ mod tests {
         assert!(plan.variables[0].xpt_type.is_character());
         assert_eq!(plan.variables[1].name, "AESEQ");
         assert!(plan.variables[1].xpt_type.is_numeric());
+    }
+
+    #[test]
+    fn test_column_metadata_wired_to_schema() {
+        // Create columns with full metadata
+        let dataset = Dataset::new(
+            "AE",
+            vec![
+                Column::new("USUBJID", ColumnData::String(vec![Some("01-001".into())]))
+                    .with_label("Unique Subject Identifier")
+                    .with_format(Format::character(20)),
+                Column::new("AESTDY", ColumnData::F64(vec![Some(15.0)]))
+                    .with_label("Study Day of Start")
+                    .with_format(Format::numeric(8, 0)),
+                Column::new("AESTDTC", ColumnData::F64(vec![Some(21185.0)]))
+                    .with_label("Start Date")
+                    .with_format_str("DATE9.")
+                    .unwrap(),
+            ],
+        )
+        .unwrap();
+
+        let config = Config::default();
+        let plan = derive_schema_plan(&dataset, None, None, None, &config).unwrap();
+
+        // Verify labels are wired
+        assert_eq!(plan.variables[0].label, "Unique Subject Identifier");
+        assert_eq!(plan.variables[1].label, "Study Day of Start");
+        assert_eq!(plan.variables[2].label, "Start Date");
+
+        // Verify formats are wired
+        assert!(plan.variables[0].format.is_some());
+        assert_eq!(plan.variables[0].format_name(), "CHAR");
+        assert_eq!(plan.variables[0].format_length(), 20);
+
+        assert!(plan.variables[1].format.is_some());
+        assert_eq!(plan.variables[1].format_length(), 8);
+        assert_eq!(plan.variables[1].format_decimals(), 0);
+
+        assert!(plan.variables[2].format.is_some());
+        assert_eq!(plan.variables[2].format_name(), "DATE");
+        assert_eq!(plan.variables[2].format_length(), 9);
+    }
+
+    #[test]
+    fn test_column_length_override() {
+        // Create a column with explicit length override
+        let dataset = Dataset::new(
+            "AE",
+            vec![
+                Column::new("USUBJID", ColumnData::String(vec![Some("short".into())]))
+                    .with_length(100),
+            ], // Force length to 100 even though data is shorter
+        )
+        .unwrap();
+
+        let config = Config::default();
+        let plan = derive_schema_plan(&dataset, None, None, None, &config).unwrap();
+
+        // Length should be 100, not 5 (the actual data length)
+        assert_eq!(plan.variables[0].length, 100);
     }
 
     #[test]
