@@ -10,6 +10,7 @@ use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 
 use crate::error::{Error, Result};
 
+use super::format::{Format, FormatParseError};
 use super::iter::{ColumnNames, IntoIter, Iter, IterMut};
 use super::newtypes::{DomainCode, Label, VariableName};
 
@@ -252,11 +253,21 @@ impl fmt::Display for Dataset {
 /// A single column (variable) in a domain dataset.
 ///
 /// Each column has a [`VariableName`], optional [`VariableRole`], and typed [`ColumnData`].
+/// Columns can also have metadata: label, format, informat, and explicit length.
+///
+/// # CDISC/FDA Compliance
+///
+/// For FDA regulatory submissions, variable labels are **recommended** to help
+/// reviewers understand the data. Labels are limited to 40 bytes in XPT v5.
+///
+/// Formats control how numeric values are displayed (e.g., `DATE9.`, `8.2`).
+/// While FDA recommends avoiding custom SAS formats, standard formats should
+/// still have their metadata correctly populated.
 ///
 /// # Example
 ///
 /// ```
-/// use xportrs::{Column, ColumnData, VariableRole};
+/// use xportrs::{Column, ColumnData, VariableRole, Format};
 ///
 /// // Create a simple string column
 /// let col = Column::new("USUBJID", ColumnData::String(vec![
@@ -264,6 +275,11 @@ impl fmt::Display for Dataset {
 ///     Some("01-002".into()),
 /// ]));
 /// println!("{}", col);  // Prints: USUBJID (String)
+///
+/// // Create a column with full CDISC metadata
+/// let col = Column::new("AESTDTC", ColumnData::String(vec![Some("2024-01-15".into())]))
+///     .with_label("Start Date/Time of Adverse Event")
+///     .with_format(Format::character(19));
 ///
 /// // Create a column with a CDISC role
 /// let col = Column::with_role(
@@ -287,6 +303,28 @@ pub struct Column {
 
     /// The [`ColumnData`] containing the typed values.
     data: ColumnData,
+
+    /// The variable label (max 40 bytes in XPT v5).
+    ///
+    /// Labels are recommended for FDA submissions to help reviewers
+    /// understand the data. Missing labels will trigger a validation warning.
+    label: Option<Label>,
+
+    /// The SAS format (controls display output).
+    ///
+    /// Examples: `DATE9.`, `8.2`, `$CHAR200.`
+    format: Option<Format>,
+
+    /// The SAS informat (controls data input).
+    ///
+    /// Typically only relevant when reading data from other sources.
+    informat: Option<Format>,
+
+    /// Explicit character length override.
+    ///
+    /// If not set, length is derived from the maximum value length in the data.
+    /// Only applicable to character columns.
+    length: Option<usize>,
 }
 
 impl Column {
@@ -297,6 +335,10 @@ impl Column {
             name: name.into(),
             role: None,
             data,
+            label: None,
+            format: None,
+            informat: None,
+            length: None,
         }
     }
 
@@ -307,7 +349,111 @@ impl Column {
             name: name.into(),
             role: Some(role),
             data,
+            label: None,
+            format: None,
+            informat: None,
+            length: None,
         }
+    }
+
+    /// Sets the variable label.
+    ///
+    /// Labels are limited to 40 bytes in XPT v5 and are **recommended** for
+    /// FDA regulatory submissions.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use xportrs::{Column, ColumnData};
+    ///
+    /// let col = Column::new("USUBJID", ColumnData::String(vec![Some("01-001".into())]))
+    ///     .with_label("Unique Subject Identifier");
+    ///
+    /// assert_eq!(col.label(), Some("Unique Subject Identifier"));
+    /// ```
+    #[must_use]
+    pub fn with_label(mut self, label: impl Into<Label>) -> Self {
+        self.label = Some(label.into());
+        self
+    }
+
+    /// Sets the SAS format.
+    ///
+    /// Formats control how values are displayed. Common formats include:
+    /// - `DATE9.` - Display as date (e.g., "15JAN2024")
+    /// - `8.2` - Numeric with 8 width and 2 decimals
+    /// - `$CHAR200.` - Character with 200 width
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use xportrs::{Column, ColumnData, Format};
+    ///
+    /// let col = Column::new("AESTDT", ColumnData::F64(vec![Some(23391.0)]))
+    ///     .with_format(Format::parse("DATE9.").unwrap());
+    ///
+    /// assert!(col.format().is_some());
+    /// ```
+    #[must_use]
+    pub fn with_format(mut self, format: Format) -> Self {
+        self.format = Some(format);
+        self
+    }
+
+    /// Sets the SAS format from a format string.
+    ///
+    /// This is a convenience method that parses the format string.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`FormatParseError`] if the format string is invalid.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use xportrs::{Column, ColumnData};
+    ///
+    /// let col = Column::new("AESTDT", ColumnData::F64(vec![Some(23391.0)]))
+    ///     .with_format_str("DATE9.")?;
+    ///
+    /// assert!(col.format().is_some());
+    /// # Ok::<(), xportrs::FormatParseError>(())
+    /// ```
+    pub fn with_format_str(mut self, format: &str) -> std::result::Result<Self, FormatParseError> {
+        self.format = Some(Format::parse(format)?);
+        Ok(self)
+    }
+
+    /// Sets the SAS informat.
+    ///
+    /// Informats control how data is read from external sources.
+    /// Typically only relevant when reading data.
+    #[must_use]
+    pub fn with_informat(mut self, informat: Format) -> Self {
+        self.informat = Some(informat);
+        self
+    }
+
+    /// Sets an explicit character length.
+    ///
+    /// This overrides the default behavior of deriving length from the data.
+    /// Only applicable to character columns; ignored for numeric columns.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use xportrs::{Column, ColumnData};
+    ///
+    /// // Reserve 200 bytes even though data is shorter
+    /// let col = Column::new("AETERM", ColumnData::String(vec![Some("HEADACHE".into())]))
+    ///     .with_length(200);
+    ///
+    /// assert_eq!(col.explicit_length(), Some(200));
+    /// ```
+    #[must_use]
+    pub fn with_length(mut self, length: usize) -> Self {
+        self.length = Some(length);
+        self
     }
 
     /// Returns the number of elements in the column.
@@ -332,6 +478,33 @@ impl Column {
     #[must_use]
     pub fn role(&self) -> Option<VariableRole> {
         self.role
+    }
+
+    /// Returns the variable label, if any.
+    #[must_use]
+    pub fn label(&self) -> Option<&str> {
+        self.label.as_ref().map(Label::as_str)
+    }
+
+    /// Returns the SAS format, if any.
+    #[must_use]
+    pub fn format(&self) -> Option<&Format> {
+        self.format.as_ref()
+    }
+
+    /// Returns the SAS informat, if any.
+    #[must_use]
+    pub fn informat(&self) -> Option<&Format> {
+        self.informat.as_ref()
+    }
+
+    /// Returns the explicit character length, if any.
+    ///
+    /// This is the length set via [`Column::with_length`], not the
+    /// automatically derived length from the data.
+    #[must_use]
+    pub fn explicit_length(&self) -> Option<usize> {
+        self.length
     }
 
     /// Returns a reference to the [`ColumnData`].

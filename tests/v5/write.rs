@@ -3,7 +3,7 @@
 use std::path::PathBuf;
 
 use tempfile::tempdir;
-use xportrs::{Agency, Column, ColumnData, Dataset, Xpt};
+use xportrs::{Agency, Column, ColumnData, Dataset, Format, Xpt};
 
 /// Get the path to test data directory.
 fn test_data_dir() -> PathBuf {
@@ -270,4 +270,143 @@ fn test_roundtrip_real_files() {
             filename
         );
     }
+}
+
+/// Test metadata (labels, formats) roundtrip.
+#[test]
+fn test_metadata_roundtrip() {
+    let dir = tempdir().unwrap();
+    let path = dir.path().join("ae_metadata.xpt");
+
+    // Create dataset with full CDISC metadata
+    let dataset = Dataset::with_label("AE", Some("Adverse Events"), vec![
+        Column::new("STUDYID", ColumnData::String(vec![Some("STUDY123".into())]))
+            .with_label("Study Identifier")
+            .with_format(Format::character(20))
+            .with_length(20), // explicit length override
+        Column::new("USUBJID", ColumnData::String(vec![Some("001-001".into())]))
+            .with_label("Unique Subject Identifier")
+            .with_format(Format::character(40))
+            .with_length(40), // explicit length override
+        Column::new("AESEQ", ColumnData::F64(vec![Some(1.0)]))
+            .with_label("Sequence Number")
+            .with_format(Format::numeric(8, 0)),
+        Column::new("AESTDTC", ColumnData::F64(vec![Some(21185.0)]))
+            .with_label("Start Date/Time")
+            .with_format_str("DATE9.")
+            .unwrap(),
+    ])
+    .unwrap();
+
+    // Verify original dataset has metadata
+    assert_eq!(dataset.dataset_label().unwrap(), "Adverse Events");
+    assert_eq!(dataset.columns()[0].label().unwrap().to_string(), "Study Identifier");
+    assert!(dataset.columns()[0].format().is_some());
+
+    // Write
+    Xpt::writer(dataset.clone())
+        .finalize()
+        .unwrap()
+        .write_path(&path)
+        .unwrap();
+
+    // Read back
+    let loaded = Xpt::read(&path).unwrap();
+
+    // Verify dataset label preserved
+    assert_eq!(loaded.dataset_label().unwrap(), "Adverse Events");
+
+    // Verify variable labels preserved
+    assert_eq!(loaded.columns()[0].label().unwrap().to_string(), "Study Identifier");
+    assert_eq!(loaded.columns()[1].label().unwrap().to_string(), "Unique Subject Identifier");
+    assert_eq!(loaded.columns()[2].label().unwrap().to_string(), "Sequence Number");
+    assert_eq!(loaded.columns()[3].label().unwrap().to_string(), "Start Date/Time");
+
+    // Verify formats preserved
+    let format0 = loaded.columns()[0].format().expect("STUDYID should have format");
+    assert_eq!(format0.name_without_prefix(), "CHAR");
+    assert_eq!(format0.length(), 20);
+
+    // Note: Numeric formats with bare width (like "8.") are not written to XPT
+    // as they have no format name. Only named formats like DATE9. are preserved.
+    // The AESEQ column used Format::numeric(8, 0) which creates a bare format.
+
+    let format3 = loaded.columns()[3].format().expect("AESTDTC should have format");
+    assert_eq!(format3.name_without_prefix(), "DATE");
+    assert_eq!(format3.length(), 9);
+
+    // Verify explicit length preserved for character variables
+    assert_eq!(loaded.columns()[0].explicit_length(), Some(20));
+    assert_eq!(loaded.columns()[1].explicit_length(), Some(40));
+}
+
+/// Test that missing labels generate warnings.
+#[test]
+fn test_missing_labels_warning() {
+    let dataset = Dataset::new(
+        "AE",
+        vec![
+            Column::new("USUBJID", ColumnData::String(vec![Some("001".into())])),
+            Column::new("AESEQ", ColumnData::F64(vec![Some(1.0)])),
+        ],
+    )
+    .unwrap();
+
+    // Without labels, validation should produce warnings
+    let validated = Xpt::writer(dataset).finalize().unwrap();
+
+    // Should have warnings for missing labels (but no errors)
+    assert!(validated.has_warnings());
+    assert!(!validated.has_errors());
+
+    // Check that the issues include missing label warnings
+    let issues = validated.issues();
+    assert!(
+        issues.iter().any(|i| format!("{}", i).contains("missing a label")),
+        "Expected missing label warnings, got: {:?}",
+        issues
+    );
+}
+
+/// Test Format parsing.
+#[test]
+fn test_format_parsing() {
+    // Date format
+    let date_format = Format::parse("DATE9.").unwrap();
+    assert_eq!(date_format.name_without_prefix(), "DATE");
+    assert_eq!(date_format.length(), 9);
+    assert_eq!(date_format.decimals(), 0);
+
+    // Numeric format with decimals
+    let num_format = Format::parse("8.2").unwrap();
+    assert_eq!(num_format.name(), "");
+    assert_eq!(num_format.length(), 8);
+    assert_eq!(num_format.decimals(), 2);
+
+    // Character format
+    let char_format = Format::parse("$CHAR200.").unwrap();
+    assert_eq!(char_format.name_without_prefix(), "CHAR");
+    assert_eq!(char_format.length(), 200);
+    assert!(char_format.is_character());
+
+    // BEST format
+    let best_format = Format::parse("BEST12.").unwrap();
+    assert_eq!(best_format.name_without_prefix(), "BEST");
+    assert_eq!(best_format.length(), 12);
+}
+
+/// Test Format constructors.
+#[test]
+fn test_format_constructors() {
+    // Numeric constructor
+    let num = Format::numeric(8, 2);
+    assert_eq!(num.length(), 8);
+    assert_eq!(num.decimals(), 2);
+    assert!(!num.is_character());
+
+    // Character constructor
+    let char_fmt = Format::character(200);
+    assert_eq!(char_fmt.name_without_prefix(), "CHAR");
+    assert_eq!(char_fmt.length(), 200);
+    assert!(char_fmt.is_character());
 }

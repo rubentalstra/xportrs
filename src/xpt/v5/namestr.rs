@@ -144,7 +144,7 @@ pub(crate) fn pack_namestr(var: &VariableSpec, var_num: usize) -> Result<[u8; NA
         .copy_from_slice(&label_bytes);
 
     // nform: format name (8 bytes, space-padded)
-    let format_bytes = pad_string(&var.format, 8);
+    let format_bytes = pad_string(var.format_name(), 8);
     cursor
         .get_mut()
         .get_mut(56..64)
@@ -153,15 +153,21 @@ pub(crate) fn pack_namestr(var: &VariableSpec, var_num: usize) -> Result<[u8; NA
 
     // nfl, nfd, nfj: format length, decimals, justification
     cursor.set_position(64);
-    cursor.write_i16::<BigEndian>(0).map_err(Error::Io)?; // nfl
-    cursor.write_i16::<BigEndian>(0).map_err(Error::Io)?; // nfd
-    cursor.write_i16::<BigEndian>(0).map_err(Error::Io)?; // nfj
+    cursor
+        .write_i16::<BigEndian>(var.format_length() as i16)
+        .map_err(Error::Io)?;
+    cursor
+        .write_i16::<BigEndian>(var.format_decimals() as i16)
+        .map_err(Error::Io)?;
+    cursor
+        .write_i16::<BigEndian>(var.format_justification())
+        .map_err(Error::Io)?;
 
     // nfill: 2 bytes unused
     cursor.set_position(72);
 
     // niform: informat name (8 bytes, space-padded)
-    let informat_bytes = pad_string(&var.informat, 8);
+    let informat_bytes = pad_string(var.informat_name(), 8);
     cursor
         .get_mut()
         .get_mut(72..80)
@@ -170,8 +176,12 @@ pub(crate) fn pack_namestr(var: &VariableSpec, var_num: usize) -> Result<[u8; NA
 
     // nifl, nifd: informat length, decimals
     cursor.set_position(80);
-    cursor.write_i16::<BigEndian>(0).map_err(Error::Io)?; // nifl
-    cursor.write_i16::<BigEndian>(0).map_err(Error::Io)?; // nifd
+    cursor
+        .write_i16::<BigEndian>(var.informat_length() as i16)
+        .map_err(Error::Io)?;
+    cursor
+        .write_i16::<BigEndian>(var.informat_decimals() as i16)
+        .map_err(Error::Io)?;
 
     // npos: position (4 bytes, big-endian) - per SAS spec at offset 84-87
     cursor.set_position(84);
@@ -260,12 +270,13 @@ fn pad_string(s: &str, len: usize) -> Vec<u8> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::dataset::Format;
 
     #[test]
     fn test_pack_unpack_roundtrip() {
         let var = VariableSpec::numeric("AESEQ")
             .with_label("Sequence Number")
-            .with_format("8.")
+            .with_format(Format::numeric(8, 0))
             .with_source_index(0);
 
         let packed = pack_namestr(&var, 0).unwrap();
@@ -275,16 +286,35 @@ mod tests {
         assert_eq!(unpacked.nlabel, "Sequence Number");
         assert_eq!(unpacked.ntype, 1); // numeric
         assert_eq!(unpacked.nlng, 8);
+        assert_eq!(unpacked.nfl, 8); // format length now correctly written
+        assert_eq!(unpacked.nfd, 0); // format decimals
     }
 
     #[test]
     fn test_character_variable() {
-        let var = VariableSpec::character("USUBJID", 20);
+        let var = VariableSpec::character("USUBJID", 20)
+            .with_format(Format::character(20));
 
         let packed = pack_namestr(&var, 1).unwrap();
         let unpacked = unpack_namestr(&packed).unwrap();
 
         assert_eq!(unpacked.ntype, 2); // character
         assert_eq!(unpacked.nlng, 20);
+        assert_eq!(unpacked.nform, "CHAR"); // character format without $
+        assert_eq!(unpacked.nfl, 20);
+    }
+
+    #[test]
+    fn test_date_format() {
+        let var = VariableSpec::numeric("AESTDT")
+            .with_label("Start Date")
+            .with_format(Format::parse("DATE9.").unwrap());
+
+        let packed = pack_namestr(&var, 0).unwrap();
+        let unpacked = unpack_namestr(&packed).unwrap();
+
+        assert_eq!(unpacked.nform, "DATE");
+        assert_eq!(unpacked.nfl, 9);
+        assert_eq!(unpacked.nfd, 0);
     }
 }

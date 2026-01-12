@@ -231,6 +231,39 @@ pub enum Issue {
         /// Character count (for context).
         char_count: usize,
     },
+
+    // =========================================================================
+    // CDISC Metadata Issues
+    // =========================================================================
+    /// Variable is missing a label.
+    ///
+    /// Per Pinnacle 21 rule SD0063, this is a warning (not an error).
+    /// Labels are recommended for FDA reviewer clarity but not strictly
+    /// required for compliance per SDTM-IG v3.3+.
+    MissingVariableLabel {
+        /// The variable name.
+        variable: String,
+    },
+
+    /// Dataset is missing a label.
+    ///
+    /// Per Pinnacle 21 rule SD0063A, this is a warning (not an error).
+    MissingDatasetLabel {
+        /// The dataset name.
+        dataset: String,
+    },
+
+    /// Invalid format syntax.
+    ///
+    /// The format string could not be parsed as a valid SAS format.
+    InvalidFormatSyntax {
+        /// The variable name.
+        variable: String,
+        /// The invalid format string.
+        format: String,
+        /// Error message explaining why parsing failed.
+        reason: String,
+    },
 }
 
 impl Issue {
@@ -238,10 +271,11 @@ impl Issue {
     #[must_use]
     pub const fn severity(&self) -> Severity {
         match self {
-            // Warnings
-            Self::CharacterValueLengthExceeded { .. } | Self::MultiByteLabelNearLimit { .. } => {
-                Severity::Warning
-            }
+            // Warnings - things that don't block generation but should be addressed
+            Self::CharacterValueLengthExceeded { .. }
+            | Self::MultiByteLabelNearLimit { .. }
+            | Self::MissingVariableLabel { .. }
+            | Self::MissingDatasetLabel { .. } => Severity::Warning,
             // Everything else is an error
             _ => Severity::Error,
         }
@@ -258,7 +292,8 @@ impl Issue {
             | Self::DatasetNameFileStemMismatch { dataset, .. }
             | Self::NonAsciiDatasetName { dataset }
             | Self::NonAsciiDatasetLabel { dataset }
-            | Self::AgencyDatasetNameTooLong { dataset, .. } => {
+            | Self::AgencyDatasetNameTooLong { dataset, .. }
+            | Self::MissingDatasetLabel { dataset } => {
                 Some(Target::Dataset(dataset.clone()))
             }
 
@@ -272,7 +307,9 @@ impl Issue {
             | Self::NonAsciiVariableName { variable }
             | Self::NonAsciiVariableLabel { variable }
             | Self::AgencyVariableNameTooLong { variable, .. }
-            | Self::CharacterValueLengthExceeded { variable, .. } => {
+            | Self::CharacterValueLengthExceeded { variable, .. }
+            | Self::MissingVariableLabel { variable }
+            | Self::InvalidFormatSyntax { variable, .. } => {
                 Some(Target::Variable(variable.clone()))
             }
 
@@ -508,6 +545,34 @@ impl fmt::Display for Issue {
                     f,
                     "{} '{}' label uses {} of {} bytes ({} characters) - approaching limit with multi-byte characters",
                     kind, name, byte_count, max_bytes, char_count
+                )?;
+            }
+
+            Self::MissingVariableLabel { variable } => {
+                write!(
+                    f,
+                    "variable '{}' is missing a label (recommended for FDA submissions)",
+                    variable
+                )?;
+            }
+
+            Self::MissingDatasetLabel { dataset } => {
+                write!(
+                    f,
+                    "dataset '{}' is missing a label (recommended for FDA submissions)",
+                    dataset
+                )?;
+            }
+
+            Self::InvalidFormatSyntax {
+                variable,
+                format,
+                reason,
+            } => {
+                write!(
+                    f,
+                    "variable '{}' has invalid format '{}': {}",
+                    variable, format, reason
                 )?;
             }
         }

@@ -7,7 +7,7 @@ use std::io::{BufReader, Read, Seek, SeekFrom};
 use std::path::Path;
 
 use crate::config::ReadOptions;
-use crate::dataset::{Column, ColumnData, Dataset};
+use crate::dataset::{Column, ColumnData, Dataset, Format};
 use crate::error::{Error, Result};
 
 use super::obs::ObservationReader;
@@ -157,12 +157,46 @@ impl<R: Read + Seek> XptReader<R> {
             }
         }
 
-        // Build columns
+        // Build columns with full metadata from NAMESTR records
         let cols: Vec<Column> = member
             .variables
             .iter()
             .zip(columns)
-            .map(|(var, data)| Column::new(&var.nname, data))
+            .map(|(var, data)| {
+                let mut col = Column::new(&var.nname, data);
+
+                // Transfer label if present
+                if !var.nlabel.is_empty() {
+                    col = col.with_label(var.nlabel.as_str());
+                }
+
+                // Transfer format if present
+                if !var.nform.is_empty() {
+                    col = col.with_format(Format::from_namestr(
+                        &var.nform,
+                        var.nfl,
+                        var.nfd,
+                        var.nfj,
+                    ));
+                }
+
+                // Transfer informat if present
+                if !var.niform.is_empty() {
+                    col = col.with_informat(Format::from_namestr(
+                        &var.niform,
+                        var.nifl,
+                        var.nifd,
+                        0, // informats don't have justification
+                    ));
+                }
+
+                // Set explicit length for character variables
+                if var.xpt_type().is_character() {
+                    col = col.with_length(var.length());
+                }
+
+                col
+            })
             .collect();
 
         Dataset::with_label(member.name.clone(), member.label.clone(), cols)
