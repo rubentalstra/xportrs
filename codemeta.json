@@ -1,0 +1,98 @@
+{
+    "@context": "https://w3id.org/codemeta/3.1",
+    "@type": "SoftwareSourceCode",
+    "name": "xportrs",
+    "description": "Pure Rust SAS XPORT (XPT) reader and writer for CDISC clinical trial data submissions. Provides a safe, DataFrame-agnostic implementation of XPT v5 I/O with built-in regulatory compliance validation for FDA, PMDA, and NMPA submissions.",
+    "version": "0.0.4",
+    "identifier": "https://doi.org/10.5281/zenodo.18219718",
+    "url": "https://github.com/rubentalstra/xportrs",
+    "codeRepository": "https://github.com/rubentalstra/xportrs",
+    "downloadUrl": "https://crates.io/crates/xportrs",
+    "installUrl": "https://crates.io/crates/xportrs",
+    "readme": "https://github.com/rubentalstra/xportrs/blob/main/README.md",
+    "programmingLanguage": {
+        "@type": "ComputerLanguage",
+        "name": "Rust",
+        "url": "https://www.rust-lang.org/"
+    },
+    "runtimePlatform": "Rust 1.92+",
+    "developmentStatus": "active",
+    "issueTracker": "https://github.com/rubentalstra/xportrs/issues",
+    "continuousIntegration": "https://github.com/rubentalstra/xportrs/actions",
+    "buildInstructions": "https://github.com/rubentalstra/xportrs/blob/main/CONTRIBUTING.md",
+    "releaseNotes": "https://github.com/rubentalstra/xportrs/blob/main/CHANGELOG.md",
+    "author": {
+        "@type": "Person",
+        "@id": "https://orcid.org/0009-0009-2758-0141",
+        "givenName": "Ruben",
+        "familyName": "Talstra",
+        "email": "me@rubentalstra.nl"
+    },
+    "maintainer": {
+        "@type": "Person",
+        "@id": "https://orcid.org/0009-0009-2758-0141",
+        "givenName": "Ruben",
+        "familyName": "Talstra",
+        "email": "me@rubentalstra.nl"
+    },
+    "copyrightHolder": {
+        "@type": "Person",
+        "@id": "https://orcid.org/0009-0009-2758-0141",
+        "givenName": "Ruben",
+        "familyName": "Talstra",
+        "email": "me@rubentalstra.nl"
+    },
+    "copyrightYear": 2026,
+    "dateCreated": "2026-01-08",
+    "dateModified": "2026-01-12",
+    "datePublished": "2026-01-12",
+    "license": "https://spdx.org/licenses/MIT",
+    "keywords": [
+        "rust",
+        "sas",
+        "xpt",
+        "xport",
+        "cdisc",
+        "clinical-trials",
+        "fda",
+        "pmda",
+        "nmpa",
+        "sdtm",
+        "adam"
+    ],
+    "applicationCategory": "Scientific/Research Software",
+    "applicationSubCategory": "Clinical Trial Data Management",
+    "softwareRequirements": "Rust >= 1.92",
+    "operatingSystem": [
+        "Linux",
+        "macOS",
+        "Windows"
+    ],
+    "isAccessibleForFree": true,
+    "softwareSuggestions": [
+        {
+            "@type": "SoftwareApplication",
+            "name": "polars",
+            "description": "Optional Polars DataFrame integration",
+            "url": "https://crates.io/crates/polars"
+        },
+        {
+            "@type": "SoftwareApplication",
+            "name": "serde",
+            "description": "Optional serialization support",
+            "url": "https://crates.io/crates/serde"
+        },
+        {
+            "@type": "SoftwareApplication",
+            "name": "tracing",
+            "description": "Optional structured logging",
+            "url": "https://crates.io/crates/tracing"
+        }
+    ],
+    "relatedLink": [
+        "https://docs.rs/xportrs",
+        "https://github.com/atorus-research/xportr"
+    ],
+    "softwareHelp": "https://docs.rs/xportrs",
+    "sameAs": "https://crates.io/crates/xportrs"
+}
