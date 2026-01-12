@@ -10,6 +10,8 @@ type: software
 authors:
     -   family-names: Talstra
         given-names: Ruben
+        orcid: 'https://orcid.org/0009-0009-2758-0141'
+        email: me@rubentalstra.nl
 repository-code: 'https://github.com/rubentalstra/xportrs'
 url: 'https://github.com/rubentalstra/xportrs'
 abstract: >-
@@ -33,3 +35,8 @@ keywords:
 license: MIT
 version: 0.0.4
 date-released: '2026-01-12'
+doi: 10.5281/zenodo.18219718
+identifiers:
+    -   type: doi
+        value: 10.5281/zenodo.18219718
+        description: Zenodo archive
