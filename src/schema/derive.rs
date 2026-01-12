@@ -74,7 +74,7 @@ pub fn derive_schema_plan(
 
         // First, apply Column's metadata (label, format, informat, role)
         if let Some(label) = col.label() {
-            planned.label = truncate_to_bytes(label.as_ref(), 40);
+            planned.label = truncate_to_bytes(label, 40);
         }
         if let Some(format) = col.format() {
             planned.format = Some(format.clone());

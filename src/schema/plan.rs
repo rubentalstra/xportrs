@@ -181,20 +181,20 @@ impl VariableSpec {
     pub fn format_name(&self) -> &str {
         self.format
             .as_ref()
-            .map(|f| f.name_without_prefix())
+            .map(Format::name_without_prefix)
             .unwrap_or("")
     }
 
     /// Returns the format length for NAMESTR, or 0 if no format.
     #[must_use]
     pub fn format_length(&self) -> u16 {
-        self.format.as_ref().map(|f| f.length()).unwrap_or(0)
+        self.format.as_ref().map(Format::length).unwrap_or(0)
     }
 
     /// Returns the format decimals for NAMESTR, or 0 if no format.
     #[must_use]
     pub fn format_decimals(&self) -> u16 {
-        self.format.as_ref().map(|f| f.decimals()).unwrap_or(0)
+        self.format.as_ref().map(Format::decimals).unwrap_or(0)
     }
 
     /// Returns the format justification for NAMESTR, or 0 if no format.
@@ -211,20 +211,20 @@ impl VariableSpec {
     pub fn informat_name(&self) -> &str {
         self.informat
             .as_ref()
-            .map(|f| f.name_without_prefix())
+            .map(Format::name_without_prefix)
             .unwrap_or("")
     }
 
     /// Returns the informat length for NAMESTR, or 0 if no informat.
     #[must_use]
     pub fn informat_length(&self) -> u16 {
-        self.informat.as_ref().map(|f| f.length()).unwrap_or(0)
+        self.informat.as_ref().map(Format::length).unwrap_or(0)
     }
 
     /// Returns the informat decimals for NAMESTR, or 0 if no informat.
     #[must_use]
     pub fn informat_decimals(&self) -> u16 {
-        self.informat.as_ref().map(|f| f.decimals()).unwrap_or(0)
+        self.informat.as_ref().map(Format::decimals).unwrap_or(0)
     }
 }
 

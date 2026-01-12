@@ -277,6 +277,11 @@ impl Format {
     /// # Errors
     ///
     /// Returns [`FormatParseError`] if the format string is invalid.
+    ///
+    /// # Panics
+    ///
+    /// This function will not panic. The internal `.unwrap()` is safe because
+    /// we verify the string contains a '.' before calling `rfind('.')`.
     pub fn parse(s: &str) -> Result<Self, FormatParseError> {
         let s = s.trim();
 
@@ -296,8 +301,8 @@ impl Format {
         }
 
         // Check for character format prefix
-        let (is_char, rest) = if s.starts_with('$') {
-            (true, &s[1..])
+        let (is_char, rest) = if let Some(stripped) = s.strip_prefix('$') {
+            (true, stripped)
         } else {
             (false, s)
         };
