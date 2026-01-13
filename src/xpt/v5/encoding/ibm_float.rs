@@ -184,8 +184,8 @@ fn ieee_to_ibm(value: f64) -> [u8; 8] {
     // We need to align to base-16 boundaries
 
     // Shift mantissa to 56 bits
-    let mut mant = mant_with_hidden << 3; // Now 55-bit aligned (need 56)
-    let mut exp2 = exp_adj;
+    let mut mant = mant_with_hidden << 3; // Now 56-bit aligned
+    let mut exp2 = exp_adj + 1;  // Account for << 3 shift
 
     // Normalize to base-16: shift mantissa right and adjust exponent
     // until exp2 is divisible by 4
@@ -284,7 +284,7 @@ fn ibm_to_ieee(bytes: &[u8; 8]) -> f64 {
     // Adjust exponent: exp2 accounts for 16^x, plus adjustment for mantissa position
     // Original: mant / 2^56, with leading 1 at position bit_pos
     // Normalized: 1.xxx with value 2^bit_pos * something / 2^56 = 2^(bit_pos - 56) * something
-    let ieee_exp_raw = exp2 + bit_pos - 56 + 1023 + 1;
+    let ieee_exp_raw = exp2 + bit_pos - 56 + 1023;
 
     // Check for overflow/underflow
     if ieee_exp_raw >= 2047 {
