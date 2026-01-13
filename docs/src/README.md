@@ -65,7 +65,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-xportrs = "0.0.7"
+xportrs = "0.0.8"
 ```
 
 ## Next Steps

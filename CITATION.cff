@@ -33,8 +33,8 @@ keywords:
     - sdtm
     - adam
 license: MIT
-version: 0.0.7
-date-released: '2026-01-12'
+version: 0.0.8
+date-released: '2026-01-13'
 doi: 10.5281/zenodo.18219718
 identifiers:
     -   type: doi

@@ -10,7 +10,7 @@ Add xportrs to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-xportrs = "0.0.7"
+xportrs = "0.0.8"
 ```
 
 ## Reading an XPT File
