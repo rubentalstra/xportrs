@@ -185,7 +185,7 @@ fn ieee_to_ibm(value: f64) -> [u8; 8] {
 
     // Shift mantissa to 56 bits
     let mut mant = mant_with_hidden << 3; // Now 56-bit aligned
-    let mut exp2 = exp_adj + 1;  // Account for << 3 shift
+    let mut exp2 = exp_adj + 1; // Account for << 3 shift
 
     // Normalize to base-16: shift mantissa right and adjust exponent
     // until exp2 is divisible by 4
