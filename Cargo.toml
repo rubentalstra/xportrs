@@ -16,7 +16,8 @@ default = []
 serde = ["dep:serde", "chrono/serde"]
 tracing = ["dep:tracing"]
 polars = ["dep:polars"]
-full = ["serde", "tracing", "polars"]
+wasm = ["chrono/wasmbind", "serde"]
+full = ["serde", "tracing", "polars", "wasm"]
 
 [dependencies]
 # Required - Error handling (industry standard for libraries)
