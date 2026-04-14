@@ -470,6 +470,8 @@ dependencies = [
 name = "xportts"
 version = "0.1.0"
 dependencies = [
+ "chrono",
+ "js-sys",
  "serde",
  "tsify",
  "wasm-bindgen",

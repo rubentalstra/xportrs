@@ -18,9 +18,16 @@ crate-type = ["cdylib", "rlib"]
 # Optional - Generates wasm bindings needed for TypeScript
 wasm-bindgen = { version = "0.2.117" }
 
+# Required - Date/time handling for XPT timestamps and SAS epoch conversions
+chrono = { version = "*", features = ["wasmbind", "js-sys"] }
+
+# Required - Used for working with JS values
+js-sys = "0.3"
+
 # Optional - Generates TypeScript types
 tsify = { version = "0.5.6" }
 
 xportrs = { path = "../..", features = ["wasm"] }
 
+# Optional - Serialization
 serde = { version = "1.0", features = ["derive"] }
