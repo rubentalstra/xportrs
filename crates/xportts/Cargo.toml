@@ -1,0 +1,33 @@
+[package]
+name = "xportts"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.92"
+license = "MIT"
+description = "CDISC-compliant XPT file generation and parsing library for TypeScript"
+readme = "README.md"
+repository = "https://github.com/rubentalstra/xportrs"
+# documentation = "https://docs.rs/xportrs"
+keywords = ["sas", "xpt", "xport", "cdisc", "clinical-trials"]
+categories = ["encoding", "parser-implementations", "science"]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+# Optional - Generates wasm bindings needed for TypeScript
+wasm-bindgen = { version = "0.2.117" }
+
+# Required - Date/time handling for XPT timestamps and SAS epoch conversions
+chrono = { version = "*", features = ["wasmbind", "js-sys"] }
+
+# Required - Used for working with JS values
+js-sys = "0.3"
+
+# Optional - Generates TypeScript types
+tsify = { version = "0.5.6" }
+
+xportrs = { path = "../..", features = ["wasm"] }
+
+# Optional - Serialization
+serde = { version = "1.0", features = ["derive"] }

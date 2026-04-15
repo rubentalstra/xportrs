@@ -38,6 +38,7 @@ use super::newtypes::{DomainCode, Label, VariableName};
 /// ).expect("valid dataset");
 /// ```
 #[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Dataset {
     /// The domain code (e.g., "AE", "DM", "LB").
     ///
@@ -316,6 +317,7 @@ impl fmt::Display for Dataset {
 /// }
 /// ```
 #[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Column {
     /// The variable name.
     ///
@@ -591,6 +593,7 @@ impl fmt::Display for Column {
 /// }
 /// ```
 #[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub enum ColumnData {
     /// 64-bit floating-point values.
